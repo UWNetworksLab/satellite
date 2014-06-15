@@ -4,7 +4,7 @@
   "description": "Handling DNS for zmap",
   "main": "mkpkt.js",
   "dependencies": {
-    "native-dns-packet": "^0.0.4"
+    "native-dns-packet": "git://github.com/willscott/native-dns-packet.git"
   },
   "devDependencies": {},
   "scripts": {
