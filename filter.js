@@ -27,7 +27,11 @@ rl.on('line', function(line) {
     return;
   }
   hosts += 1;
-  record = dns.parse(new Buffer(info[2], 'hex'));
+  try {
+    record = dns.parse(new Buffer(info[2], 'hex'));
+  } catch(e) {
+    return;
+  }
   
   if (record.header.qr == 0 || record.header.ra == 0 ) {
     return;
@@ -52,5 +56,5 @@ rl.on('close', function() {
   output.end();
   output.on('finish', function() {
     process.exit(0);
-  });
+  }); 
 });
