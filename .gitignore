@@ -1,3 +1,6 @@
 node_modules
 *.pkt
 *.csv
+authfile
+blacklist.conf
+runs

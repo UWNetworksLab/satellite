@@ -59,7 +59,7 @@ watcher._transform = function (line, encoding, done) {
 
   recursive += 1;
 
-  this.push(info[0] + '\n');
+  this.push(info[0] + '/32\n');
 
   if (record.answer.length == 0) {
     done();
