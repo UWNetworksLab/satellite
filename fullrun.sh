@@ -4,7 +4,7 @@
 getTopSites()
 {
 	echo "Getting top Sites..."
-	wget http://s3.amazonaws.com/alexa-static/top-1m.csv.zip
+	curl -O http://s3.amazonaws.com/alexa-static/top-1m.csv.zip
 	unzip top-1m.csv.zip
 	rm top-1m.csv.zip
 	cut -d "," -f 2 top-1m.csv | head -10000 > domains.txt
@@ -16,7 +16,7 @@ getBlacklist()
 {
 	echo "Getting Blacklist..."
 	local auth=$(cat authfile)
-	curl -u '$auth' http://seahawk.cs.washington.edu:8080/blacklist.conf > blacklist.conf
+	curl -s -u $auth http://seahawk.cs.washington.edu:8080/blacklist.conf > blacklist.conf
 }
 
 ##3. Create output for run.
@@ -49,8 +49,7 @@ getGoodHosts()
 ##7. Do it!
 runTopSites()
 {
-	for p in (domains.txt)
-	do
+	while read p; do
 		echo "Scanning ${p}..."
 		getBlacklist
 		node mkpkt.js $p
@@ -59,7 +58,7 @@ runTopSites()
 			--output-module=csv -f saddr,timestamp-str,data \
 			--output-filter="success = 1 && repeat = 0" -M udp \
 			--probe-args=file:query.pkt 
-	done
+	done <domains.txt
 }
 
 ##8. Clean up

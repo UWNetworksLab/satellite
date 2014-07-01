@@ -4,3 +4,5 @@ node_modules
 authfile
 blacklist.conf
 runs
+domains.txt
+hosts.txt
