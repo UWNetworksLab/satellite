@@ -1,8 +1,12 @@
 // Usage: node splitHosts.js <n>
 // Splits hosts.txt into n parts.
 
+var fs = require('fs');
 var partitions = process.argv[2];
 console.log("Splitting/Filtering Hosts into " , partitions, " parts");
+if (!partitions) {
+  process.exit(1);
+}
 
 // Read in.
 var hosts = fs.readFileSync("hosts.txt").toString().split("\n");
@@ -14,7 +18,8 @@ for (var i = 0; i < partitions; i++) {
 }
 
 // Create bloom filter for filtering at /24's.
-var bloom = new require('bloomfilter')(256 * 256 * 256, 8);
+var BloomFilter = require('bloomfilter').BloomFilter;
+var bloom = new BloomFilter(256 * 256 * 256, 8);
 var adds = 0;
 
 // Shuffle into buckets.

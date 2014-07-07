@@ -6,3 +6,4 @@ blacklist.conf
 runs
 domains.txt
 hosts.txt
+hosts
