@@ -7,6 +7,10 @@
     "bloomfilter": "0.0.14",
     "native-dns-packet": "git://github.com/willscott/native-dns-packet.git"
   },
+  "repository:": {
+    "type": "git",
+    "url": "git://bitbucket.org/ttocslliw/zmapdns.git"
+  },
   "devDependencies": {},
   "scripts": {
     "test": "bash trial.sh"
