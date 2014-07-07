@@ -2,7 +2,7 @@
 var fs = require('fs');
 var Q = require('q');
 var spawn = require('child_process').spawn;
-var pkt = require('mkpkt');
+var pkt = require('./mkpkt');
 
 var threads = fs.readdirSync('hosts');
 
