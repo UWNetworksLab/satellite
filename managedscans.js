@@ -55,8 +55,11 @@ var doNext = function() {
     return;
   }
   var host = hosts.shift();
+  if (!host || !host.length) {
+    return doNext();
+  }
   // 45 second delay between starting.
-  run(process.argv[2], 'hosts/' + threads[thread], host).then(setTimeout(doNext, 45000));
+  run(process.argv[2], 'hosts/' + threads[thread], host).then(setTimeout(doNext, 15000));
   thread = thread++;
   if (thread == threads.length) {
     thread = 0;
