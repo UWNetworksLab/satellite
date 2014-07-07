@@ -5,9 +5,10 @@
   "main": "mkpkt.js",
   "dependencies": {
     "bloomfilter": "0.0.14",
-    "native-dns-packet": "git://github.com/willscott/native-dns-packet.git"
+    "native-dns-packet": "git://github.com/willscott/native-dns-packet.git",
+    "q": "^1.0.1"
   },
-  "repository:": {
+  "repository": {
     "type": "git",
     "url": "git://bitbucket.org/ttocslliw/zmapdns.git"
   },
