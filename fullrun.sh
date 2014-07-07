@@ -49,24 +49,18 @@ getGoodHosts()
 ##7. Do it!
 runTopSites()
 {
-	while read p; do
-		echo "Scanning ${p}..."
-		getBlacklist
-		node mkpkt.js query.pkt $p
-		zmap -p 53 -o runs/$thisRun/$p.csv \
-			-b blacklist.conf -w hosts.txt -c 300 -r 50000 \
-			--output-module=csv -f saddr,timestamp-str,data \
-			--output-filter="success = 1 && repeat = 0" -M udp \
-			--probe-args=file:query.pkt 
-	done <domains.txt
+	echo "Splitting..."
+	node splithosts.js 10 #splits into 10 partitions of roughly 200k hosts each.
+	echo "Scanning x10000..."
+	node managedscans.js $thisRun
 }
 
 ##8. Clean up
 cleanup()
 {
 	echo "Cleaning up..."
-	rm query.pkt || echo "no query pkt."
 	rm hosts.txt
+	rm -r hosts
 	#TODO: upload.
 }
 
@@ -76,3 +70,4 @@ generateRun
 getActiveResolvers
 getGoodHosts
 runTopSites
+cleanup
