@@ -5,6 +5,7 @@ var spawn = require('child_process').spawn;
 var pkt = require('./mkpkt');
 
 var threads = fs.readdirSync('hosts');
+var re = /send: \d+ done/;
 
 var run = function(run, host, domain) {
   var deferred = Q.defer();
@@ -27,7 +28,7 @@ var run = function(run, host, domain) {
     });
 
   zmap.stdout.on('data', function (data) {
-    if (data.indexOf("zmap: completed") >= 0) {
+    if (data && data.length && data.match(re)) {
       deferred.resolve();
     }
     console.log(data);
@@ -50,7 +51,7 @@ var doNext = function() {
     process.exit(0);
   }
   var host = hosts.shift();
-  run(process.argv[2], 'hosts/' + threads[thread], host).then(doNext);
+  run(process.argv[2], 'hosts/' + threads[thread], host).then(setTimeout(doNext, 10000));
   thread = thread++;
   if (thread == threads.length) {
     thread = 0;
