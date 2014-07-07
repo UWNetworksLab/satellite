@@ -48,10 +48,15 @@ var hosts = fs.readFileSync('domains.txt').toString().split('\n');
 var thread = 0;
 var doNext = function() {
   if (!hosts.length) {
-    process.exit(0);
+    // wait 5 minutes to exit so that the run is done
+    setTimeout(function() {
+      process.exit(0)
+    }, 5 * 60 * 1000)
+    return;
   }
   var host = hosts.shift();
-  run(process.argv[2], 'hosts/' + threads[thread], host).then(setTimeout(doNext, 10000));
+  // 45 second delay between starting.
+  run(process.argv[2], 'hosts/' + threads[thread], host).then(setTimeout(doNext, 45000));
   thread = thread++;
   if (thread == threads.length) {
     thread = 0;
