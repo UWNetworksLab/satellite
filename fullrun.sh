@@ -30,7 +30,7 @@ generateRun()
 ##5. Find active servers
 getActiveResolvers()
 {
-	node mkpkt.js cs.washington.edu
+	node mkpkt.js query.pkt cs.washington.edu
 	echo "Running initial scan..."
 	zmap -p 53 -o runs/$thisRun/cs.washington.edu.csv \
 		-b blacklist.conf -c 300 -r 50000 \
@@ -52,7 +52,7 @@ runTopSites()
 	while read p; do
 		echo "Scanning ${p}..."
 		getBlacklist
-		node mkpkt.js $p
+		node mkpkt.js query.pkt $p
 		zmap -p 53 -o runs/$thisRun/$p.csv \
 			-b blacklist.conf -w hosts.txt -c 300 -r 50000 \
 			--output-module=csv -f saddr,timestamp-str,data \

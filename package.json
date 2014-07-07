@@ -4,6 +4,7 @@
   "description": "Handling DNS for zmap",
   "main": "mkpkt.js",
   "dependencies": {
+    "bloomfilter": "0.0.14",
     "native-dns-packet": "git://github.com/willscott/native-dns-packet.git"
   },
   "devDependencies": {},
