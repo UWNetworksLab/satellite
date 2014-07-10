@@ -9,6 +9,10 @@ var re = /send: \d+ done/;
 
 var run = function(run, host, domain) {
   var deferred = Q.defer();
+  if (fs.existsSync('runs/' + run + '/' + domain + '.csv')) {
+    deferred.resolve();
+    return deferred.promise;
+  }
   var probe = domain + '.pkt';
   pkt.make(domain, probe);
   var zmap = spawn('zmap', [
@@ -16,7 +20,7 @@ var run = function(run, host, domain) {
       '-o', 'runs/' + run + '/' + domain + '.csv',
       '-b', 'blacklist.conf',
       '-w', host,
-      '-c', 300,
+      '-c', 20,
       '-r', 50000,
       '--output-module=csv',
       '-f', 'saddr,timestamp-str,data',
@@ -28,7 +32,7 @@ var run = function(run, host, domain) {
     });
 
   zmap.stdout.on('data', function (data) {
-    if (data && data.length && data.match(re)) {
+    if (data && data.length && data.match && data.match(re)) {
       deferred.resolve();
     }
     console.log(data);
@@ -38,9 +42,13 @@ var run = function(run, host, domain) {
   });
 
   // Clean up.
-  deferred.promise.then(function() {
-    fs.unlinkSync(probe);
-  });
+  deferred.promise.then(function(file) {
+    try {
+      fs.unlinkSync(file);
+    } catch(e) {
+      console.error(e.message);
+    }
+  }.bind({}, probe));
   return deferred.promise;
 }
 
@@ -51,7 +59,7 @@ var doNext = function() {
     // wait 5 minutes to exit so that the run is done
     setTimeout(function() {
       process.exit(0)
-    }, 5 * 60 * 1000)
+    }, 60 * 1000)
     return;
   }
   var host = hosts.shift();
@@ -59,7 +67,7 @@ var doNext = function() {
     return doNext();
   }
   // 45 second delay between starting.
-  run(process.argv[2], 'hosts/' + threads[thread], host).then(setTimeout(doNext, 15000));
+  run(process.argv[2], 'hosts/' + threads[thread], host).then(setTimeout(doNext, 20000));
   thread = thread++;
   if (thread == threads.length) {
     thread = 0;
