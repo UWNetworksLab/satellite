@@ -55,6 +55,13 @@ runTopSites()
 	node managedscans.js $thisRun
 }
 
+##8. Archive
+makeArchive()
+{
+	echo "Archiving..."
+	tar -czf runs/$thisRun.tgz runs/$thisRun
+}
+
 ##8. Clean up
 cleanup()
 {
@@ -70,4 +77,5 @@ generateRun
 getActiveResolvers
 getGoodHosts
 runTopSites
+makeArchive
 cleanup
