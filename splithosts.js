@@ -1,5 +1,7 @@
 // Usage: node splitHosts.js <n>
-// Splits hosts.txt into n parts.
+// Splits hosts.txt into n parts. In the process, filter down to a single server
+// in each /24 (e.g. if multiple servers in a single /24 exist, we'll only take
+// one of them.
 
 var fs = require('fs');
 var partitions = process.argv[2];

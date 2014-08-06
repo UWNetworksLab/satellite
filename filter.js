@@ -1,3 +1,9 @@
+// Input: zmap output file (.csv of servers and base64 packets)
+// Output: Return separated list of ip/32 with a functional recursive server.
+//
+// Used, for example, to filter out IPs that look like they're actually DNS
+// servers from the initial zmap scan.
+
 var fs = require('fs'),
     readline = require('readline'),
     stream = require('stream'),
