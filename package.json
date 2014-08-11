@@ -5,6 +5,7 @@
   "main": "mkpkt.js",
   "dependencies": {
     "bloomfilter": "0.0.14",
+    "googleapis": "^1.0.6",
     "native-dns-packet": "git://github.com/willscott/native-dns-packet.git",
     "q": "^1.0.1"
   },

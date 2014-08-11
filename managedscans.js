@@ -1,4 +1,4 @@
-//Runs a bunch of overlapping zmap scans.
+// Runs a bunch of overlapping zmap scans.
 var fs = require('fs');
 var Q = require('q');
 var spawn = require('child_process').spawn;

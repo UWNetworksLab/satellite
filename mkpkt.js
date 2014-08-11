@@ -1,3 +1,5 @@
+// Input: An output filename and a domain name
+// Output: Writes a DNS request packet for the domain name into the output filename.
 var dns = require('native-dns-packet');
 var fs = require('fs');
 
