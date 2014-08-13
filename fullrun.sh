@@ -61,6 +61,7 @@ makeArchive()
 	echo "Archiving..."
 	tar -czf runs/$thisRun.tgz runs/$thisRun
 	sha1sum runs/$thisRun.tgz | awk '{print $1}' > runs/$thisRun.tgz.sig
+	node generateStudyMetadata.js
 }
 
 ##8. Clean up
