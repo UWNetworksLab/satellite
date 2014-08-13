@@ -46,50 +46,22 @@ var finishMetaData = function(files) {
   //});
 }
 
-var conn = spawn('sftp', ['washington@scans.io']);
-var state = 0;
-var cmds = [['lcd runs',function(){}], ['cd data/dns/runs',function(){}]];
-var buffer = "";
-var sftpcb = null;
-var queueCmd = function(cmd, cb) {
-  cmds.push([cmd, cb]);
-  if (state == 2) {
-    var cc = cmds.shift();
-    conn.stdin.write(cc[0]);
-    sftpcb = cc[1];
-    state = 1;
-  }
-};
-
-conn.stdout.setEncoding('utf8');
-conn.stderr.setEncoding('utf8');
-var ondata = function(data) {
-  console.log('got data', data);
-  if (state == 0 && data.indexOf('Connected to') > -1) {
-    console.log('connected');
-    state = 1; // connected.
-  }
-  if (data.indexOf('sftp>') > -1 && state == 1) {
-    buffer += data.substr(0, data.indexOf('sftp>'));
-    sftpcb(buffer);
-    buffer = '';
-    state = 2;
-    if (cmds.length) {
-      var cc = cmds.shift();
-      console.log('sending: ', cc[0]);
-      conn.stdin.write(cc[0]);
-      sftpcb = cc[1];
-      state = 1;
-    }
-  } else if (state > 0) {
+var conn, buffer, cb;
+var sftp = function(cmd, cb) {
+  conn = spawn('sftp', ['washington@scans.io', '-q', '-b', '-']);
+  buffer = "";
+  conn.stdout.setEncoding('utf8');
+  conn.stderr.setEncoding('utf8');
+  conn.stdout.on('data', function(data) {
     buffer += data;
-  }
-};
-conn.stdout.on('data', ondata);
-conn.stderr.on('data', ondata);
-conn.on('exit', function() {
-  process.exit();
-});
+  });
+  conn.on('exit',function() {
+    delete conn;
+    cb(buffer);
+  });
+  conn.stdin.end(cmd);
+}
+
 
 // Get local list.
 var localArchives = fs.readdirSync('runs').filter(function(file) {
@@ -98,7 +70,7 @@ var localArchives = fs.readdirSync('runs').filter(function(file) {
 
 // Wait for remote list
 var remoteArchives = [];
-queueCmd('ls', function(remote) {
+queueCmd('cd data/dns/runs\nls', function(remote) {
   remoteArchives = remote.split('\n');
   remoteArchives.forEach(function(file) {
     if (localArchives.indexOf(file) > -1) {
@@ -106,10 +78,12 @@ queueCmd('ls', function(remote) {
     }
   });
   // Local Archives is now things to upload.
+  var cmd = 'lcd runs\ncd data/dns/runs\n';
   localArchives.forEach(function(file) {
-    console.log('would upload ' , file);
+    cmd += 'put ' + file + '\n';
     //queueCmd('put ' + file, function() {})
   });
-  queueCmd('ls', finishMetadata.bind({}, remoteArchives));
+  console.log("would run", cmd);
+  //queueCmd('ls', finishMetadata.bind({}, remoteArchives));
 });
 
