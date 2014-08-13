@@ -57,13 +57,12 @@ var sftp = function(cmd, cb) {
   conn.stdin.setEncoding('utf8');
   conn.stderr.setEncoding('utf8');
   conn.stdout.on('data', function(data) {
-    console.log('Saw STDOUT', data);
     buffer += data;
   });
   conn.stderr.on('data', function(data) {
-    console.log('Saw STDERR', data);
+    console.log('SFTP STDERR:', data);
   });
-  conn.stdin.on('error', console.log.bind(console, 'stdin'));
+  conn.stdin.on('STFP ERROR:', console.log.bind(console, 'stdin'));
   conn.on('exit',function() {
     delete conn;
     cb(buffer);
@@ -101,6 +100,6 @@ sftp('cd data/dns/runs\nls', function(remote) {
     finalArchives.push(file);
   });
   console.log('Uploading Data [' + todo + ' files]...');
-  sftp(cmd, finishMetadata.bind({}, finalArchives));
+  sftp(cmd, finishMetaData.bind({}, finalArchives));
 });
 
