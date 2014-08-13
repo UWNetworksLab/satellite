@@ -38,6 +38,11 @@ var finishMetaData = function(files) {
   });
   var string = JSON.stringify(template, null, 4);
   fs.writeFileSync('dns.study', string);
+  console.log('Uploading Metadata...');
+  sftp('cd data/dns\nput dns.study', function() {
+    console.log('Done.');
+    process.exit(0);
+  });
   //queueCmd('put dns.study', function() {
     console.log('Done.');
   //  process.exit(0);
@@ -63,7 +68,7 @@ var sftp = function(cmd, cb) {
     delete conn;
     cb(buffer);
   });
-  conn.stdin.write(cmd);
+  conn.stdin.end(cmd);
 }
 
 
@@ -74,20 +79,28 @@ var localArchives = fs.readdirSync('runs').filter(function(file) {
 
 // Wait for remote list
 var remoteArchives = [];
+var finalArchives = [];
 sftp('cd data/dns/runs\nls', function(remote) {
   remoteArchives = remote.split('\n');
   remoteArchives.forEach(function(file) {
+    if (file.indexOf('sftp>') === 0) {
+      return;
+    }
+    file = file.trim();
+    finalArchives.push(file);
     if (localArchives.indexOf(file) > -1) {
       localArchives.splice(localArchives.indexOf(file), 1);
     }
   });
   // Local Archives is now things to upload.
   var cmd = 'lcd runs\ncd data/dns/runs\n';
+  var todo = 0;
   localArchives.forEach(function(file) {
+    todo++;
     cmd += 'put ' + file + '\n';
-    //queueCmd('put ' + file, function() {})
+    finalArchives.push(file);
   });
-  console.log("would run", cmd);
-  //queueCmd('ls', finishMetadata.bind({}, remoteArchives));
+  console.log('Uploading Data [' + todo + ' files]...');
+  sftp(cmd, finishMetadata.bind({}, finalArchives));
 });
 
