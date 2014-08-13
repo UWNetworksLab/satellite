@@ -22,7 +22,7 @@ var template = {
         
     "tags": ["UDP/53", "DNS"],
     
-    "files": []
+    "files": [],
     
     "created_at": "",
     
@@ -40,13 +40,13 @@ var finishMetaData = function(files) {
   fs.writeFileSync('dns.study', string);
   queueCmd('cd ..', function() {});
   queueCmd('lcd ..', function() {});
-  queueCmd('put dns.study', function() {
+  //queueCmd('put dns.study', function() {
     console.log('Done.');
-    process.exit(0);
-  });
+  //  process.exit(0);
+  //});
 }
 
-var conn = spawn('sftp washington@scans.io',['-q']);
+var conn = spawn('sftp', ['washington@scans.io']);
 var state = 0;
 var cmds = [['lcd runs',function(){}], ['cd data/dns/runs',function(){}]];
 var buffer = "";
@@ -60,8 +60,13 @@ var queueCmd = function(cmd, cb) {
     state = 1;
   }
 };
-conn.stdout.on('data', function(data) {
+
+conn.stdout.setEncoding('utf8');
+conn.stderr.setEncoding('utf8');
+var ondata = function(data) {
+  console.log('got data', data);
   if (state == 0 && data.indexOf('Connected to') > -1) {
+    console.log('connected');
     state = 1; // connected.
   }
   if (data.indexOf('sftp>') > -1 && state == 1) {
@@ -71,6 +76,7 @@ conn.stdout.on('data', function(data) {
     state = 2;
     if (cmds.length) {
       var cc = cmds.shift();
+      console.log('sending: ', cc[0]);
       conn.stdin.write(cc[0]);
       sftpcb = cc[1];
       state = 1;
@@ -78,7 +84,9 @@ conn.stdout.on('data', function(data) {
   } else if (state > 0) {
     buffer += data;
   }
-});
+};
+conn.stdout.on('data', ondata);
+conn.stderr.on('data', ondata);
 conn.on('exit', function() {
   process.exit();
 });
@@ -99,7 +107,8 @@ queueCmd('ls', function(remote) {
   });
   // Local Archives is now things to upload.
   localArchives.forEach(function(file) {
-    queueCmd('put ' + file, function() {})
+    console.log('would upload ' , file);
+    //queueCmd('put ' + file, function() {})
   });
   queueCmd('ls', finishMetadata.bind({}, remoteArchives));
 });
