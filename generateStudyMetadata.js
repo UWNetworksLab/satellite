@@ -46,7 +46,7 @@ var finishMetaData = function(files) {
 
 var conn, buffer, cb;
 var sftp = function(cmd, cb) {
-  conn = spawn('sftp', ['washington@scans.io', '-q', '-b', '-']);
+  conn = spawn('sftp', ['-q', '-b', '-', 'washington@scans.io']);
   buffer = "";
   conn.stdout.setEncoding('utf8');
   conn.stdin.setEncoding('utf8');
@@ -58,11 +58,12 @@ var sftp = function(cmd, cb) {
   conn.stderr.on('data', function(data) {
     console.log('Saw STDERR', data);
   });
+  conn.stdin.on('error', console.log.bind(console, 'stdin'));
   conn.on('exit',function() {
     delete conn;
     cb(buffer);
   });
-  conn.stdin.end(cmd);
+  conn.stdin.write(cmd);
 }
 
 
