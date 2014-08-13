@@ -1,5 +1,6 @@
 var fs = require('fs');
 var spawn = require('child_process').spawn;
+var filesize = require('filesize');
 
 var template = {
     "uniqid": "washington-dns",
@@ -30,11 +31,31 @@ var template = {
 };
 
 var finishMetaData = function(files) {
-  files.forEach(function(file) {
-    template.files.push({
-      "name":"runs/" + file,
-      "description": "scan data from " + file.substr(file.indexOf('.')),
+  var existing = {};
+  if (fs.existsSync('dns.study')) {
+    JSON.parse(fs.readFileSync('dns.study')).files.forEach(function(file) {
+      existing[file.name] = file;
     });
+  }
+  files.forEach(function(file) {
+    if (!file.length) {
+      return;
+    }
+    var data = {
+      "name":"runs/" + file,
+      "description": "scan data from " + file.substr(0, file.indexOf('.')),
+      "updated-at": file.substr(0, file.indexOf('.'))
+    };
+    if (existing[data.name]) {
+      data.size = existing.size;
+      data.fingerprint = existing.fingerprint;
+    } else if (fs.existsSync(data.name)) {
+      data.size = filesize(fs.statSync(data.name).size, {unix: true});
+    }
+    if (fs.existsSync(data.name + '.sig')) {
+      data.fingerprint = fs.readFileSync(data.name + '.sig').trim();
+    }
+    template.files.push(data);
   });
   var string = JSON.stringify(template, null, 4);
   fs.writeFileSync('dns.study', string);
@@ -73,7 +94,7 @@ var sftp = function(cmd, cb) {
 
 // Get local list.
 var localArchives = fs.readdirSync('runs').filter(function(file) {
-  return file.indexOf('.tgz') > 0;
+  return file.indexOf('.tgz') > 0 && file.indexOf('.sig') < file.indexOf('.tgz');
 });
 
 // Wait for remote list
