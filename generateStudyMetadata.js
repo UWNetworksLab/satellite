@@ -38,8 +38,6 @@ var finishMetaData = function(files) {
   });
   var string = JSON.stringify(template, null, 4);
   fs.writeFileSync('dns.study', string);
-  queueCmd('cd ..', function() {});
-  queueCmd('lcd ..', function() {});
   //queueCmd('put dns.study', function() {
     console.log('Done.');
   //  process.exit(0);
@@ -51,9 +49,14 @@ var sftp = function(cmd, cb) {
   conn = spawn('sftp', ['washington@scans.io', '-q', '-b', '-']);
   buffer = "";
   conn.stdout.setEncoding('utf8');
+  conn.stdin.setEncoding('utf8');
   conn.stderr.setEncoding('utf8');
   conn.stdout.on('data', function(data) {
+    console.log('Saw STDOUT', data);
     buffer += data;
+  });
+  conn.stderr.on('data', function(data) {
+    console.log('Saw STDERR', data);
   });
   conn.on('exit',function() {
     delete conn;
@@ -70,7 +73,7 @@ var localArchives = fs.readdirSync('runs').filter(function(file) {
 
 // Wait for remote list
 var remoteArchives = [];
-queueCmd('cd data/dns/runs\nls', function(remote) {
+sftp('cd data/dns/runs\nls', function(remote) {
   remoteArchives = remote.split('\n');
   remoteArchives.forEach(function(file) {
     if (localArchives.indexOf(file) > -1) {
