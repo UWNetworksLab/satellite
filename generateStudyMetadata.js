@@ -101,9 +101,9 @@ var localArchives = fs.readdirSync('runs').filter(function(file) {
 var remoteArchives = [];
 var finalArchives = [];
 sftp('cd data/dns/runs\nls', function(remote) {
-  remoteArchives = remote.split('\n');
+  remoteArchives = remote.split(/\s+/);
   remoteArchives.forEach(function(file) {
-    if (file.indexOf('sftp>') === 0) {
+    if (file.indexOf('sftp>') === 0 | file.length === 0) {
       return;
     }
     file = file.trim();
@@ -116,6 +116,7 @@ sftp('cd data/dns/runs\nls', function(remote) {
   var cmd = 'lcd runs\ncd data/dns/runs\n';
   var todo = 0;
   localArchives.forEach(function(file) {
+    console.log('new: ' + file);
     todo++;
     cmd += 'put ' + file + '\n';
     finalArchives.push(file);
