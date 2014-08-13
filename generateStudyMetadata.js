@@ -53,7 +53,7 @@ var finishMetaData = function(files) {
       data.size = filesize(fs.statSync(data.name).size, {unix: true});
     }
     if (fs.existsSync(data.name + '.sig')) {
-      data.fingerprint = fs.readFileSync(data.name + '.sig').trim();
+      data.fingerprint = fs.readFileSync(data.name + '.sig',"utf-8").toString().trim();
     }
     template.files.push(data);
   });
@@ -103,7 +103,7 @@ var finalArchives = [];
 sftp('cd data/dns/runs\nls', function(remote) {
   remoteArchives = remote.split(/\s+/);
   remoteArchives.forEach(function(file) {
-    if (file.indexOf('sftp>') === 0 | file.length === 0) {
+    if (file.indexOf('sftp>') === 0 || file.length === 0) {
       return;
     }
     file = file.trim();
