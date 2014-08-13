@@ -103,7 +103,7 @@ var finalArchives = [];
 sftp('cd data/dns/runs\nls', function(remote) {
   remoteArchives = remote.split(/\s+/);
   remoteArchives.forEach(function(file) {
-    if (file.indexOf('sftp>') === 0 || file.length === 0) {
+    if (file.indexOf('.tgz') < 0 || file.length === 0) {
       return;
     }
     file = file.trim();
