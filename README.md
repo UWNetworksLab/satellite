@@ -50,14 +50,14 @@ And you probably also want to change its permissions to 600, since it's a privat
 
 Now create authdata.json with the following contents:
 
-  {
-    "email": "<Client ID from Service Account>",
-    "keyFile": "<Filename of PEM format private key>",
-    "key": "<Key fingerprint>",
-    "scopes": [
-      "https://www.googleapis.com/auth/bigquery",
-    ],
-    "subject":  ""
-  }
+    {
+        "email": "<Client ID from Service Account>",
+        "keyFile": "<Filename of PEM format private key>",
+        "key": "<Key fingerprint>",
+        "scopes": [
+          "https://www.googleapis.com/auth/bigquery",
+        ],
+        "subject":  ""
+    }
 
 And you should be ready to roll with uploading to BigQuery.
