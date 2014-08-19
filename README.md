@@ -42,13 +42,13 @@ and click Credentials under API & Auth in the left hand sidebar.
 Click "Create New Client ID", select "Service Account", and download the private key.
 You'll need to convert it to a .pem with something like
 
-  openssl pkcs12 -in <downloadedPrivateKey>.p12 -nodes -nocerts > <downloadedPrivateKey>.pem
+    openssl pkcs12 -in <downloadedPrivateKey>.p12 -nodes -nocerts > <downloadedPrivateKey>.pem
 
 And you probably also want to change its permissions to 600, since it's a private key:
 
-  chmod 600 <downloadedPrivateKey>.pem
+    chmod 600 <downloadedPrivateKey>.pem
 
-Now create authdata.json with the following contents:
+Now create `authdata.json` with the following contents:
 
     {
         "email": "<Client ID from Service Account>",
