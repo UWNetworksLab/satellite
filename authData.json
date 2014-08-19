@@ -1,9 +1,0 @@
-{
-  "email": "344095649748-uefo7hpap77m6omhbb6mtd5nhashbttt@developer.gserviceaccount.com",
-  "keyFile": "CensorWatch-8e31823e8ce6.pem",
-  "key": "8e31823e8ce6f4cb8bf3a1b7600dcf7a60ae0a89",
-  "scopes": [
-    "https://www.googleapis.com/auth/bigquery"
-  ],
-  "subject":  ""
-}

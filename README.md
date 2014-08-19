@@ -30,3 +30,27 @@ The zmap command line should look something like:
 ```
     zmap -p 53 -o zmaptrial.csv --output-module=csv -f saddr,timestamp-str,data --output-filter="success = 1 && repeat = 0" -M udp --probe-args=file:query.pkt 8.8.8.8
 ```
+
+#### Setting up your authdata for Google Cloud ####
+
+You'll need to create an appropriate authdata.json file to enable the scripts
+to talk to Google Cloud Services (for uploading data to BigQuery) on your behalf.
+
+Visit https://console.developers.google.com/, go to the project (e.g. censor-watch),
+and click Credentials under API & Auth in the left hand sidebar.
+
+Click "Create New Client ID", select "Service Account", and download the private key.
+
+Now create authdata.json with the following contents:
+
+  {
+    "email": "<Client ID from Service Account>",
+    "keyFile": "<Filename of downloaded private key>",
+    "key": "<Key fingerprint>",
+    "scopes": [
+      "https://www.googleapis.com/auth/bigquery",
+    ],
+    "subject":  ""
+  }
+
+And you should be ready to roll with uploading to BigQuery.
