@@ -3,9 +3,7 @@
   "keyFile": "CensorWatch-8e31823e8ce6.pem",
   "key": "8e31823e8ce6f4cb8bf3a1b7600dcf7a60ae0a89",
   "scopes": [
-    "https://www.googleapis.com/auth/bigquery",
-    "https://www.googleapis.com/auth/bigquery.insertdata",
-    "https://www.googleapis.com/auth/cloud-platform"
+    "https://www.googleapis.com/auth/bigquery"
   ],
   "subject":  ""
 }
