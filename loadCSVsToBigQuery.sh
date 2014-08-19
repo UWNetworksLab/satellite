@@ -5,7 +5,7 @@
 for var in "$@"
 do
   echo "Parsing $var into newline delimited JSON..."
-  node parseIPsFromPackets.js $var $var.jsonList
+  node zmapCSVToNewlineJSON.js $var $var.jsonList
   echo "Done. Gzipping $var.jsonList > $var.jsonList.gz..."
   gzip < $var.jsonList > $var.jsonList.gz
   echo "Done. Uploading gs://censor-watch/$var.jsonList.gz....."
