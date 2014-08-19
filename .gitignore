@@ -11,3 +11,7 @@ domains.txt
 hosts.txt
 hosts
 authdata.json
+*.swp
+*.gz
+*.jsonList
+
