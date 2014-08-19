@@ -1,5 +1,5 @@
 // Input: zmap output file (.csv of servers and base64 packets).
-// Output: .json of received packet info.
+// Output: \n delimited .json, one line per received DNS packet.
 var util = require('util');
 var fs = require('fs'),
     readline = require('readline'),
