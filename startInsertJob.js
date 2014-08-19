@@ -115,7 +115,7 @@ authClient.authorize(function (err, data) {
                 console.log('Error starting job to insert data ' + dataFilename);
                 throw err;
               }
-              console.log(util.format('Started insert job of file %s with jobId %s', 
+              console.log(util.format('Started insert job of file "%s" with jobId "%s"', 
                                       dataFilename, results.jobReference.jobId));
             }
           );
