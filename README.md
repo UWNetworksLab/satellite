@@ -12,6 +12,7 @@ zmap DNS automates collection of satellite monitoring for the DNS probe.
 
 * git clone
 * npm install
+* To upload to BigQuery, install the Google Cloud Platform SDK: https://developers.google.com/cloud/sdk/#Quick_Start
 
 ### Contribution guidelines ###
 
