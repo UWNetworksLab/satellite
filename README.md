@@ -40,12 +40,19 @@ Visit https://console.developers.google.com/, go to the project (e.g. censor-wat
 and click Credentials under API & Auth in the left hand sidebar.
 
 Click "Create New Client ID", select "Service Account", and download the private key.
+You'll need to convert it to a .pem with something like
+
+  openssl pkcs12 -in <downloadedPrivateKey>.p12 -nodes -nocerts > <downloadedPrivateKey>.pem
+
+And you probably also want to change its permissions to 600, since it's a private key:
+
+  chmod 600 <downloadedPrivateKey>.pem
 
 Now create authdata.json with the following contents:
 
   {
     "email": "<Client ID from Service Account>",
-    "keyFile": "<Filename of downloaded private key>",
+    "keyFile": "<Filename of PEM format private key>",
     "key": "<Key fingerprint>",
     "scopes": [
       "https://www.googleapis.com/auth/bigquery",

@@ -1,6 +1,8 @@
 node_modules
 *.pkt
 *.csv
+*.pem
+*.p12
 authfile
 blacklist.conf
 runs
