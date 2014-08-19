@@ -1,8 +1,9 @@
 // Input: toBigQuery.js <tablename> <data> 
-// Output - logging messages indicating success or failure.
-// If the table named doesn't exist it is created with the schema of the first
-// row of the data. Otherwise the data is inserted into the existing table of
-// that name.
+// Output - logging messages indicating success or failure. 
+// If the table named doesn't exist it is created. Otherwise the data is
+// inserted into the existing table of that name.
+//
+// Limitations: The amount of data that can be POSTed in this way is limited.
 
 // Dependencies
 var googleapis = require('googleapis');
