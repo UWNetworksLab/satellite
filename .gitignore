@@ -5,6 +5,7 @@ node_modules
 *.p12
 authfile
 blacklist.conf
+dns.study
 runs
 domains.txt
 hosts.txt
