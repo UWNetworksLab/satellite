@@ -1,0 +1,9 @@
+[
+  {"name":"server_ip", "type":"string"},
+  {"name":"timestamp", "type":"string"},
+  {"name":"answer", "type":"string"},
+  {"name":"domain", "type":"string"},
+  {"name":"ttl", "type":"integer"},
+  {"name":"type", "type":"integer"},
+  {"name":"class", "type":"integer"}
+]
