@@ -1,5 +1,8 @@
-// Input: zmap output file (.csv of servers and base64 packets).
-// Output: \n delimited .json, one line per received DNS packet.
+// Input: zmap output filename (.csv of servers and base64 packets).
+// Output: Writes \n delimited .json, one line per received DNS packet, to stdout
+//
+// Takes a file containing zmap output and transforms it into \n-delimited
+// JSON, writing that JSON out to stdout.
 var util = require('util');
 var fs = require('fs'),
     readline = require('readline'),
@@ -29,7 +32,8 @@ liner._flush = function (done) {
 /** end line chunker */
 
 var input = fs.createReadStream(process.argv[2]);
-var output = fs.createWriteStream(process.argv[3]);
+// var output = fs.createWriteStream(process.argv[2] + '.jsonList');
+var output = process.stdout;
 
 var resultsList = [];
 
