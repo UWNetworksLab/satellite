@@ -4,6 +4,7 @@ node_modules
 *.pem
 *.p12
 authfile
+originas*
 blacklist.conf
 dns.study
 runs

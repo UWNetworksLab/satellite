@@ -14,7 +14,11 @@
     "type": "git",
     "url": "git://bitbucket.org/ttocslliw/zmapdns.git"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "chalk": "^0.5.1",
+    "event-stream": "^3.1.7",
+    "q": "^1.0.1"
+  },
   "scripts": {
     "test": "bash trial.sh"
   },
