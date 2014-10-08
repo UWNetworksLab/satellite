@@ -46,11 +46,13 @@ var finishMetaData = function(files) {
       "description": "scan data from " + file.substr(0, file.indexOf('.')),
       "updated-at": file.substr(0, file.indexOf('.'))
     };
-    if (existing[data.name]) {
-      data.size = existing.size;
-      data.fingerprint = existing.fingerprint;
+    if (existing[data.name] && existing[data.name].size) {
+      data.size = existing[data.name].size;
     } else if (fs.existsSync(data.name)) {
       data.size = filesize(fs.statSync(data.name).size, {unix: true});
+    }
+    if (existing[data.name] && existing[data.name].fingerprint) {
+      data.fingerprint = existing[data.name].fingerprint;
     }
     if (fs.existsSync(data.name + '.sig')) {
       data.fingerprint = fs.readFileSync(data.name + '.sig',"utf-8").toString().trim();
