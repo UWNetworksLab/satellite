@@ -102,26 +102,26 @@ function parseDomainLine(map, into, domain, line) {
   var record;
   try {
     record = dns.parse(new Buffer(parts[2], 'hex'));
-    if (!map[asn]) {
-      map[asn] = {};
+    if (!into[asn]) {
+      into[asn] = {};
     }
     if (record.answer.length > 0) {
       record.answer.forEach(function(answer) {
         var ip = answer.address;
-        if (!map[asn][ip]) {
-          map[asn][ip] = 1;
+        if (!into[asn][ip]) {
+          into[asn][ip] = 1;
         } else {
-          map[asn][ip] += 1;
+          into[asn][ip] += 1;
         }
       });
     } else {
-      if (!map[asn].empty) {
-        map[asn].empty = 0;
+      if (!into[asn].empty) {
+        into[asn].empty = 0;
       }
-      map[asn].empty += 1;
+      into[asn].empty += 1;
     }
   } catch(e) {
-    map.failed += 1;
+    into.failed += 1;
     return;
   }
 }
