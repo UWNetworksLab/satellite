@@ -46,6 +46,9 @@ function parseASLine(map, line) {
 };
 
 function doASLookup(ip, off) {
+  if (!ip) {
+    return 'unknown';
+  }
   var bytes = ip.split('.');
   if (bytes.length < 4) {
     return 'unknown';
@@ -83,7 +86,10 @@ function makeASMap() {
 }
 
 function parseDomainLine(map, into, domain, line) {
-  var parts = line.split(',');
+  var parts = line.toString('ascii').split(',');
+  if (parts.length !== 3) {
+    return;
+  }
   var asn = map.lookup(parts[0]);
   var record;
   try {
