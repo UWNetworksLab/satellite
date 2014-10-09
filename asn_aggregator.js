@@ -49,12 +49,17 @@ function doASLookup(ip, off) {
   if (!ip) {
     return 'unknown';
   }
-  var bytes = ip.split('.');
-  if (bytes.length < 4) {
-    return 'unknown';
+  var classC;
+  if (typeof ip === 'string') {
+    var bytes = ip.split('.');
+    if (bytes.length < 4) {
+      return 'unknown';
+    }
+    classC = new Buffer(bytes).readInt32BE(0);
+    classC -= classC % 256;
+  } else {
+    classC = ip;
   }
-  var classC = new Buffer(bytes).readInt32BE(0);
-  classC -= classC % 256;
   if (off > 16) {
     return 'unknown';
   }
