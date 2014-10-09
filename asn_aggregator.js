@@ -49,6 +49,9 @@ function doASLookup(ip, off) {
   if (!ip) {
     return 'unknown';
   }
+  if (!off) {
+    off = 0;
+  }
   var classC;
   if (typeof ip === 'string') {
     var bytes = ip.split('.');
@@ -60,19 +63,19 @@ function doASLookup(ip, off) {
   } else {
     classC = ip;
   }
-  if (off > 16) {
-    return 'unknown';
-  }
-  if (this[classC]) {
-    var keys = Object.keys(this[classC]);
-    for (var i = 24 - off; i > 8; i--) {
-      if (keys.indexOf('' + i) >= 0) {
-        return this[classC]['' + i];
+  while (off < 16) {
+    if (this[classC]) {
+      var keys = Object.keys(this[classC]);
+      for (var i = 24 - off; i > 8; i--) {
+        if (keys.indexOf('' + i) >= 0) {
+          return this[classC]['' + i];
+        }
       }
     }
+    off += 1;
+    classC -= classC % (256 << (off)); 
   }
-  classC -= classC % (256 << (off + 1)); 
-  return doASLookup(classC, off + 1);
+  return 'unknown';
 };
 
 // Build the in memory representation of the origin ip->asn mapping.
