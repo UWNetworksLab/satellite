@@ -46,7 +46,11 @@ function parseASLine(map, line) {
 };
 
 function doASLookup(ip, off) {
-  var classC = new Buffer(ip.split('.')).readInt32BE(0);
+  var bytes = ip.split('.');
+  if (bytes.length < 4) {
+    return 'unknown';
+  }
+  var classC = new Buffer(bytes).readInt32BE(0);
   classC -= classC % 256;
   if (off > 16) {
     return 'unknown';
@@ -111,7 +115,7 @@ function parseDomainLine(map, into, domain, line) {
 // Read one csv file line by line.
 function collapseSingle(map, into, domain, file) {
   return Q.Promise(function(resolve, reject) {
-    fs.createReadStream(rundir + '/' + domain)
+    fs.createReadStream(rundir + '/' + file)
       .pipe(es.split())
       .pipe(es.mapSync(parseDomainLine.bind({}, map, into, domain)))
       .on('end', resolve)
