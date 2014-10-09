@@ -127,6 +127,9 @@ function collapseAll(asm) {
     var base = Q(0);
     var n = 0;
     files.forEach(function(domain) {
+      if (domain.indexOf('.csv') < 0) {
+        return;
+      }
       var dn = domain.split('.csv')[0];
       mapping[dn] = {
         failed: 0
