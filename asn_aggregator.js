@@ -166,8 +166,9 @@ function collapseAll(asm) {
       base = base.then(collapseSingle.bind({}, asm, mapping[dn], dn, domain));
     });
     return base.then(function() {
+      console.log(chalk.green('Done.'));
       return mapping;
-    });
+    }).then(resolve, reject);
   });
 }
 
