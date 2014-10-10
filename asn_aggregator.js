@@ -152,11 +152,11 @@ function parseDomainLine(map, into, domain, line) {
 }
 
 // Read one csv file line by line.
-function collapseSingle(into, domain, file) {
-  var map = {
+function collapseSingle(map, domain, file) {
+  var into = {
     failed: 0
   };
-  if (fs.fileExistsSync(rundir + '/' + file + '.asn.json')) {
+  if (fs.existsSync(rundir + '/' + file + '.asn.json')) {
     return Q(0);
   }
 
@@ -168,7 +168,7 @@ function collapseSingle(into, domain, file) {
       .on('error', reject);
   }).then(function(m) {
     fs.writeFileSync(rundir + '/' + file + '.asn.json', JSON.stringify(m));
-    delete map;
+    delete into;
     return true;
   });
 }
