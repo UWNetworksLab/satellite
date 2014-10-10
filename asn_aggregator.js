@@ -31,7 +31,7 @@ if (!fs.existsSync('originas.bz2') ||
 
 // Take a line of the origin AS file and load it into a hash map.
 // Map format is {start -> {cidr -> asn}}
-var parseASLineRegex = /IN TXT\s+"(\d+)" "(\d+\.\d+\.\d+\.\d+)" "\d+"/;
+var parseASLineRegex = /IN TXT\s+"(\d+)" "(\d+\.\d+\.\d+\.\d+)" "(\d+)"/;
 function parseASLine(map, line) {
   var result = parseASLineRegex.exec(line),
       start;
