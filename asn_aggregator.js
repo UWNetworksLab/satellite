@@ -102,12 +102,17 @@ function loadASMap() {
   if (!fs.existsSync('asmap.json') ||
       new Date() - fs.statSync('asmap.json').mtime > (1000 * 60 * 60 * 24 * 30)) {
         prom = prom.then(makeASMap).then(function(map) {
+          var lu = map.lookup;
+          delete map.lookup;
           fs.writeFileSync("asmap.json", JSON.stringify(map));
+          map.lookup = lu;
           return map;
         });
   } else {
     prom = prom.then(function() {
-      return JSON.parse(fs.readFileSync("asmap.json"));
+      var map = JSON.parse(fs.readFileSync("asmap.json"));
+      map.lookup = doASLookup;
+      return map;
     });
   }
   return prom;
