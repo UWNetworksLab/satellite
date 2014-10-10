@@ -21,6 +21,10 @@ if (!rundir) {
   console.error(chalk.red("Run to aggregate must be specified."));
   process.exit(1);
 }
+if (!process.argv[3]) {
+  console.error(chalk.red("Output file must be specified."));
+  process.exit(1);
+}
 
 if (!fs.existsSync('originas.bz2') ||
     new Date() - fs.statSync('originas.bz2').mtime > (1000 * 60 * 60 * 24 * 30)) {
@@ -93,6 +97,21 @@ function makeASMap() {
   });
 }
 
+function loadASMap() {
+  var prom = Q(0);
+  if (!fs.existsSync('asmap.json') ||
+      new Date() - fs.statSync('asmap.json').mtime > (1000 * 60 * 60 * 24 * 30)) {
+        prom = prom.then(makeASMap).then(function(map) {
+          fs.writeFileSync("asmap.json", JSON.stringify(map));
+          return map;
+        });
+  } else {
+    prom = prom.then(function() {
+      return JSON.parse(fs.readFileSync("asmap.json"));
+    });
+  }
+}
+
 function parseDomainLine(map, into, domain, line) {
   var parts = line.toString('ascii').split(',');
   if (parts.length !== 3) {
@@ -127,31 +146,37 @@ function parseDomainLine(map, into, domain, line) {
 }
 
 // Read one csv file line by line.
-function collapseSingle(map, into, domain, file) {
+function collapseSingle(into, domain, file) {
+  var map = {
+    failed: 0
+  };
+
   return Q.Promise(function(resolve, reject) {
     fs.createReadStream(rundir + '/' + file)
       .pipe(es.split())
       .pipe(es.mapSync(parseDomainLine.bind({}, map, into, domain)))
       .on('end', resolve)
       .on('error', reject);
+  }).then(function(m) {
+    fs.writeFileSync(rundir + '/' + file + '.asn.json', JSON.stringify(m));
+    delete map;
+    return true;
   });
 }
 
 function collapseAll(asm) {
   var files = fs.readdirSync(rundir);
-  var mapping = {};
   console.log(chalk.blue("Starting Aggregation of %d domains"), files.length);
   return Q.Promise(function(resolve, reject) {
     var base = Q(0);
     var n = 0;
+    var allFiles = [];
     files.forEach(function(domain) {
       if (domain.indexOf('.csv') < 0) {
         return;
       }
+      allFiles.push(domain);
       var dn = domain.split('.csv')[0];
-      mapping[dn] = {
-        failed: 0
-      };
       n += 1;
       if (n%100 === 0) {
         base.then(function() {
@@ -163,23 +188,53 @@ function collapseAll(asm) {
           console.log(chalk.green(n));
         })
       }
-      base = base.then(collapseSingle.bind({}, asm, mapping[dn], dn, domain));
+      base = base.then(collapseSingle.bind({}, asm, dn, domain));
     });
     return base.then(function() {
       console.log(chalk.green('Done.'));
-      return mapping;
+      return allFiles;
     }).then(resolve, reject);
   });
 }
 
-function writeMap(map) {
+var queue;
+function writeMap(files) {
   console.log(chalk.blue('Writing Compiled Map.'));
+  var stream = fs.createWriteStream(process.argv[3]);
   return Q.Promise(function(resolve, reject) {
-    fs.writeFile('output', JSON.stringify(map), resolve);
+    stream.on('finish', resolve);
+    stream.on('error', reject);
+
+    stream.write("{'length':" + files.length);
+
+    queue = files;
+    aggregateMap(stream);
+  }).then(function() {
+    console.log(chalk.green('Done.'));
+    console.log(chalk.blue('Cleaning Up.'));
+    files.forEach(function(file) {
+      fs.unlinkSync(rundir + '/' + file + '.asn.json');
+    });
   });
 }
 
-makeASMap()
+function aggregateMap(stream) {
+  if (queue.length) {
+    var next = queue.pop();
+    var domain = next.split('.csv')[0];
+    stream.write(",'" + domain + "':");
+    if(stream.write(fs.readFileSync(rundir + '/' + file + '.asn.json'))) {
+      process.nextTick(aggregateMap.bind({}, stream));
+    } else {
+      stream.once('drain', aggregateMap.bind({}, stream));
+    }
+  } else {
+    stream.write("}");
+    stream.end();
+  }
+}
+
+loadASMap()
 .then(collapseAll)
 .then(writeMap)
 .then(function() {
