@@ -110,6 +110,7 @@ function loadASMap() {
       return JSON.parse(fs.readFileSync("asmap.json"));
     });
   }
+  return prom;
 }
 
 function parseDomainLine(map, into, domain, line) {
@@ -150,6 +151,9 @@ function collapseSingle(into, domain, file) {
   var map = {
     failed: 0
   };
+  if (fs.fileExistsSync(rundir + '/' + file + '.asn.json')) {
+    return Q(0);
+  }
 
   return Q.Promise(function(resolve, reject) {
     fs.createReadStream(rundir + '/' + file)
@@ -172,7 +176,7 @@ function collapseAll(asm) {
     var n = 0;
     var allFiles = [];
     files.forEach(function(domain) {
-      if (domain.indexOf('.csv') < 0) {
+      if (domain.indexOf('.csv') < 0 || domain.indexOf('asn.json') > 0) {
         return;
       }
       allFiles.push(domain);
