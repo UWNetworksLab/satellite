@@ -5,10 +5,10 @@
   "main": "mkpkt.js",
   "dependencies": {
     "bloomfilter": "0.0.14",
+    "filesize": "~2.0.3",
     "googleapis": "^1.0.6",
-    "native-dns-packet": "git://github.com/scrivener/native-dns-packet.git",
-    "q": "^1.0.1",
-    "filesize": "~2.0.3"
+    "native-dns-packet": "git://github.com/willscott/native-dns-packet.git",
+    "q": "^1.0.1"
   },
   "repository": {
     "type": "git",

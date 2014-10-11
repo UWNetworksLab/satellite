@@ -193,9 +193,9 @@ function collapseAll(asm) {
         })
       }
       if (n%1000 === 0) {
-        base.then(function() {
-          console.log(chalk.green(n));
-        })
+        base.then(function(x) {
+          console.log(chalk.green(x));
+        }.bind({},n))
       }
       base = base.then(collapseSingle.bind({}, asm, dn, domain));
     });
