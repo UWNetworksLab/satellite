@@ -167,7 +167,7 @@ function collapseSingle(map, domain, file) {
       .on('end', resolve)
       .on('error', reject);
   }).then(function(m) {
-    fs.writeFileSync(rundir + '/' + file + '.asn.json', JSON.stringify(m));
+    fs.writeFileSync(rundir + '/' + file + '.asn.json', JSON.stringify(into));
     delete into;
     return true;
   });
