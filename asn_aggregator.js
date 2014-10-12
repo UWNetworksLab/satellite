@@ -232,7 +232,7 @@ function aggregateMap(stream) {
     var next = queue.pop();
     var domain = next.split('.csv')[0];
     stream.write(",'" + domain + "':");
-    if(stream.write(fs.readFileSync(rundir + '/' + file + '.asn.json'))) {
+    if(stream.write(fs.readFileSync(rundir + '/' + next + '.asn.json'))) {
       process.nextTick(aggregateMap.bind({}, stream));
     } else {
       stream.once('drain', aggregateMap.bind({}, stream));
