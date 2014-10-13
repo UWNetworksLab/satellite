@@ -221,8 +221,11 @@ function writeMap(files) {
   }).then(function() {
     console.log(chalk.green('Done.'));
     console.log(chalk.blue('Cleaning Up.'));
-    files.forEach(function(file) {
-      fs.unlinkSync(rundir + '/' + file + '.asn.json');
+    var all = fs.readdirSync(rundir);
+    all.forEach(function(file) {
+      if (file.indexOf('.asn.json') > 0) {
+        fs.unlinkSync(rundir + '/' + file);
+      }
     });
   });
 }
