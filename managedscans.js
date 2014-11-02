@@ -17,6 +17,7 @@ var run = function(run, host, domain) {
   pkt.make(domain, probe);
   var zmap = spawn('zmap', [
       '-p', '53',
+      '-i', 'eth0',
       '-o', 'runs/' + run + '/' + domain + '.csv',
       '-b', 'blacklist.conf',
       '-w', host,

@@ -32,7 +32,7 @@ getActiveResolvers()
 {
 	node mkpkt.js query.pkt cs.washington.edu
 	echo "Running initial scan..."
-	zmap -p 53 -o runs/$thisRun/cs.washington.edu.csv \
+	zmap -p 53 -i eth0 -o runs/$thisRun/cs.washington.edu.csv \
 		-b blacklist.conf -c 300 -r 50000 \
 		--output-module=csv -f saddr,timestamp-str,data \
 		--output-filter="success = 1 && repeat = 0" -M udp \
@@ -68,7 +68,7 @@ makeArchive()
 cleanup()
 {
 	echo "Cleaning up..."
-	rm hosts.txt
+	#rm hosts.txt
 	rm -r hosts
 	#TODO: upload.
 }
@@ -76,8 +76,8 @@ cleanup()
 getTopSites
 getBlacklist
 generateRun
-getActiveResolvers
-getGoodHosts
+#getActiveResolvers
+#getGoodHosts
 runTopSites
 makeArchive
 cleanup
