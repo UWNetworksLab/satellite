@@ -73,11 +73,11 @@ cleanup()
 	#TODO: upload.
 }
 
-getTopSites
-getBlacklist
-generateRun
-#getActiveResolvers
-#getGoodHosts
-runTopSites
-makeArchive
-cleanup
+getTopSites          # downloads alexa.
+getBlacklist         # downloads blacklist.
+generateRun          # creates date-based folder
+#getActiveResolvers  # does cs.washington.edu run
+#getGoodHosts        # recreates hosts.txt from the cs.washington.edu run
+runTopSites          # runs all top domains against hosts
+makeArchive          # creates archive.
+#cleanup
