@@ -67,6 +67,9 @@ var doNext = function() {
   if (!host || !host.length) {
     return doNext();
   }
+  if (host.indexOf('/') > -1) {
+    host = host.substr(0, host.indexOf('/'));
+  }
   // 45 second delay between starting.
   run(process.argv[2], 'hosts/' + threads[thread], host).then(setTimeout(doNext, 20000));
   thread = thread++;
