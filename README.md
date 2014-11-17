@@ -62,3 +62,7 @@ Now create `authdata.json` with the following contents:
     }
 
 And you should be ready to roll with uploading to BigQuery.
+
+#### Files ####
+* asn_aggreagator.js  - is used to take a run and generate a .asn.json file with ip counts for each asn for each domain. Size reduction from 20gigs compressed to 3gigs uncompressed.
+* asn_zmap.js - is used to take a zmap output csv and get ip count per asn. [for protocol scans.]
