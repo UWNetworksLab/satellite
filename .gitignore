@@ -5,6 +5,7 @@ node_modules
 *.p12
 authfile
 originas*
+asmap.json
 blacklist.conf
 dns.study
 runs
