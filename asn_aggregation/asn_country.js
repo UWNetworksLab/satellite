@@ -27,3 +27,27 @@ var load = function() {
 }
 
 load();
+
+exports.asnmap2country = function(inmap) {
+  var out = {};
+  Object.keys(inmap).forEach(function(key) {
+    var c = exports.db[key];
+    if (c) {
+      if(!out[c]){
+        out[c]=0;
+      }
+      out[c] += inmap[key];
+    }
+  });
+  return out;
+}
+
+exports.listWeirdCases = function(base, test) {
+  Object.keys(base).forEach(function(coun) {
+    if (!test[coun]) {
+      console.warn(base[coun] + ':0 ' + coun);
+    } else if(2*test[coun] < base[coun]) {
+      console.warn(base[coun] +': ' + test[coun] + ' ' +coun);
+    }
+  });
+};
