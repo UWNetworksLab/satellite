@@ -117,7 +117,7 @@ function writeMap(files) {
     stream.on('finish', resolve);
     stream.on('error', reject);
 
-    stream.write("{'length':" + files.length);
+    stream.write("{\"length\":" + files.length);
 
     queue = files;
     aggregateMap(stream);
@@ -137,7 +137,7 @@ function aggregateMap(stream) {
   if (queue.length) {
     var next = queue.pop();
     var domain = next.split('.csv')[0];
-    stream.write(",'" + domain + "':");
+    stream.write(",\"" + domain + "\":");
     if(stream.write(fs.readFileSync(rundir + '/' + next + '.asn.json'))) {
       process.nextTick(aggregateMap.bind({}, stream));
     } else {
