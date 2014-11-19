@@ -2,7 +2,7 @@
  * Collapse. From:
  * domain -> {asn -> {ip -> %}}
  * to:
- * domain -> {asn -> % chance bad}
+ * domain -> {asn -> [#good,#bad]}
  */
 
 var lastMap;
@@ -68,7 +68,25 @@ var collapseDomain = function(asnmap) {
   return out;
 }
 
-var streamJSON = function(file) {
+var streamToDC = function(file, outfile) {
+  var outHandle = fs.createWriteStream(outfile);
+
+  var countryMap = require('./asn_country');
+  countryMap.onReady.then(function() {
+    var collapseDomainCountry = function (domain, map) {
+      // Collapse to good-bad counts per asn
+      var gb = collapseDomain(map);
+      // Collapse that to good-bad counts per country
+      var country = countryMap.goodbad2country(gb);
+      // Save the result.
+      fs.write(JSON.stringify({domain: domain, counts: country}));
+      fs.write('\n');
+    };
+    streamJSON(file, collapseDomainCountry);
+  })
+};
+
+var streamJSON = function(file, mapper) {
   var fs = require('fs');
 
   var depth = 0;
@@ -77,12 +95,10 @@ var streamJSON = function(file) {
   var parseOutput = function() {
     //TODO: should be quotes not single quotes.
     var domain = /\'([^\']*)\'\:$/.exec(currentDomain)[1];
-//    var collapsed = collapseDomain(JSON.parse(currentMap));
-    console.error('domain:', domain);
-//    console.error(collapsed);
     lastMap = JSON.parse(currentMap);
-    //currentDomain = '';
-    //currentMap = '';
+    mapper(domain, lastMap);
+    currentDomain = '';
+    currentMap = '';
   };
 
   var inputstream = fs.createReadStream(file, {encoding:'utf8'});
@@ -115,3 +131,4 @@ var streamJSON = function(file) {
 
 exports.collapseDomain = collapseDomain;
 exports.streamJSON = streamJSON;
+exports.streamToDC = streamToDC;
