@@ -79,8 +79,8 @@ var streamToDC = function(file, outfile) {
       // Collapse that to good-bad counts per country
       var country = countryMap.goodbad2country(gb);
       // Save the result.
-      fs.write(JSON.stringify({domain: domain, counts: country}));
-      fs.write('\n');
+      outHandle.write(JSON.stringify({domain: domain, counts: country}));
+      outHandle.write('\n');
     };
     streamJSON(file, collapseDomainCountry);
   })
@@ -128,6 +128,8 @@ var streamJSON = function(file, mapper) {
 };
 
 //streamJSON('runs/11-13-2014.asn.json')
+//var ac = require('./asn_aggregation/asn_collapse')
+//ac.streamToDC('runs/11-13-2014.asn.json','runs/11-13-2014.country.json')
 
 exports.collapseDomain = collapseDomain;
 exports.streamJSON = streamJSON;
