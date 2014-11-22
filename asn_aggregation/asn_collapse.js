@@ -81,6 +81,7 @@ var streamToDC = function(file, outfile) {
       // Save the result.
       outHandle.write(JSON.stringify({domain: domain, counts: country}));
       outHandle.write('\n');
+      console.warn('Done.')
     };
     streamJSON(file, collapseDomainCountry);
   })
