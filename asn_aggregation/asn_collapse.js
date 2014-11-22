@@ -60,7 +60,7 @@ var collapseDomain = function(asnmap) {
         }
       });
       if (good + bad > 0) {
-        out[asn] = [good, bad];
+        out[asn] = [good, bad, majority];
       }
     }
   });
@@ -118,7 +118,6 @@ var streamJSON = function(file, mapper) {
           }
           if (depth === 1) {
             parseOutput();
-            inputstream.close();
           }
         } else if (depth === 1) currentDomain += chunk[i];
         else if (depth > 1) currentMap += chunk[i];
