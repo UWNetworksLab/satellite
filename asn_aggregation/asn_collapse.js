@@ -98,8 +98,10 @@ var streamJSON = function(file, mapper) {
   var parseOutput = function() {
     //TODO: should be quotes not single quotes.
     var dr = domainRegex.exec(currentDomain);
-    if (!dr) {
+    if (!dr[1]) {
+      var cur = domainRegex;
       domainRegex = fallbackRegex;
+      fallbackRegex = cur;
       dr = domainRegex.exec(currentDomain);
     }
     var domain = dr[1];
