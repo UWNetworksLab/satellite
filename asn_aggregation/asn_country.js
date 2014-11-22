@@ -54,7 +54,7 @@ exports.asnmap2country = function(inmap) {
 }
 
 exports.goodbad2country = function(inmap) {
-  return exports.general2country(inmap, [0,0], function(a,b) {return [a[0]+b[0],a[1]+b[1]];});
+  return exports.general2country(inmap, [0,0,0], function(a,b) {return [a[0]+b[0],a[1]+b[1],b[2]];});
 }
 
 
