@@ -38,14 +38,14 @@ var collapseDomain = function(asnmap) {
     }
   }
 
-  console.log('majority of ' + threshold + ' held by ' + (majority + 1) + '/' + ips + ' IPs.');
-  if (sortedIPs.indexOf('empty') < majority) {
-    console.log('Empty IPs outweigh expected.');
-  }
-  if (majority === 0) {
-    // Single Homed. Common Case.
-    console.log('e.g. Single Homed.');
-  }
+  //console.log('majority of ' + threshold + ' held by ' + (majority + 1) + '/' + ips + ' IPs.');
+  //if (sortedIPs.indexOf('empty') < majority) {
+  //  console.log('Empty IPs outweigh expected.');
+  //}
+  //if (majority === 0) {
+  //  // Single Homed. Common Case.
+  //  console.log('e.g. Single Homed.');
+  //}
 
   //Each ASN gets graded by how much of it is in the majority.
   var out = {};
