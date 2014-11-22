@@ -81,7 +81,6 @@ var streamToDC = function(file, outfile) {
       // Save the result.
       outHandle.write(JSON.stringify({domain: domain, counts: country}));
       outHandle.write('\n');
-      console.warn('Done.')
     };
     streamJSON(file, collapseDomainCountry);
   })
@@ -135,6 +134,9 @@ var streamJSON = function(file, mapper) {
       }
     }
   });
+  inputstream.on('end', function() {
+    console.warn('Done.');
+  })
 };
 
 //streamJSON('runs/11-13-2014.asn.json')
