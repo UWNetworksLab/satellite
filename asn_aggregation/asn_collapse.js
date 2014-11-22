@@ -86,6 +86,9 @@ var streamToDC = function(file, outfile) {
   })
 };
 
+var domainRegex = /\'([^\']*)\'\:$/;
+var fallbackRegex = /\"([^\"]*)\"\:$/;
+
 var streamJSON = function(file, mapper) {
   var fs = require('fs');
 
@@ -94,7 +97,12 @@ var streamJSON = function(file, mapper) {
   
   var parseOutput = function() {
     //TODO: should be quotes not single quotes.
-    var domain = /\'([^\']*)\'\:$/.exec(currentDomain)[1];
+    var dr = domainRegex.exec(currentDomain);
+    if (!dr) {
+      domainRegex = fallbackRegex;
+      dr = domainRegex.exec(currentDomain);
+    }
+    var domain = dr[1];
     lastMap = JSON.parse(currentMap);
     mapper(domain, lastMap);
     currentDomain = '';
