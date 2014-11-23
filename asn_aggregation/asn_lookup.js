@@ -34,6 +34,21 @@ function parseASLine(map, line) {
   }
 };
 
+function getClassC(ip) {
+  var classC;
+  if (typeof ip === 'string') {
+    var bytes = ip.split('.');
+    if (bytes.length < 4) {
+      return 'unknown';
+    }
+    classC = new Buffer(bytes).readInt32BE(0);
+    classC -= classC % 256;
+  } else {
+    classC = ip;
+  }
+  return classC;
+}
+
 function doASLookup(ip, off) {
   if (!ip) {
     return 'unknown';
@@ -91,12 +106,14 @@ function loadASMap() {
           delete map.lookup;
           fs.writeFileSync("asmap.json", JSON.stringify(map));
           map.lookup = lu;
+          map.classC = getClassC;
           return map;
         });
   } else {
     prom = prom.then(function() {
       var map = JSON.parse(fs.readFileSync("asmap.json"));
       map.lookup = doASLookup;
+      map.classC = getClassC;
       return map;
     });
   }
