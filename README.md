@@ -1,10 +1,11 @@
 # README #
 
-zmap DNS automates collection of satellite monitoring for the DNS probe.
+This repository automates collection of satellite monitoring probes.
+Currently working on generalizing from DNS to handle more probe types.
 
 ### What is this repository for? ###
 
-* Generating zmap dns probe packets
+* Generating zmap-compatible probe packets
 * filtering response to determine functioning hosts
 * Creating reports & uploading / archiving them.
 
@@ -12,7 +13,6 @@ zmap DNS automates collection of satellite monitoring for the DNS probe.
 
 * git clone
 * npm install
-* To upload to BigQuery, install the Google Cloud Platform SDK: https://developers.google.com/cloud/sdk/#Quick_Start
 
 ### Contribution guidelines ###
 
@@ -26,43 +26,29 @@ zmap DNS automates collection of satellite monitoring for the DNS probe.
 
 #### Notes ####
 
-The zmap command line should look something like:
+A sample zmap invocation should look similar to this:
 
 ```
-    zmap -p 53 -o zmaptrial.csv --output-module=csv -f saddr,timestamp-str,data --output-filter="success = 1 && repeat = 0" -M udp --probe-args=file:query.pkt 8.8.8.8
+    zmap -p 53 -b blacklist.conf -o zmaptrial.csv --output-module=csv -f saddr,timestamp-str,data --output-filter="success = 1 && repeat = 0" -M udp --probe-args=file:query.pkt 8.8.8.8
 ```
 
-#### Setting up your authdata for Google Cloud ####
+Upon updating the zmap binary, you will likely want to be able to run as not root.
+This is done through:
 
-You'll need to create an appropriate authdata.json file to enable the scripts
-to talk to Google Cloud Services (for uploading data to BigQuery) on your behalf.
-
-Visit https://console.developers.google.com/, go to the project (e.g. censor-watch),
-and click Credentials under API & Auth in the left hand sidebar.
-
-Click "Create New Client ID", select "Service Account", and download the private key.
-You'll need to convert it to a .pem with something like
-
-    openssl pkcs12 -in <downloadedPrivateKey>.p12 -nodes -nocerts > <downloadedPrivateKey>.pem
-
-And you probably also want to change its permissions to 600, since it's a private key:
-
-    chmod 600 <downloadedPrivateKey>.pem
-
-Now create `authdata.json` with the following contents:
-
-    {
-        "email": "<Client ID from Service Account>",
-        "keyFile": "<Filename of PEM format private key>",
-        "key": "<Key fingerprint>",
-        "scopes": [
-          "https://www.googleapis.com/auth/bigquery",
-        ],
-        "subject":  ""
-    }
-
-And you should be ready to roll with uploading to BigQuery.
+```
+sudo setcap cap_net_raw,cap_net_admin=eip /usr/local/sbin/zmap
+````
 
 #### Files ####
-* asn_aggreagator.js  - is used to take a run and generate a .asn.json file with ip counts for each asn for each domain. Size reduction from 20gigs compressed to 3gigs uncompressed.
-* asn_zmap.js - is used to take a zmap output csv and get ip count per asn. [for protocol scans.]
+
+* asn_aggregation Contains scripts for compressing raw runs to ASN or Country level aggregates.
+* asn_aggreagator.js - is used to take a folder of zmap scans and generate a .asn.json file with ip counts for each asn for each file. Order of 100 size reduction
+* asn_zmap.js - is used to take a single zmap output csv and learn how many IPs responded in each ASN.
+* filter.js - Takes a zmap DNS output and returns the IPs that appear to be valid DNS servers.
+* fullrun.sh - Does a full satellite run!
+* generateStudyMetadata.js - Creates the dns.study file needed by scans.io, and uploads files
+* liner.js - A utility function to chunk a node.js stream into lines
+* managedscans.js - Manages concurrent zmap scans. currently hardcoded for DNS
+* mkpkt.js - Create a DNS query for a given domain.
+* splithosts.js - Splits and filters hosts so that multiple scans can be done on different subsets.
+

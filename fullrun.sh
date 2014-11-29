@@ -70,7 +70,6 @@ cleanup()
 	echo "Cleaning up..."
 	#rm hosts.txt
 	rm -r hosts
-	#TODO: upload.
 }
 
 getTopSites          # downloads alexa.
