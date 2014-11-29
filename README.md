@@ -41,14 +41,13 @@ This is done through:
 
 #### Files ####
 
-* *asn_aggregation* Contains scripts for compressing raw runs to ASN or Country level aggregates.
-* *asn_aggreagator.js* is used to take a folder of zmap scans and generate a .asn.json file with ip counts for each asn for each file. Order of 100 size reduction
-* *asn_zmap.js* is used to take a single zmap output csv and learn how many IPs responded in each ASN.
-* *filter.js* Takes a zmap DNS output and returns the IPs that appear to be valid DNS servers.
+* *asn_aggregation* Contains scripts for compressing raw scans to ASN or Country level aggregates.
+* *dns* Contains scripts around dns specific packet generation & processing
+* *util* Contains general-purpose utility scripts for working with zmap.
+* *runs* Contains raw data
+* *temp* Contains downloaded files used during scanning.
+
 * *fullrun.sh* Does a full satellite run!
-* *generateStudyMetadata.js* Creates the dns.study file needed by scans.io, and uploads files
-* *liner.js* A utility function to chunk a node.js stream into lines
-* *managedscans.js* Manages concurrent zmap scans. currently hardcoded for DNS
-* *mkpkt.js* Create a DNS query for a given domain.
-* *splithosts.js* Splits and filters hosts so that multiple scans can be done on different subsets.
+* *generateStudyMetadata.js* Creates the .study file needed by scans.io, and uploads files
+* *package.json* Lists node dependencies needed by the code.
 
