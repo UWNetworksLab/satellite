@@ -6,12 +6,9 @@ node_modules
 authfile
 originas*
 asmap.json
-blacklist.conf
 dns.study
 temp
 runs
-hosts.txt
-hosts
 authdata.json
 *.swp
 *.gz

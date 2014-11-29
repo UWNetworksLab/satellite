@@ -1,17 +1,19 @@
-// Usage: node splitHosts.js <n>
-// Splits hosts.txt into n parts. In the process, filter down to a single server
+// Usage: node splitHosts.js <file> <directory> <n>
+// Splits file, a list of ips, into n parts. In the process, filter down to a single server
 // in each /24 (e.g. if multiple servers in a single /24 exist, we'll only take
 // one of them.
 
 var fs = require('fs');
-var partitions = process.argv[2];
+var source_file = process.argv[2];
+var dest_dir = process.argv[3];
+var partitions = process.argv[4];
 console.log("Splitting/Filtering Hosts into " , partitions, " parts");
 if (!partitions) {
   process.exit(1);
 }
 
 // Read in.
-var hosts = fs.readFileSync("hosts.txt").toString().split("\n");
+var hosts = fs.readFileSync(source_file).toString().split("\n");
 
 // Allocate n buckets.
 var buckets = [];
@@ -35,14 +37,14 @@ for (var i = 0; i < hosts.length; i++) {
 }
 
 // Mkdir if not there
-if (!fs.existsSync("hosts")) {
-  fs.mkdirSync("hosts");
+if (!fs.existsSync(dest_dir)) {
+  fs.mkdirSync(dest_dir);
 }
 
 // Write out.
 for (var i = 0; i < partitions; i++) {
   var data = buckets[i].join('\n');
-  fs.writeFileSync('hosts/hosts-' + i + '.txt', data);
+  fs.writeFileSync(dest_dir + '/hosts-' + i + '.txt', data);
 }
 
 console.log("Done. Filtered to ", adds, " of ", hosts.length);

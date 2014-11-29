@@ -17,8 +17,15 @@ getTopSites()
 getBlacklist()
 {
 	echo "Getting Blacklist..."
+  if [ ! -f "authfile" ];
+  then
+    echo "No authentication file exists for using the UW satellite blacklist"
+    echo "You'll need to set up your own blacklist or get in touch with us"
+    echo "in order to use ours."
+    exit 1
+  fi
 	local auth=$(cat authfile)
-	curl -s -u $auth http://seahawk.cs.washington.edu:8080/blacklist.conf > blacklist.conf
+	curl -s -u $auth http://seahawk.cs.washington.edu:8080/blacklist.conf > temp/blacklist.conf
 }
 
 ##3. Create output for run.
@@ -32,29 +39,30 @@ generateRun()
 ##5. Find active servers
 getActiveResolvers()
 {
-	node mkpkt.js query.pkt cs.washington.edu
+	node dns/mkpkt.js temp/query.pkt cs.washington.edu
 	echo "Running initial scan..."
 	zmap -p 53 -i eth0 -o runs/$thisRun/cs.washington.edu.csv \
-		-b blacklist.conf -c 300 -r 50000 \
+		-b temp/blacklist.conf -c 300 -r 100000 \
 		--output-module=csv -f saddr,timestamp-str,data \
 		--output-filter="success = 1 && repeat = 0" -M udp \
-		--probe-args=file:query.pkt 
+		--probe-args=file:temp/query.pkt 
 }
 
 ##6. extract good hosts
 getGoodHosts()
 {
 	echo "Generating IP list..."
-	node filter.js runs/$thisRun/cs.washington.edu.csv hosts.txt
+	node dns/filter.js runs/$thisRun/cs.washington.edu.csv temp/dns_servers.txt
 }
 
 ##7. Do it!
 runTopSites()
 {
 	echo "Splitting..."
-	node splithosts.js 10 #splits into 10 partitions of roughly 200k hosts each.
+  #splits into 10 partitions of roughly 200k hosts each.
+	node util/splithosts.js temp/dns_servers.txt temp/hosts 10 
 	echo "Scanning x10000..."
-	node managedscans.js $thisRun
+	node dns/managedscans.js temp/domains.txt temp/hosts runs/$thisRun
 }
 
 ##8. Archive
@@ -70,8 +78,8 @@ makeArchive()
 cleanup()
 {
 	echo "Cleaning up..."
-	#rm hosts.txt
-	rm -r hosts
+	#rm temp/dns_servers.txt
+	rm -r temp/hosts
 }
 
 getTopSites          # downloads alexa.
