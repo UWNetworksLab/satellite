@@ -4,11 +4,13 @@
 getTopSites()
 {
 	echo "Getting top Sites..."
+  cd temp
 	curl -O http://s3.amazonaws.com/alexa-static/top-1m.csv.zip
 	unzip top-1m.csv.zip
 	rm top-1m.csv.zip
 	cut -d "," -f 2 top-1m.csv | head -10000 > domains.txt
 	rm top-1m.csv
+  cd ..
 }
 
 ##2. Get the blacklist.

@@ -1,0 +1,1 @@
+This folder contains temporary products from satellite, like blacklists, domainlists, and routing tables.
