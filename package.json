@@ -5,8 +5,12 @@
   "main": "mkpkt.js",
   "dependencies": {
     "bloomfilter": "0.0.14",
+    "browserify": "^9.0.3",
+    "browserify-shim": "^3.8.3",
     "filesize": "~2.0.3",
     "googleapis": "^1.0.6",
+    "http-server": "^0.7.5",
+    "jquery": "^2.1.3",
     "native-dns-packet": "git://github.com/willscott/native-dns-packet.git",
     "q": "^1.0.1"
   },
@@ -21,7 +25,23 @@
     "q": "^1.0.1"
   },
   "scripts": {
-    "test": "bash trial.sh"
+    "test": "bash trial.sh",
+    "charts": "browserify charts/index.js -o charts/bundle.js; ./node_modules/http-server/bin/http-server charts"
+  },
+  "browser": {
+    "Highcharts": "./bower_components/highcharts-release/highcharts.src.js"
+  },
+  "browserify": {
+    "transform": [
+      "browserify-shim"
+    ]
+  },
+  "browserify-shim": {
+    "Highcharts": {
+      "depends": [
+        "jquery:jQuery"
+      ]
+    }
   },
   "author": "Will Scott"
 }

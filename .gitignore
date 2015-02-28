@@ -13,4 +13,8 @@ authdata.json
 *.swp
 *.gz
 *.jsonList
-
+.idea
+*.iml
+bundle.js
+bower_components
+charts/*.json

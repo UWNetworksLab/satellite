@@ -1,0 +1,8 @@
+{
+  "name": "satellite",
+  "version": "0.0.0",
+  "homepage": "https://github.com/UWNetworksLab/satellite",
+  "dependencies": {
+    "highcharts-release": "~4.1.1"
+  }
+}
