@@ -17,7 +17,7 @@
   "devDependencies": {
     "chalk": "^0.5.1",
     "event-stream": "^3.1.7",
-    "ip2country": "^0.2.0",
+    "ip2country": "^0.2.2",
     "q": "^1.0.1"
   },
   "scripts": {
