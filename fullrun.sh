@@ -41,12 +41,12 @@ getActiveResolvers()
 {
 	node dns/mkpkt.js temp/query.pkt cs.washington.edu
 	echo "Running initial scan..."
-	zmap -p 53 -i eth0 -o runs/$thisRun/cs.washington.edu.csv \
+	zmap -p 53 -o runs/$thisRun/cs.washington.edu.csv \
 		-b temp/blacklist.conf -c 300 -r 100000 \
-        `cat zmap.conf` \
+		`cat zmap.conf` \
 		--output-module=csv -f saddr,timestamp-str,data \
 		--output-filter="success = 1 && repeat = 0" -M udp \
-		--probe-args=file:temp/query.pkt 
+		--probe-args=file:temp/query.pkt
 }
 
 ##6. extract good hosts
@@ -60,7 +60,7 @@ getGoodHosts()
 runTopSites()
 {
 	echo "Splitting..."
-  #splits into 10 partitions of roughly 200k hosts each.
+	#splits into 10 partitions of roughly 200k hosts each.
 	node util/splithosts.js temp/dns_servers.txt temp/hosts 10 
 	echo "Scanning x10000..."
 	node dns/managedscans.js temp/domains.txt temp/hosts runs/$thisRun
@@ -86,8 +86,8 @@ cleanup()
 getTopSites          # downloads alexa.
 getBlacklist         # downloads blacklist.
 generateRun          # creates date-based folder
-#getActiveResolvers  # does cs.washington.edu run
-#getGoodHosts        # recreates hosts.txt from the cs.washington.edu run
+getActiveResolvers  # does cs.washington.edu run
+getGoodHosts        # recreates hosts.txt from the cs.washington.edu run
 runTopSites          # runs all top domains against hosts
 makeArchive          # creates archive.
 #cleanup
