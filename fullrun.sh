@@ -43,6 +43,7 @@ getActiveResolvers()
 	echo "Running initial scan..."
 	zmap -p 53 -i eth0 -o runs/$thisRun/cs.washington.edu.csv \
 		-b temp/blacklist.conf -c 300 -r 100000 \
+        `cat zmap.conf` \
 		--output-module=csv -f saddr,timestamp-str,data \
 		--output-filter="success = 1 && repeat = 0" -M udp \
 		--probe-args=file:temp/query.pkt 

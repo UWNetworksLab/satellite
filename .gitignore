@@ -13,4 +13,5 @@ authdata.json
 *.swp
 *.gz
 *.jsonList
+zmap.conf
 

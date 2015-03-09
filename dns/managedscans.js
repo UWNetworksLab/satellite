@@ -1,10 +1,11 @@
 // Runs a bunch of overlapping zmap scans.
-// args: <domain file> <folder of ips> <where to put output>
+// args: <domain file> <folder of ips> <where to put output> <zmapargs>
 var fs = require('fs');
 var Q = require('q');
 var spawn = require('child_process').spawn;
 var pkt = require('./mkpkt');
 
+var zmapconf = fs.readFileSync(process.argv[5]).toString().split(' ');
 var threads = fs.readdirSync(process.argv[3]);
 var re = /send: \d+ done/;
 
@@ -18,7 +19,6 @@ var run = function(run, host, domain) {
   pkt.make(domain, probe);
   var zmap = spawn('zmap', [
       '-p', '53',
-      '-i', 'eth0',
       '-o',  run + '/' + domain + '.csv',
       '-b', 'temp/blacklist.conf',
       '-w', host,
@@ -29,7 +29,7 @@ var run = function(run, host, domain) {
       '--output-filter="success = 1 && repeat = 0"',
       '-M', 'udp',
       '--probe-args=file:' + probe
-    ], {
+    ].concat(zmapconf), {
       stdio: ['ignore', 'pipe', process.stderr]
     });
 
