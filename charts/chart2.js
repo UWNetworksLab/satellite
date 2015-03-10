@@ -26,21 +26,12 @@ var options = {
     }
   },
   legend: {
-    align: 'right',
-    x: -30,
-    verticalAlign: 'top',
-    y: 25,
-    floating: true,
-    backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || 'white',
-    borderColor: '#CCC',
-    borderWidth: 1,
-    shadow: false
+    enabled: false
   },
   tooltip: {
     formatter: function () {
-      return '<b>' + this.x + '</b><br/>' +
-        this.series.name + ': ' + this.y + '<br/>' +
-        'Total: ' + this.point.stackTotal;
+      return 'Resolver: ' + this.x + '  ' + asn_name[this.x] + '<br/>' +
+        'Answer: ' + this.series.name + '  ' + asn_name[this.series.name] + ': ' + this.y + '<br/>';
     }
   },
   plotOptions: {
