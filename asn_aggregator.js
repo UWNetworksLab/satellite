@@ -1,14 +1,14 @@
 /*
  * Aggregate a study by ASN#
  * Given an uncompressed study directory, the data is compressed to a denser mapping of
- * domain -> {asn -> {ip -> %}}
+   * domain -> {asn -> {ip -> %}}
  */
 
 var Q = require('q');
 var fs = require('fs');
-var es = require('event-stream')
-var chalk = require('chalk')
-var asn = require('./asn_aggregation/asn_lookup')
+var es = require('event-stream');
+var chalk = require('chalk');
+var asn = require('./asn_aggregation/asn_lookup');
 var dns = require('native-dns-packet');
 
 var rundir = process.argv[2];

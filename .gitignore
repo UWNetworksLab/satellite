@@ -19,3 +19,4 @@ bundle.js
 bower_components
 charts/*.json
 zmap.conf
+htpasswd
