@@ -50,7 +50,7 @@ var options = {
   }
 };
 
-function makeChart(domains, country) {
+function makeChart(domains, countries) {
   Q.all(domains.map(function (domainName) {
     return Q(jQuery.ajax({
       url: 'runs/02-16-2015/' + domainName + '.csv.asn.json',
@@ -71,7 +71,7 @@ function makeChart(domains, country) {
       domainData = domainData.data;
 
       Object.keys(domainData).filter(function (resolverKey) {
-        return country !== 'Global' ? asn_country[resolverKey] === country : true
+        return countries[asn_country[resolverKey]];
       }).forEach(function (resolverKey) {
         resolverASNs[resolverKey] = true;
 

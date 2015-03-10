@@ -70,24 +70,19 @@ var options = {
   }
 };
 
-function makeChart(domains, country) {
+function makeChart(domains, countries) {
+  var result = [];
+
   return Q.all(domains.map(function (domainName) {
     return Q(jQuery.ajax({
       url: 'runs/02-16-2015/' + domainName + '.csv.asn.json',
       type: 'GET'
     })).then(function (domainData) {
-      var totals = {},
-        resolverASNs;
+      var totals = {};
 
-      if (country !== 'Global') {
-        resolverASNs = Object.keys(domainData).filter(function (key) {
-          return key !== 'length' && asn_country[key] === country;
-        });
-      } else {
-        resolverASNs = Object.keys(domainData).filter(function (key) {
-          return key !== 'length';
-        });
-      }
+      var resolverASNs = Object.keys(domainData).filter(function (key) {
+        return countries[asn_country[key]];
+      });
 
       resolverASNs.forEach(function (resolverASN) {
         var resolverData = domainData[resolverASN],
