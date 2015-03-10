@@ -1,8 +1,8 @@
 require('Highcharts');
 var $ = require('jquery');
-var asn_asn = require('./asn_asn.json');
-var asn_country = require('./asn_country.json');
 var asn_name = require('./asn_name.json');
+var asn_country = require('./asn_country.json');
+var Q = require('q');
 
 var chart,
   options = {
@@ -71,58 +71,63 @@ var chart,
     }
   },
 
-  makeSeries = function (domains, country) {
-    var result = [];
+  makeChart = function (domains, country) {
+    return Q.all(domains.map(function (domainName) {
+      return Q(jQuery.ajax({
+        url: 'runs/02-16-2015/' + domainName + '.csv.asn.json',
+        type: 'GET'
+      })).then(function (domainData) {
+        var totals = {},
+          resolverASNs;
 
-    domains.forEach(function (domainName) {
-      var totals = {},
-        resolverASNs,
-        domainData = asn_asn[domainName];
-
-      if (country !== 'Global') {
-        resolverASNs = Object.keys(domainData).filter(function (key) {
-          return key !== 'length' && asn_country[key] === country;
-        });
-      } else {
-        resolverASNs = Object.keys(domainData).filter(function (key) {
-          return key !== 'length';
-        });
-      }
-
-      resolverASNs.forEach(function (resolverASN) {
-        var resolverData = domainData[resolverASN],
-          answerASNs = Object.keys(resolverData).filter(function (el) {
-            return el !== 'empty' && el !== 'unknown';
+        if (country !== 'Global') {
+          resolverASNs = Object.keys(domainData).filter(function (key) {
+            return key !== 'length' && asn_country[key] === country;
           });
-
-        answerASNs.forEach(function (answerASN) {
-           totals[answerASN] = totals[answerASN] || 0;
-            totals[answerASN] += resolverData[answerASN];
-        });
-      });
-
-      var data = Object.keys(totals).map(function (key) {
-        return {
-          name: key,
-          y: totals[key]
+        } else {
+          resolverASNs = Object.keys(domainData).filter(function (key) {
+            return key !== 'length';
+          });
         }
-      });
 
-      data.sort(function (a, b) {
-        return a.y - b.y;
-      });
+        resolverASNs.forEach(function (resolverASN) {
+          var resolverData = domainData[resolverASN],
+            answerASNs = Object.keys(resolverData).filter(function (el) {
+              return el !== 'empty' && el !== 'unknown';
+            });
 
-      data.map(function (val, idx, arr) {
-        val.x = (idx * 10000) / arr.length;
-      });
+          answerASNs.forEach(function (answerASN) {
+            totals[answerASN] = totals[answerASN] || 0;
+            totals[answerASN] += resolverData[answerASN];
+          });
+        });
 
-      result.push({
-        name: domainName,
-        data: data
-      });
-    });
+        var data = Object.keys(totals).map(function (key) {
+          return {
+            name: key,
+            y: totals[key]
+          }
+        });
 
-    return result;
+        data.sort(function (a, b) {
+          return a.y - b.y;
+        });
+
+        data.map(function (val, idx, arr) {
+          val.x = (idx * 10000) / arr.length;
+        });
+
+        return {
+          name: domainName,
+          data: data
+        };
+      }, function (xhr) {
+        // on failure
+      });
+    })).then(function (series) {
+        return new Highcharts.Chart($.extend({series: series}, options))
+      }
+    );
   };
 
 function updateChart() {
@@ -130,16 +135,16 @@ function updateChart() {
     country = $('#country').find(':selected').val(),
     domains = $('#domains').val();
 
-  chart = new Highcharts.Chart($.extend({series: makeSeries(domains, country)}, options));
+    chart = makeChart(domains, country);
 }
 
 // domain dropdown
 $('#domains').change(updateChart);
 
-Object.keys(asn_asn).filter(function (el) {
-  return el !== 'length';
-}).map(function (el) {
-  $('#domains').append("<option>" + el + "</domain>");
+$.get("runs/02-16-2015.txt", function (data) {
+  data.split('\n').forEach(function (el) {
+    $('#domains').append("<option>" + el + "</domain>");
+  });
 });
 
 // country dropdown

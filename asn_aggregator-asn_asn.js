@@ -20,10 +20,11 @@ if (!rundir) {
 } else {
   rundir = rundir.replace(/\/$/, '');
 }
-if (!process.argv[3]) {
-  console.error(chalk.red("Output file must be specified."));
-  process.exit(1);
-}
+
+//if (!process.argv[3]) {
+//  console.error(chalk.red("Output file must be specified."));
+//  process.exit(1);
+//}
 
 function parseDomainLine(map, into, domain, line) {
   var parts = line.toString('ascii').split(',');
@@ -206,7 +207,7 @@ function loadBlacklist(asm) {
 
 loadASMap().then(loadBlacklist)
   .then(collapseAll)
-  .then(writeMap)
+//  .then(writeMap)
   .then(function () {
     console.log(chalk.green('Done'));
     process.exit(0);
