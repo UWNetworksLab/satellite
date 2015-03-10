@@ -1,0 +1,5 @@
+{
+  "zmap": "zmap",
+  "zmap_opts": "-i eth0",
+  "blacklist": "http://seahawk.cs.washington.edu:8080/blacklist.conf"
+}
