@@ -1,43 +1,31 @@
 # README #
 
 This repository automates collection of satellite monitoring probes.
-Currently working on generalizing from DNS to handle more probe types.
+Activity is centered around the question: how much of the global state of
+network interference can we infer from a single commodity machine?
 
 ### What is this repository for? ###
 
-* Generating zmap-compatible probe packets
-* filtering response to determine functioning hosts
-* Creating reports & uploading / archiving them.
+* Generating scanning experiments for zmap to run, and managing them
+* Analysis & Aggregation of packet captures
+* Visualization and insight into regionalized anomalies.
 
-### How do I get set up? ###
+### Installation ###
 
+* Install [zmap](https://zmap.io/), and [node/npm](https://nodejs.org/)
 * git clone
 * npm install
 
 ### Contribution guidelines ###
 
-* Run past Will or Adam
+* Attempt to pass jslint as specified by the [brackets](https://brackets.io) editor.
+* Comments should go in a branch or fork and then be pull requested for review.
 
-### Who do I talk to? ###
+### Contact ###
 
+* Satellite <satellite@cs.washington.edu>
 * Will Scott (https://wills.co.tt) <willscott@gmail.com>
 * Adam Lerner <lerner@cs.washington.edu>
-
-
-#### Notes ####
-
-A sample zmap invocation should look similar to this:
-
-```
-    zmap -p 53 -b blacklist.conf -o zmaptrial.csv --output-module=csv -f saddr,timestamp-str,data --output-filter="success = 1 && repeat = 0" -M udp --probe-args=file:query.pkt 8.8.8.8
-```
-
-Upon updating the zmap binary, you will likely want to be able to run as not root.
-This is done through:
-
-```
-    sudo setcap cap_net_raw,cap_net_admin=eip /usr/local/sbin/zmap
-```
 
 #### Files ####
 
