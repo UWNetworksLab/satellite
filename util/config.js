@@ -9,5 +9,8 @@ exports.getKey = function (key) {
 };
 
 if (require.main === module) {
-  console.log(exports.getKey(process.argv[2]));
+  var key = exports.getKey(process.argv[2]);
+  if (key !== undefined) {
+    console.log(key);
+  }
 }

@@ -16,16 +16,16 @@ getTopSites()
 ##2. Get the blacklist.
 getBlacklist()
 {
-	echo "Getting Blacklist..."
-  if [ ! -f "authfile" ];
-  then
-    echo "No authentication file exists for using the UW satellite blacklist"
+echo "Getting Blacklist..."
+  if [[ -n $(node util/config.js blacklist) ]]; then
+    curl -s `node util/config.js blacklist` > temp/blacklist.conf
+  else
+    echo "No blacklist set for satellite."
+    echo "Configure this setting in the config.json file."
     echo "You'll need to set up your own blacklist or get in touch with us"
     echo "in order to use ours."
     exit 1
   fi
-	local auth=$(cat authfile)
-	curl -s -u $auth http://seahawk.cs.washington.edu:8080/blacklist.conf > temp/blacklist.conf
 }
 
 ##3. Create output for run.
@@ -41,9 +41,8 @@ getActiveResolvers()
 {
 	node dns/mkpkt.js temp/query.pkt cs.washington.edu
 	echo "Running initial scan..."
-	zmap -p 53 -o runs/$thisRun/cs.washington.edu.csv \
+	`node util/config.js zmap` -p 53 -o runs/$thisRun/cs.washington.edu.csv \
 		-b temp/blacklist.conf -c 300 -r 100000 \
-		`cat zmap.conf` \
 		--output-module=csv -f saddr,timestamp-str,data \
 		--output-filter="success = 1 && repeat = 0" -M udp \
 		--probe-args=file:temp/query.pkt
@@ -61,7 +60,7 @@ runTopSites()
 {
 	echo "Splitting..."
 	#splits into 10 partitions of roughly 200k hosts each.
-	node util/splithosts.js temp/dns_servers.txt temp/hosts 10 
+	node util/splithosts.js temp/dns_servers.txt temp/hosts `node util/config.js shards` 
 	echo "Scanning x10000..."
 	node dns/managedscans.js temp/domains.txt temp/hosts runs/$thisRun
 }
