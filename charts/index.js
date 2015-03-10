@@ -69,69 +69,80 @@ var chart,
       },
       pointFormat: ''
     }
-  };
+  },
 
-function makeSeries() {
-  var domain = $('#domain').find(':selected').val(),
-    country = $('#country').find(':selected').val(),
-    asns = Object.keys(asn_asn[domain]).filter(function (key) {
-      return key !== 'length';
-    }),
-    totals = {},
-    data;
+  makeSeries = function (domains, country) {
+    var result = [];
 
-  if (country !== 'Global') {
-    asns = asns.filter(function (key) {
-      return asn_country[key] === country;
-    });
-  }
+    domains.forEach(function (domainName) {
+      var totals = {},
+        resolverASNs,
+        domainData = asn_asn[domainName];
 
-  for (var i = 0; i < asns.length; i++) {
-    var resolverASN = asns[i],
-      answerASNs = Object.keys(asn_asn[domain][resolverASN]).filter(function (el) {
-        return el !== 'empty' && el !== 'unknown';
+      if (country !== 'Global') {
+        resolverASNs = Object.keys(domainData).filter(function (key) {
+          return key !== 'length' && asn_country[key] === country;
+        });
+      } else {
+        resolverASNs = Object.keys(domainData).filter(function (key) {
+          return key !== 'length';
+        });
+      }
+
+      resolverASNs.forEach(function (resolverASN) {
+        var resolverData = domainData[resolverASN],
+          answerASNs = Object.keys(resolverData).filter(function (el) {
+            return el !== 'empty' && el !== 'unknown';
+          });
+
+        answerASNs.forEach(function (answerASN) {
+           totals[answerASN] = totals[answerASN] || 0;
+            totals[answerASN] += resolverData[answerASN];
+        });
       });
 
-    for (var j = 0; j < answerASNs.length; j++) {
-      totals[answerASNs[j]] = totals[answerASNs[j]] || 0;
-      totals[answerASNs[j]] += asn_asn[domain][resolverASN][answerASNs[j]];
-    }
-  }
+      var data = Object.keys(totals).map(function (key) {
+        return {
+          name: key,
+          y: totals[key]
+        }
+      });
 
-  data = Object.keys(totals).map(function (key) {
-    return {
-      name: key,
-      y: totals[key]
-    }
-  });
+      data.sort(function (a, b) {
+        return a.y - b.y;
+      });
 
-  data.sort(function (a, b) {
-    return a.y - b.y;
-  });
+      data.map(function (val, idx, arr) {
+        val.x = (idx * 10000) / arr.length;
+      });
 
-  return [{
-    name: domain,
-    data: data
-  }];
-}
+      result.push({
+        name: domainName,
+        data: data
+      });
+    });
+
+    return result;
+  };
 
 function updateChart() {
-  chart = new Highcharts.Chart($.extend({
-    series: makeSeries()
-  }, options));
+  var type = $('#chart-type').val(),
+    country = $('#country').find(':selected').val(),
+    domains = $('#domains').val();
+
+  chart = new Highcharts.Chart($.extend({series: makeSeries(domains, country)}, options));
 }
 
 // domain dropdown
-$('#domain').change(updateChart);
+$('#domains').change(updateChart);
 
 Object.keys(asn_asn).filter(function (el) {
   return el !== 'length';
 }).map(function (el) {
-  $('#domain').append("<option>" + el + "</domain>");
+  $('#domains').append("<option>" + el + "</domain>");
 });
 
 // country dropdown
 $('#country').change(updateChart);
-
 
 chart = new Highcharts.Chart(options);
