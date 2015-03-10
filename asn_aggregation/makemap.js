@@ -9,7 +9,7 @@ var when = process.argv[2];
 var where = process.argv[3];
 require('ip2country/src/build').getGenericMap(false, false, when).then(function (map) {
   fs.writeFileSync(where + '/' + when + '.lookup.json', JSON.stringify(map));
-  console.log('done');
+  fs.unlinkSync('rib');
   process.exit(0);
 });
 
