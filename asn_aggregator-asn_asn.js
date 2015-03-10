@@ -10,12 +10,17 @@ var es = require('event-stream');
 var chalk = require('chalk');
 var asn = require('./asn_aggregation/asn_lookup');
 var dns = require('native-dns-packet');
+var build = require('ip2country/src/build');
+var lookup = require('ip2country/src/lookup').lookup;
 
 var rundir = process.argv[2];
 if (!rundir) {
   console.error(chalk.red("Run to aggregate must be specified."));
   process.exit(1);
+} else {
+  rundir = rundir.replace(/\/$/, '');
 }
+
 if (!process.argv[3]) {
   console.error(chalk.red("Output file must be specified."));
   process.exit(1);
@@ -26,7 +31,11 @@ function parseDomainLine(map, into, domain, line) {
   if (parts.length !== 3) {
     return;
   }
-  var resolverASN = map.lookup(parts[0]);
+
+  var resolverASN = lookup(map, parts[0]);
+  if (resolverASN === 'ZZ') {
+    return;
+  }
   var record;
   try {
     record = dns.parse(new Buffer(parts[2], 'hex'));
@@ -36,7 +45,11 @@ function parseDomainLine(map, into, domain, line) {
       record.answer.forEach(function (answer) {
 
         if (answer.name.toLowerCase() === domain.toLowerCase()) {
-          var answerASN = map.lookup(answer.address);
+          var answerASN = lookup(map, answer.address);
+
+          if (answerASN === 'ZZ') {
+            return;
+          }
 
           into[resolverASN][answerASN] = into[resolverASN][answerASN] || 0;
           into[resolverASN][answerASN] += 1
@@ -147,8 +160,29 @@ function aggregateMap(stream) {
   }
 }
 
-asn.getMap()
-  .then(collapseAll)
+function loadASMap() {
+  var prom = Q(0),
+    filename = rundir + '.lookup.json',
+    when = rundir.replace(/.*\//, '');
+
+  if (!fs.existsSync(filename)) {
+    return build.getGenericMap(false, false, when).then(function (map) {
+      fs.writeFileSync(filename, JSON.stringify(map));
+      return map;
+    });
+  } else {
+    prom = prom.then(function () {
+      console.log(chalk.blue('Loading AS map.'));
+      var map = JSON.parse(fs.readFileSync(filename));
+      console.log(chalk.green('Done'));
+      return map;
+    });
+  }
+
+  return prom;
+}
+
+loadASMap().then(collapseAll)
   .then(writeMap)
   .then(function () {
     console.log(chalk.green('Done'));
