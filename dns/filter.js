@@ -8,7 +8,7 @@ var fs = require('fs'),
     readline = require('readline'),
     stream = require('stream'),
     dns = require('native-dns-packet'),
-    liner = require('../util/liner');
+    liner = require('../util/liner').liner;
 
 
 var hosts = 0, recursive = 0, answer = 0, valid = 0;
