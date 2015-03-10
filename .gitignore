@@ -3,7 +3,6 @@ node_modules
 *.csv
 *.pem
 *.p12
-authfile
 originas*
 asmap.json
 dns.study
@@ -13,5 +12,4 @@ authdata.json
 *.swp
 *.gz
 *.jsonList
-zmap.conf
-
+config.json
