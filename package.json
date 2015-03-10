@@ -1,8 +1,7 @@
 {
   "name": "zmapdns",
   "version": "0.0.0",
-  "description": "Handling DNS for zmap",
-  "main": "mkpkt.js",
+  "description": "Satellite Internet Observation",
   "dependencies": {
     "bloomfilter": "0.0.14",
     "filesize": "~2.0.3",
@@ -12,17 +11,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://bitbucket.org/ttocslliw/zmapdns.git"
+    "url": "https://github.com/UWNetworksLab/satellite.git"
   },
   "devDependencies": {
     "chalk": "^0.5.1",
     "event-stream": "^3.1.7",
     "ip2country": "^0.2.2",
     "linebyline": "0.0.7",
-    "q": "^1.0.1"
+    "moment": "^2.9.0",
   },
   "scripts": {
-    "test": "bash trial.sh"
+    "run": "bash fullrun.sh"
   },
-  "author": "Will Scott"
+  "author": "Will Scott (https://wills.co.tt) <willscott@gmail.com>"
 }
