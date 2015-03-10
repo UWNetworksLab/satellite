@@ -1,6 +1,7 @@
 var $ = require('jquery');
 var chart1 = require('./chart1.js');
 var chart2 = require('./chart2.js');
+var chart3 = require('./chart3.js');
 
 function updateChart() {
   var type = $('#chart-type').val(),
@@ -11,6 +12,8 @@ function updateChart() {
     chart1.makeChart(domains, country);
   } else if (type === 'Chart #2') {
     chart2.makeChart(domains, country);
+  } else if (type === 'Chart #3') {
+    chart3.makeChart(domains, country);
   }
 }
 
