@@ -1,7 +1,7 @@
 require('Highcharts');
 var $ = require('jquery');
 var asn_asn = require('./asn_asn.json');
-var asn_country = require('./countries.json');
+var asn_country = require('./asn_country.json');
 
 var chart,
   options = {
