@@ -8,7 +8,7 @@ var conf = require('../util/config');
 
 var threads = fs.readdirSync(process.argv[3]);
 var re = /send: \d+ done/;
-var zmap = conf.getKey('zmap').split(' ');
+var zmapconf = conf.getKey('zmap').split(' ');
 
 var run = function(run, host, domain) {
   var deferred = Q.defer();
@@ -18,7 +18,7 @@ var run = function(run, host, domain) {
   }
   var probe = domain + '.pkt';
   pkt.make(domain, probe);
-  var zmap = spawn(zmap[0], [
+  var zmap = spawn(zmapconf[0], [
       '-p', '53',
       '-o',  run + '/' + domain + '.csv',
       '-b', 'temp/blacklist.conf',
@@ -30,7 +30,7 @@ var run = function(run, host, domain) {
       '--output-filter="success = 1 && repeat = 0"',
       '-M', 'udp',
       '--probe-args=file:' + probe
-    ].concat(zmap.slice(1)), {
+    ].concat(zmapconf.slice(1)), {
       stdio: ['ignore', 'pipe', process.stderr]
     });
 
