@@ -2,14 +2,14 @@ require('Highcharts');
 var $ = require('jquery');
 var asn_asn = require('./asn_asn.json');
 var asn_country = require('./asn_country.json');
+var asn_name = require('./asn_name.json');
 
 var chart,
   options = {
     chart: {
       renderTo: 'container',
-      type: "spline",
-      height: 800,
-      zoomType: 'x'
+      type: "line",
+      height: 600
     },
     credits: {
       enabled: false
@@ -26,8 +26,18 @@ var chart,
       }
     },
     plotOptions: {
+      series: {
+        cursor: 'pointer',
+        point: {
+          events: {
+            click: function () {
+              window.open('http://bgp.he.net/AS' + this.name, '_blank');
+            }
+          }
+        },
+        turboThreshold: 5000
+      },
       spline: {
-        turboThreshold: 10000,
         lineWidth: 2,
         states: {
           hover: {
@@ -51,7 +61,12 @@ var chart,
       text: ''
     },
     tooltip: {
-      headerFormat: '<span style="font-size: 10px">{point.y} resolutions to ASN: {point.key}</span><br/>',
+      formatter: function () {
+        return '<span style="font-size: 10px">' +
+          this.y +
+          ' resolutions to ASN: ' + this.key + '</span><br/>' +
+          '<span>' + asn_name[this.key] + '</span>'
+      },
       pointFormat: ''
     }
   };
@@ -118,4 +133,5 @@ Object.keys(asn_asn).filter(function (el) {
 // country dropdown
 $('#country').change(updateChart);
 
-updateChart();
+
+chart = new Highcharts.Chart(options);
