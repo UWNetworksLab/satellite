@@ -20,7 +20,6 @@ if (!rundir) {
 } else {
   rundir = rundir.replace(/\/$/, '');
 }
-
 if (!process.argv[3]) {
   console.error(chalk.red("Output file must be specified."));
   process.exit(1);
@@ -28,7 +27,7 @@ if (!process.argv[3]) {
 
 function parseDomainLine(map, into, domain, line) {
   var parts = line.toString('ascii').split(',');
-  if (parts.length !== 3) {
+  if (parts.length !== 3 || map.blacklist[parts[0]]) {
     return;
   }
 
@@ -182,7 +181,31 @@ function loadASMap() {
   return prom;
 }
 
-loadASMap().then(collapseAll)
+function loadBlacklist(asm) {
+  var filename = rundir + '.aggregation-blacklist.txt';
+  asm.blacklist = {};
+
+  if (!fs.existsSync(filename)) {
+    return Q.Promise(function (resolve, reject) {
+      console.log(chalk.blue('No blacklist found.'));
+      resolve(asm);
+    });
+  } else {
+    return Q.Promise(function (resolve, reject) {
+      console.log(chalk.blue('Using blacklist ' + filename));
+      fs.createReadStream(filename)
+        .pipe(es.split())
+        .pipe(es.mapSync(function (line) {
+          asm.blacklist[line] = true;
+        }))
+        .on('end', resolve(asm))
+        .on('error', reject);
+    });
+  }
+}
+
+loadASMap().then(loadBlacklist)
+  .then(collapseAll)
   .then(writeMap)
   .then(function () {
     console.log(chalk.green('Done'));
