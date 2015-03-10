@@ -3,13 +3,13 @@
 ##1. Get The alexa top sites.
 getTopSites()
 {
-	echo "Getting top Sites..."
+  echo "Getting top Sites..."
   cd temp
-	curl -O http://s3.amazonaws.com/alexa-static/top-1m.csv.zip
-	unzip top-1m.csv.zip
-	rm top-1m.csv.zip
-	cut -d "," -f 2 top-1m.csv | head -10000 > domains.txt
-	rm top-1m.csv
+  curl -O http://s3.amazonaws.com/alexa-static/top-1m.csv.zip
+  unzip top-1m.csv.zip
+  rm top-1m.csv.zip
+  cut -d "," -f 2 top-1m.csv | head -10000 > domains.txt
+  rm top-1m.csv
   cd ..
 }
 
@@ -31,55 +31,62 @@ echo "Getting Blacklist..."
 ##3. Create output for run.
 generateRun()
 {
-	echo "Starting new run..."
-	thisRun=$(date +"%m-%d-%Y")
-	mkdir runs/$thisRun
+  echo "Starting new run..."
+  thisRun=$(date +"%m-%d-%Y")
+  mkdir runs/$thisRun
 }
 
 ##5. Find active servers
 getActiveResolvers()
 {
-	node dns/mkpkt.js temp/query.pkt cs.washington.edu
-	echo "Running initial scan..."
-	`node util/config.js zmap` -p 53 -o runs/$thisRun/cs.washington.edu.csv \
-		-b temp/blacklist.conf -c 300 -r 100000 \
-		--output-module=csv -f saddr,timestamp-str,data \
-		--output-filter="success = 1 && repeat = 0" -M udp \
-		--probe-args=file:temp/query.pkt
+  node dns/mkpkt.js temp/query.pkt cs.washington.edu
+  echo "Running initial scan..."
+  `node util/config.js zmap` -p 53 -o runs/$thisRun/cs.washington.edu.csv \
+    -b temp/blacklist.conf -c 300 -r 100000 \
+    --output-module=csv -f saddr,timestamp-str,data \
+    --output-filter="success = 1 && repeat = 0" -M udp \
+    --probe-args=file:temp/query.pkt
 }
 
 ##6. extract good hosts
 getGoodHosts()
 {
-	echo "Generating IP list..."
-	node dns/filter.js runs/$thisRun/cs.washington.edu.csv temp/dns_servers.txt
+  echo "Generating IP list..."
+  node dns/filter.js runs/$thisRun/cs.washington.edu.csv temp/dns_servers.txt
 }
 
 ##7. Do it!
 runTopSites()
 {
-	echo "Splitting..."
-	#splits into 10 partitions of roughly 200k hosts each.
-	node util/splithosts.js temp/dns_servers.txt temp/hosts `node util/config.js shards` 
-	echo "Scanning x10000..."
-	node dns/managedscans.js temp/domains.txt temp/hosts runs/$thisRun
+  echo "Splitting..."
+  node util/splithosts.js temp/dns_servers.txt temp/hosts `node util/config.js shards` 
+  echo "Scanning all domains..."
+  node dns/managedscans.js temp/domains.txt temp/hosts runs/$thisRun
 }
 
-##8. Archive
+##8. Record IP Ownership.
+recordLookupTable()
+{
+  echo "Building ASN tables..."
+  node asn_aggregation/makemap.js $thisRun runs/
+}
+
+##9. Archive
 makeArchive()
 {
-	echo "Archiving..."
-	tar -czf runs/$thisRun.tgz runs/$thisRun
-	sha1sum runs/$thisRun.tgz | awk '{print $1}' > runs/$thisRun.tgz.sig
-	node generateStudyMetadata.js
+  echo "Archiving..."
+  tar -czf runs/$thisRun.tgz runs/$thisRun
+  sha1sum runs/$thisRun.tgz | awk '{print $1}' > runs/$thisRun.tgz.sig
+  node generateStudyMetadata.js
 }
 
-##8. Clean up
+##10. Clean up
 cleanup()
 {
-	echo "Cleaning up..."
-	#rm temp/dns_servers.txt
-	rm -r temp/hosts
+  echo "Cleaning up..."
+  rm temp/dns_servers.txt
+  rm -r temp/hosts
+  #rm -r runs/$thisRun
 }
 
 getTopSites          # downloads alexa.
@@ -88,5 +95,6 @@ generateRun          # creates date-based folder
 getActiveResolvers  # does cs.washington.edu run
 getGoodHosts        # recreates hosts.txt from the cs.washington.edu run
 runTopSites          # runs all top domains against hosts
+recordLookupTable    # Build lookup table of current bgp annoncements.
 makeArchive          # creates archive.
 #cleanup
