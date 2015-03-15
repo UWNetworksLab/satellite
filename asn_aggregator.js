@@ -24,7 +24,7 @@ function parseDomainLine(map, into, domain, line) {
   if (parts.length !== 3) {
     return;
   }
-  var theasn = map.classC(parts[0]);
+  var theasn = map.lookup(parts[0]);
   var record;
   try {
     record = dns.parse(new Buffer(parts[2], 'hex'));
