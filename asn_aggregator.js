@@ -11,15 +11,13 @@ var chalk = require('chalk')
 var asn = require('./asn_aggregation/asn_lookup')
 var dns = require('native-dns-packet');
 
+if (process.argv[4]) {
+  console.error(chalk.red("Usage: asn_aggregator.js <rundir> <ASN table> <output file.>"));
+  process.exit(1);
+}
 var rundir = process.argv[2];
-if (!rundir) {
-  console.error(chalk.red("Run to aggregate must be specified."));
-  process.exit(1);
-}
-if (!process.argv[3]) {
-  console.error(chalk.red("Output file must be specified."));
-  process.exit(1);
-}
+var asnTable = process.argv[3];
+var outFile = process.argv[4];
 
 function parseDomainLine(map, into, domain, line) {
   var parts = line.toString('ascii').split(',');
@@ -112,7 +110,7 @@ function collapseAll(asm) {
 var queue;
 function writeMap(files) {
   console.log(chalk.blue('Writing Compiled Map.'));
-  var stream = fs.createWriteStream(process.argv[3]);
+  var stream = fs.createWriteStream(outFile);
   return Q.Promise(function(resolve, reject) {
     stream.on('finish', resolve);
     stream.on('error', reject);
@@ -149,7 +147,7 @@ function aggregateMap(stream) {
   }
 }
 
-asn.getMap()
+asn.getMap(asnTable)
 .then(collapseAll)
 .then(writeMap)
 .then(function() {

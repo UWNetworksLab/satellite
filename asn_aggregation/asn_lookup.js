@@ -97,9 +97,16 @@ function makeASMap() {
   });
 }
 
-function loadASMap() {
+function loadASMap(mapFile) {
   var prom = Q(0);
-  if (!fs.existsSync('asmap.json') ||
+  if (mapFile && fs.existsSync(mapFile)) {
+    prom = prom.then(function() {
+      var map = JSON.parse(fs.readFileSync(mapFile));
+      map.lookup = require('ip2country').lookup.bind({}, map);
+      map.clssC = getClassC;
+      return map;
+    });
+  } else if (!fs.existsSync('asmap.json') ||
       new Date() - fs.statSync('asmap.json').mtime > (1000 * 60 * 60 * 24 * 30)) {
         prom = prom.then(makeASMap).then(function(map) {
           var lu = map.lookup;
