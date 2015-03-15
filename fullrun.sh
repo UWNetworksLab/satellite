@@ -80,13 +80,20 @@ makeArchive()
   node generateStudyMetadata.js
 }
 
+##10. Aggregate
+aggregateRun()
+{
+  echo "Aggregating..."
+  node asn_aggregator.js runs/$thisRun runs/$thisRun.lookup.json runs/$thisRun.asn.json
+}
+
 ##10. Clean up
 cleanup()
 {
   echo "Cleaning up..."
   rm temp/dns_servers.txt
   rm -r temp/hosts
-  #rm -r runs/$thisRun
+  rm -r runs/$thisRun
 }
 
 getTopSites          # downloads alexa.
@@ -97,4 +104,5 @@ getGoodHosts        # recreates hosts.txt from the cs.washington.edu run
 runTopSites          # runs all top domains against hosts
 recordLookupTable    # Build lookup table of current bgp annoncements.
 makeArchive          # creates archive.
-#cleanup
+aggregateRun         # replace folder with ASN aggreates.
+cleanup

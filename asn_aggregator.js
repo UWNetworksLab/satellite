@@ -11,7 +11,7 @@ var chalk = require('chalk')
 var asn = require('./asn_aggregation/asn_lookup')
 var dns = require('native-dns-packet');
 
-if (process.argv[4]) {
+if (!process.argv[4]) {
   console.error(chalk.red("Usage: asn_aggregator.js <rundir> <ASN table> <output file.>"));
   process.exit(1);
 }
