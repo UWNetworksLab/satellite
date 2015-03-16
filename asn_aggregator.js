@@ -1,17 +1,18 @@
 /*
  * Aggregate a study by ASN#
  * Given an uncompressed study directory, the data is compressed to a denser mapping of
-   * domain -> {asn -> {ip -> %}}
+ * domain -> {asn -> {ip -> count}}
  */
 
 var Q = require('q');
 var fs = require('fs');
 var es = require('event-stream');
 var chalk = require('chalk');
-var asn = require('./asn_aggregation/asn_lookup');
 var dns = require('native-dns-packet');
+var build = require('ip2country/src/build');
+var lookup = require('ip2country/src/lookup').lookup;
 
-var rundir = process.argv[2];
+var rundir = process.argv[2].replace(/\/*$/, '');
 if (!rundir) {
   console.error(chalk.red("Run to aggregate must be specified."));
   process.exit(1);
@@ -26,7 +27,7 @@ function parseDomainLine(map, into, domain, line) {
   if (parts.length !== 3) {
     return;
   }
-  var theasn = map.classC(parts[0]);
+  var theasn = lookup(map, parts[0]);
   var record;
   try {
     record = dns.parse(new Buffer(parts[2], 'hex'));
@@ -50,7 +51,6 @@ function parseDomainLine(map, into, domain, line) {
     }
   } catch(e) {
     into.failed += 1;
-    return;
   }
 }
 
@@ -69,9 +69,8 @@ function collapseSingle(map, domain, file) {
       .pipe(es.mapSync(parseDomainLine.bind({}, map, into, domain)))
       .on('end', resolve)
       .on('error', reject);
-  }).then(function(m) {
+  }).then(function() {
     fs.writeFileSync(rundir + '/' + file + '.asn.json', JSON.stringify(into));
-    delete into;
     return true;
   });
 }
@@ -149,12 +148,34 @@ function aggregateMap(stream) {
   }
 }
 
-asn.getMap()
-.then(collapseAll)
-.then(writeMap)
-.then(function() {
-  console.log(chalk.green('Done'));
-  process.exit(0);
-},function(err) {
-  console.error(chalk.red(err));
-});
+function loadASMap() {
+  var prom = Q(0),
+    filename = rundir + '.lookup.json',
+    when = rundir.replace(/.*\//, '');
+
+  if (!fs.existsSync(filename)) {
+    return build.getGenericMap(false, false, when).then(function (map) {
+      fs.writeFileSync(filename, JSON.stringify(map));
+      return map;
+    });
+  } else {
+    prom = prom.then(function () {
+      console.log(chalk.blue('Loading AS map.'));
+      var map = JSON.parse(fs.readFileSync(filename));
+      console.log(chalk.green('Done'));
+      return map;
+    });
+  }
+
+  return prom;
+}
+
+loadASMap()
+  .then(collapseAll)
+  .then(writeMap)
+  .then(function() {
+    console.log(chalk.green('Done'));
+    process.exit(0);
+  },function(err) {
+    console.error(chalk.red(err));
+  });
