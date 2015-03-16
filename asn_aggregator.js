@@ -34,7 +34,7 @@ function parseDomainLine(map, into, domain, line) {
     if (!into[theasn]) {
       into[theasn] = {};
     }
-    if (record.answer.length > 0) {
+    if (record.answer.length > 0 && record.question.length > 0 && record.question[0].name === domain) {
       record.answer.forEach(function(answer) {
         var ip = answer.address;
         if (!into[theasn][ip]) {
