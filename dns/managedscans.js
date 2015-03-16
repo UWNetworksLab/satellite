@@ -1,83 +1,87 @@
+/*jslint node:true */
 // Runs a bunch of overlapping zmap scans.
-// args: <domain file> <folder of ips> <where to put output>
+// args: <domain file> <dns servers file> <where to put output>
+'use strict';
+
 var fs = require('fs');
 var Q = require('q');
 var spawn = require('child_process').spawn;
 var pkt = require('./mkpkt');
 var conf = require('../util/config');
 
-var threads = fs.readdirSync(process.argv[3]);
-var re = /send: \d+ done/;
 var zmapconf = conf.getKey('zmap').split(' ');
 
-var run = function(run, host, domain) {
-  var deferred = Q.defer();
-  if (fs.existsSync(run + '/' + domain + '.csv')) {
-    deferred.resolve();
-    return deferred.promise;
+var run = function (run, host, domains) {
+  var deferred = Q.defer(),
+    i = 0,
+    probe = [],
+    zmap;
+  for (i = 0; i < domains.length; i += 1) {
+    pkt.make(domains[i], domains[i] + '.pkt');
+    probe.push(domains[i] + '.pkt');
   }
-  var probe = domain + '.pkt';
-  pkt.make(domain, probe);
-  var zmap = spawn(zmapconf[0], [
-      '-p', '53',
-      '-o',  run + '/' + domain + '.csv',
-      '-b', 'temp/blacklist.conf',
-      '-w', host,
-      '-c', 20,
-      '-r', 50000,
-      '--output-module=csv',
-      '-f', 'saddr,timestamp-str,data',
-      '--output-filter="success = 1 && repeat = 0"',
-      '-M', 'udp',
-      '--probe-args=file:' + probe
-    ].concat(zmapconf.slice(1)), {
-      stdio: ['ignore', 'pipe', process.stderr]
-    });
+  zmap = spawn(zmapconf[0], [
+    '-p', '53',
+    '-o',  run + '/' + domains[0] + '.csv',
+    '-b', 'temp/blacklist.conf',
+    '-w', host,
+    '-c', 20,
+    '-r', 50000,
+    '--output-module=csv',
+    '-f', 'saddr,timestamp-str,data',
+    '--output-filter="success = 1 && repeat = 0"',
+    '-M', 'udp-multi',
+    '--probe-args=file:' + probe.join(',')
+  ].concat(zmapconf.slice(1)), {
+    stdio: ['ignore', 'pipe', process.stderr]
+  });
 
   zmap.stdout.on('data', function (data) {
-    if (data && data.length && data.match && data.match(re)) {
-      deferred.resolve();
-    }
     console.log(data);
   });
-  zmap.on('close', function() {
+  zmap.on('close', function () {
     deferred.resolve();
   });
 
   // Clean up.
-  deferred.promise.then(function(file) {
-    try {
-      fs.unlinkSync(file);
-    } catch(e) {
-      console.error(e.message);
-    }
+  deferred.promise.then(function (file) {
+    file.forEach(function (f) {
+      try {
+        fs.unlinkSync(f);
+      } catch (e) {
+        console.error(e.message);
+      }
+    });
   }.bind({}, probe));
   return deferred.promise;
-}
+};
 
 var hosts = fs.readFileSync(process.argv[2]).toString().split('\n');
-var thread = 0;
-var doNext = function() {
+var perRun = conf.getKey("shards");
+
+var doNext = function () {
   if (!hosts.length) {
-    // wait 5 minutes to exit so that the run is done
-    setTimeout(function() {
-      process.exit(0)
-    }, 60 * 1000)
+    console.log('All Done.');
+    process.exit(0);
     return;
   }
-  var host = hosts.shift();
-  if (!host || !host.length) {
-    return doNext();
+  
+  var theseHosts = [],
+    candidate;
+  while (theseHosts.length < perRun && hosts.length) {
+    candidate = hosts.shift();
+    if (candidate && candidate.length && !fs.existsSync(run + '/' + candidate + '.csv')) {
+      if (candidate.indexOf('/') > -1) {
+        candidate = candidate.substr(0, candidate.indexOf('/'));
+      }
+
+      theseHosts.push(candidate);
+    }
   }
-  if (host.indexOf('/') > -1) {
-    host = host.substr(0, host.indexOf('/'));
-  }
-  // 45 second delay between starting.
-  run(process.argv[4], process.argv[3] + '/' + threads[thread], host).then(setTimeout(doNext, 20000));
-  thread = thread++;
-  if (thread == threads.length) {
-    thread = 0;
-  }
+
+  run(process.argv[4], process.argv[3], theseHosts).then(function () {
+    setTimeout(doNext, 1000);
+  });
 };
 
 doNext();
