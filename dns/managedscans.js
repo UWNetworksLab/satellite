@@ -28,12 +28,13 @@ var run = function (run, host, domains) {
     '-o',  run + '/' + name + '.csv',
     '-b', 'temp/blacklist.conf',
     '-w', host,
+    '-s', '15000-25000',
     '-c', 20, //20 second cooldown.
     '-r', conf.getKey('rate'),
     '--output-module=csv',
     '-f', 'saddr,probe,timestamp-str,data',
     '--output-filter="success = 1 && repeat = 0"',
-    '-M', 'udp-multi',
+    '-M', 'udp_multi',
     '--probe-args=file:' + probe.join(',')
   ].concat(zmapconf.slice(1)), {
     stdio: ['ignore', 'pipe', process.stderr]
