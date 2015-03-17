@@ -4,6 +4,7 @@ var es = require('event-stream')
 var chalk = require('chalk')
 var sys = require('sys');
 var exec = require('child_process').exec;
+var ip_utils = require('../util/ip_utils');
 function puts(error, stdout, stderr) { sys.puts(stdout) }
   
 
@@ -34,20 +35,7 @@ function parseASLine(map, line) {
   }
 };
 
-function getClassC(ip) {
-  var classC;
-  if (typeof ip === 'string') {
-    var bytes = ip.split('.');
-    if (bytes.length < 4) {
-      return 'unknown';
-    }
-    classC = new Buffer(bytes).readInt32BE(0);
-    classC -= classC % 256;
-  } else {
-    classC = ip;
-  }
-  return classC;
-}
+
 
 function doASLookup(ip, off) {
   if (!ip) {
@@ -103,7 +91,7 @@ function loadASMap(mapFile) {
     prom = prom.then(function() {
       var map = JSON.parse(fs.readFileSync(mapFile));
       map.lookup = require('ip2country').lookup.bind({}, map);
-      map.clssC = getClassC;
+      map.classC = ip_utils.getClassC;
       return map;
     });
   } else if (!fs.existsSync('asmap.json') ||
@@ -113,14 +101,14 @@ function loadASMap(mapFile) {
           delete map.lookup;
           fs.writeFileSync("asmap.json", JSON.stringify(map));
           map.lookup = lu;
-          map.classC = getClassC;
+          map.classC = ip_utils.getClassC;
           return map;
         });
   } else {
     prom = prom.then(function() {
       var map = JSON.parse(fs.readFileSync("asmap.json"));
       map.lookup = doASLookup;
-      map.classC = getClassC;
+      map.classC = ip_utils.getClassC;
       return map;
     });
   }

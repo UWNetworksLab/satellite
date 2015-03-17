@@ -6,6 +6,7 @@
 var fs = require('fs');
 var Q = require('q');
 var spawn = require('child_process').spawn;
+var crypto = require('crypto');
 var pkt = require('./mkpkt');
 var conf = require('../util/config');
 
@@ -15,20 +16,22 @@ var run = function (run, host, domains) {
   var deferred = Q.defer(),
     i = 0,
     probe = [],
-    zmap;
+    zmap,
+    name = crypto.createHash('md5').update(domains.join(',')).digest('hex');
   for (i = 0; i < domains.length; i += 1) {
     pkt.make(domains[i], domains[i] + '.pkt');
     probe.push(domains[i] + '.pkt');
   }
+  fs.writeFileSync(run + '/' + name + '.json', JSON.stringify(domains));
   zmap = spawn(zmapconf[0], [
     '-p', '53',
-    '-o',  run + '/' + domains[0] + '.csv',
+    '-o',  run + '/' + name + '.csv',
     '-b', 'temp/blacklist.conf',
     '-w', host,
-    '-c', 20,
-    '-r', 50000,
+    '-c', 20, //20 second cooldown.
+    '-r', conf.getKey('rate'),
     '--output-module=csv',
-    '-f', 'saddr,timestamp-str,data',
+    '-f', 'saddr,probe,timestamp-str,data',
     '--output-filter="success = 1 && repeat = 0"',
     '-M', 'udp-multi',
     '--probe-args=file:' + probe.join(',')
@@ -70,7 +73,7 @@ var doNext = function () {
     candidate;
   while (theseHosts.length < perRun && hosts.length) {
     candidate = hosts.shift();
-    if (candidate && candidate.length && !fs.existsSync(run + '/' + candidate + '.csv')) {
+    if (candidate && candidate.length) {
       if (candidate.indexOf('/') > -1) {
         candidate = candidate.substr(0, candidate.indexOf('/'));
       }
@@ -79,6 +82,7 @@ var doNext = function () {
     }
   }
 
+  
   run(process.argv[4], process.argv[3], theseHosts).then(function () {
     setTimeout(doNext, 1000);
   });

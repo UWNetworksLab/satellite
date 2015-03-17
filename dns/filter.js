@@ -8,14 +8,16 @@ var fs = require('fs'),
     readline = require('readline'),
     stream = require('stream'),
     dns = require('native-dns-packet'),
-    liner = require('../util/liner').liner;
+    liner = require('../util/liner').liner,
+    ip_utils = require('../util/ip_utils'),
+    mask = require('../util/mask').newMask(256*256*256);
 
 
-var hosts = 0, recursive = 0, answer = 0, valid = 0;
+var hosts = 0, recursive = 0, answer = 0, dom = 0, valid = 0;
 
 function printStats() {
-  console.log("l=" + hosts + ", r=" + recursive + ", a=" + answer +
-      ", v=" + valid);
+  console.log("total=" + hosts + ", recursive bit=" + recursive + ", with answer field=" + answer +
+      ", valid answers=" + valid + ", distinct /24s=" + dom);
 }
 
 var input = fs.createReadStream(process.argv[2]);
@@ -41,10 +43,7 @@ watcher._transform = function (line, encoding, done) {
     done();
     return;
   }
-
   recursive += 1;
-
-  this.push(info[0] + '/32\n');
 
   if (record.answer.length == 0) {
     done();
@@ -55,6 +54,15 @@ watcher._transform = function (line, encoding, done) {
   if (record.answer[0].address == '128.208.3.200') {
     valid += 1;
   }
+
+  if (mask.get(ip_utils.getClassC(info[0]))) {
+    done();
+    return;
+  }
+  mask.set(ip_utils.getClassC(info[0]))
+  dom += 1;
+
+  this.push(info[0] + '/32\n');
 
   done();
 };

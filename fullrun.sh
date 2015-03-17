@@ -42,7 +42,7 @@ getActiveResolvers()
   node dns/mkpkt.js temp/query.pkt cs.washington.edu
   echo "Running initial scan..."
   `node util/config.js zmap` -p 53 -o runs/$thisRun/cs.washington.edu.csv \
-    -b temp/blacklist.conf -c 300 -r 100000 \
+    -b temp/blacklist.conf -c 300 -r `node util/config.js rate` \
     --output-module=csv -f saddr,timestamp-str,data \
     --output-filter="success = 1 && repeat = 0" -M udp \
     --probe-args=file:temp/query.pkt
@@ -58,10 +58,8 @@ getGoodHosts()
 ##7. Do it!
 runTopSites()
 {
-  echo "Splitting..."
-  node util/splithosts.js temp/dns_servers.txt temp/hosts `node util/config.js shards` 
   echo "Scanning all domains..."
-  node dns/managedscans.js temp/domains.txt temp/hosts runs/$thisRun
+  node dns/managedscans.js temp/domains.txt temp/dns_servers.txt runs/$thisRun
 }
 
 ##8. Record IP Ownership.
@@ -92,7 +90,6 @@ cleanup()
 {
   echo "Cleaning up..."
   rm temp/dns_servers.txt
-  rm -r temp/hosts
   rm -r runs/$thisRun
 }
 
@@ -100,8 +97,8 @@ getTopSites          # downloads alexa.
 getBlacklist         # downloads blacklist.
 generateRun          # creates date-based folder
 getActiveResolvers  # does cs.washington.edu run
-getGoodHosts        # recreates hosts.txt from the cs.washington.edu run
-runTopSites          # runs all top domains against hosts
+getGoodHosts        # recreates dns_servers.txt from the cs.washington.edu run
+runTopSites          # runs all top domains against dns_servers.txt
 recordLookupTable    # Build lookup table of current bgp annoncements.
 makeArchive          # creates archive.
 aggregateRun         # replace folder with ASN aggreates.
