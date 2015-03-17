@@ -19,8 +19,8 @@ var run = function (run, host, domains) {
     zmap,
     name = crypto.createHash('md5').update(domains.join(',')).digest('hex');
   for (i = 0; i < domains.length; i += 1) {
-    pkt.make(domains[i], domains[i] + '.pkt');
-    probe.push(domains[i] + '.pkt');
+    pkt.make(domains[i], 'temp/' + domains[i] + '.pkt');
+    probe.push('temp/' + domains[i] + '.pkt');
   }
   fs.writeFileSync(run + '/' + name + '.json', JSON.stringify(domains));
   zmap = spawn(zmapconf[0], [
