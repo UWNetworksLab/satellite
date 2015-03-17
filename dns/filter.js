@@ -55,11 +55,11 @@ watcher._transform = function (line, encoding, done) {
     valid += 1;
   }
 
-  if (mask.get(ip_utils.getClassC(info[0]))) {
+  if (mask.get(ip_utils.getClassC(info[0])/256)) {
     done();
     return;
   }
-  mask.set(ip_utils.getClassC(info[0]))
+  mask.set(ip_utils.getClassC(info[0])/256)
   dom += 1;
 
   this.push(info[0] + '/32\n');

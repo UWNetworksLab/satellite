@@ -8,7 +8,7 @@ exports.getClassC = function (ip) {
     if (bytes.length < 4) {
       return 'unknown';
     }
-    classC = new Buffer(bytes).readInt32BE(0);
+    classC = new Buffer(bytes).readUInt32BE(0);
     classC -= classC % 256;
   } else {
     classC = ip;
