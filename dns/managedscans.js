@@ -30,7 +30,7 @@ var run = function (run, host, domains) {
     '-w', host,
     '-s', '15000-25000',
     '-c', 20, //20 second cooldown.
-    '-r', conf.getKey('rate'),
+    '-r', conf.getKey('recvrate'),
     '--output-module=csv',
     '-f', 'saddr,probe,timestamp-str,data',
     '--output-filter="success = 1 && repeat = 0"',

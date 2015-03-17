@@ -1,6 +1,7 @@
 {
   "zmap": "zmap -i eth0",
   "rate": 500000,
+  "recvrate": 50000,
   "blacklist_example": "http://seahawk.cs.washington.edu:8080/blacklist.conf",
   "shards": 10
 }
