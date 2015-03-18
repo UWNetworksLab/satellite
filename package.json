@@ -18,7 +18,7 @@
     "event-stream": "^3.1.7",
     "ip2country": "^0.2.2",
     "linebyline": "0.0.7",
-    "moment": "^2.9.0",
+    "moment": "^2.9.0"
   },
   "scripts": {
     "run": "bash fullrun.sh"
