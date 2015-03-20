@@ -1,3 +1,6 @@
+/*
+ * Set of exported functions for merging asn counts to country counts.
+ */
 var Q = require('q');
 
 var regex = /\d+.*AS(\d+).*,([A-Z]{2})/;

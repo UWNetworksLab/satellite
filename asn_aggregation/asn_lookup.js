@@ -1,3 +1,8 @@
+/**
+ * getMap(optional rip json) -> Promise(<map>)
+ * with a lookup function.
+ * generates current origin as if no json provided.
+ */
 var Q = require('q');
 var fs = require('fs');
 var es = require('event-stream')
