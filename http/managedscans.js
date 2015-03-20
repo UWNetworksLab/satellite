@@ -7,7 +7,6 @@
 var fs = require('fs');
 var Q = require('q');
 var spawn = require('child_process').spawn;
-var pkt = require('./mkpkt');
 var conf = require('../util/config');
 
 var zmapconf = conf.getKey('zmap').split(' ');
