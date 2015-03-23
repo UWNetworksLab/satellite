@@ -1,16 +1,26 @@
 /*jslint node:true*/
 'use strict';
 
+var chalk = require('chalk');
 var fs = require('fs');
+var path = require('path');
 
 var splitter = require('./split');
 
 // From a pair of scans, calculate intersection & partials.
-exports.diff = function (asnInfo, file_a, name_a, file_b, name_b, out_dir) {
+exports.diff = function (asnInfo, file_a, file_b) {
+  if (path.dirname(file_a) !== path.dirname(file_b)) {
+    console.warn(chalk.yellow('Diff attempted with files in different places!' +
+        ' Diff output will be placed in: ' + path.dirname(file_a)));
+  }
+  var out_dir = path.dirname(file_a),
+    name_a = path.basename(file_a),
+    name_b = path.basename(file_b),
+    dir_a = file_a + '.byasn',
+    dir_b = file_b + '.byasn';
+
   // Strategy:
   // Split each file if not already, then run alg for each ASN.
-  var dir_a = out_dir + '/' + name_a + '.components',
-    dir_b = out_dir + '/' + name_b + '.components';
   fs.makeDirSync(out_dir + '/' + name_a + '+' + name_b);
   fs.makeDirSync(out_dir + '/' + name_a + '-' + name_b);
   fs.makeDirSync(out_dir + '/' + name_b + '-' + name_a);
@@ -29,7 +39,7 @@ exports.diff = function (asnInfo, file_a, name_a, file_b, name_b, out_dir) {
       return splitter.split(asnInfo, file_b, dir_b);
     });
   }
-  ret.then(function () {
+  return ret.then(function () {
     // Get asns & run sorted walk.
     var asns_a = fs.readdirSync(dir_a),
       asns_b = fs.readdirSync(dir_b),
@@ -38,14 +48,35 @@ exports.diff = function (asnInfo, file_a, name_a, file_b, name_b, out_dir) {
     while (i < asns_a.length && j < asns_b.length) {
       asn_i = asns_a[i], asn_j = asns_b[j];
       if ((asn_i < asn_j && i < asns_a.length) || j === asns_b.length) {
-        exports.diffASN(dir_a + '/' + asn_i, name_a, undefined , name_b, asn_i, out_dir);
+        exports.diffASN(
+          dir_a + '/' + asn_i,
+          name_a,
+          undefined,
+          name_b,
+          asn_i,
+          out_dir
+        );
         i += 1;
       } else if (asn_i == asn_j) {
-        exports.diffASN(dir_a + '/' + asn_i, name_a, dir_b + '/' + asn_j , name_b, asn_i, out_dir);
+        exports.diffASN(
+          dir_a + '/' + asn_i,
+          name_a,
+          dir_b + '/' + asn_j,
+          name_b,
+          asn_i,
+          out_dir
+        );
         i += 1;
         j += 1;
       } else { // asn_i > asn_j
-        exports.diffASN(undefined, name_a, dir_b + '/' + asn_j , name_b, asn_j, out_dir);
+        exports.diffASN(
+          undefined,
+          name_a,
+          dir_b + '/' + asn_j,
+          name_b,
+          asn_j,
+          out_dir
+        );
         j += 1;
       }
     }
