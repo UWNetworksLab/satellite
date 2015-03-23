@@ -11,7 +11,7 @@ var Q = require('q');
 var fs = require('fs');
 var es = require('event-stream');
 var chalk = require('chalk');
-var asn = require('./asn_aggregation/asn_lookup');
+var asn = require('../asn_aggregation/asn_lookup');
 var dns = require('native-dns-packet');
 
 if (!process.argv[4]) {

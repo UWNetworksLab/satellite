@@ -5,7 +5,6 @@
 // servers from the initial zmap scan.
 
 var fs = require('fs'),
-    readline = require('readline'),
     stream = require('stream'),
     dns = require('native-dns-packet'),
     liner = require('../util/liner').liner,
@@ -38,7 +37,7 @@ watcher._transform = function (line, encoding, done) {
     done();
     return;
   }
-  
+
   if (record.header.qr == 0 || record.header.ra == 0 ) {
     done();
     return;
@@ -72,4 +71,4 @@ input.pipe(liner).pipe(watcher).pipe(output);
 output.on('finish', function() {
   printStats();
   process.exit(0);
-}); 
+});
