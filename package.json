@@ -1,5 +1,5 @@
 {
-  "name": "zmapdns",
+  "name": "satellite",
   "version": "0.0.0",
   "description": "Satellite Internet Observation",
   "dependencies": {
