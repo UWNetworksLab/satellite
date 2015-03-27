@@ -5,6 +5,7 @@ var chalk = require('chalk');
 var fs = require('fs');
 var path = require('path');
 var mkdirp = require('mkdirp');
+var Q = require('q');
 
 var splitter = require('./split');
 

@@ -3,6 +3,7 @@
 
 var chalk = require('chalk');
 var Q = require('q');
+var fs = require('fs');
 var stream = require('stream');
 
 var asn = require('../asn_aggregation/asn_lookup');
