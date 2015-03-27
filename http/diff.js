@@ -21,21 +21,21 @@ exports.diff = function (asnInfo, file_a, file_b) {
 
   // Strategy:
   // Split each file if not already, then run alg for each ASN.
-  fs.makeDirSync(out_dir + '/' + name_a + '+' + name_b);
-  fs.makeDirSync(out_dir + '/' + name_a + '-' + name_b);
-  fs.makeDirSync(out_dir + '/' + name_b + '-' + name_a);
+  fs.mkdirSync(out_dir + '/' + name_a + '+' + name_b);
+  fs.mkdirSync(out_dir + '/' + name_a + '-' + name_b);
+  fs.mkdirSync(out_dir + '/' + name_b + '-' + name_a);
 
   var ret = Q(0);
 
   if (!fs.existsSync(dir_a)) {
-    fs.makeDirSync(dir_a);
-    ret.then(function () {
+    fs.mkdirSync(dir_a);
+    ret = ret.then(function () {
       return splitter.split(asnInfo, file_a, dir_a);
     });
   }
   if (!fs.existsSync(dir_b)) {
-    fs.makeDirSync(dir_b);
-    ret.then(function () {
+    fs.mkdirSync(dir_b);
+    ret = ret.then(function () {
       return splitter.split(asnInfo, file_b, dir_b);
     });
   }

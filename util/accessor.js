@@ -17,7 +17,7 @@ var fs = require('fs');
 
 function mapper (key) {
   var out = {};
-  return this.data.map(function (item) {
+  this.data.map(function (item) {
     out[item[key]] = true;
   });
   return Object.keys(out);
@@ -25,7 +25,7 @@ function mapper (key) {
 
 function filterer (key, val) {
   return this.data.filter(function (item) {
-    return item[key] === val;
+    return item[key] == val;
   });
 }
 

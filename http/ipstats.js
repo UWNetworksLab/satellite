@@ -31,7 +31,7 @@ queue.then(function () {
 
 runInfo.ports().forEach(function (port) {
   queue = queue.then(function (p) {
-    var items = accessor.withport(p);
+    var items = runInfo.withport(p);
     return diff.diff(asnTable, items[0].name, items[1].name);
   }.bind({}, port))
 });
@@ -42,7 +42,7 @@ queue.then(function () {
 });
 runInfo.modes().forEach(function (mode) {
   queue = queue.then(function (m) {
-    var items = accessor.withmode(m);
+    var items = runInfo.withmode(m);
     return diff.diff(asnTable, items[0].name, items[1].name);
   }.bind({}, mode))
 });
@@ -78,6 +78,9 @@ queue.then(function () {
 
   console.log(chalk.green('Done.'));
   process.exit(0);
+}).catch(function (err) {
+  console.error(err);
+  throw err;
 });
 
 // what is the union of file names across several folders?
