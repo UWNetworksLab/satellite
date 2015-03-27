@@ -4,6 +4,7 @@
 var chalk = require('chalk');
 var fs = require('fs');
 var path = require('path');
+var mkdirp = require('mkdirp');
 
 var splitter = require('./split');
 
@@ -21,20 +22,20 @@ exports.diff = function (asnInfo, file_a, file_b) {
 
   // Strategy:
   // Split each file if not already, then run alg for each ASN.
-  fs.mkdirSync(out_dir + '/' + name_a + '+' + name_b);
-  fs.mkdirSync(out_dir + '/' + name_a + '-' + name_b);
-  fs.mkdirSync(out_dir + '/' + name_b + '-' + name_a);
+  mkdirp.sync(out_dir + '/' + name_a + '+' + name_b);
+  mkdirp.sync(out_dir + '/' + name_a + '-' + name_b);
+  mkdirp.sync(out_dir + '/' + name_b + '-' + name_a);
 
   var ret = Q(0);
 
   if (!fs.existsSync(dir_a)) {
-    fs.mkdirSync(dir_a);
+    mkdirp.sync(dir_a);
     ret = ret.then(function () {
       return splitter.split(asnInfo, file_a, dir_a);
     });
   }
   if (!fs.existsSync(dir_b)) {
-    fs.mkdirSync(dir_b);
+    mkdirp.sync(dir_b);
     ret = ret.then(function () {
       return splitter.split(asnInfo, file_b, dir_b);
     });
