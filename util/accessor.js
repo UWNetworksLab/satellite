@@ -1,6 +1,8 @@
 /* jslint node:true */
 'use strict';
 
+var fs = require('fs');
+
 /**
  * given run info, which looks like:
  * {
@@ -36,5 +38,5 @@ module.exports = function (file) {
   keys.forEach(function (key) {
     this[key + 's'] = mapper.bind(this, key);
     this['with' + key] = filterer.bind(this, key);
-  });
+  }.bind(this));
 };

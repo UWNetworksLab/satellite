@@ -6,7 +6,7 @@ var fs = require('fs');
 var Q = require('q');
 var path = require('path');
 
-var accessor = require('../util/accessor');
+var Accessor = require('../util/accessor');
 var diff = require('./diff');
 
 // Given HTTP & HTTPS scans, aggregate ASN level stats.
@@ -18,9 +18,9 @@ if (!process.argv[3]) {
   process.exit(1);
 }
 
-var runInfo = new Accessor(process.argv[2]));
+var runInfo = new Accessor(process.argv[2]);
 var asnTable = process.argv[3];
-var runDir = path.dirname(runInfo[0].name);
+var runDir = path.dirname(runInfo.data[0].name);
 
 var queue = Q(0);
 
@@ -56,7 +56,7 @@ queue.then(function () {
     folders = [],
     combos = [[0,1], [2,3], [0,2], [1,3]],
     asns,
-    output {};
+    output = {};
 
   combos.forEach(function (c) {
     folders = folders.concat([
