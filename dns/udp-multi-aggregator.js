@@ -15,7 +15,7 @@ var asn = require('../asn_aggregation/asn_lookup');
 var dns = require('native-dns-packet');
 
 if (!process.argv[4]) {
-  console.error(chalk.red("Usage: asn_aggregator.js <rundir> <ASN table> <output file.>"));
+  console.error(chalk.red("Usage: asn_aggregator.js <rundir> <ASN table> <output file>"));
   process.exit(1);
 }
 var rundir = process.argv[2];
@@ -32,10 +32,16 @@ function parseDomainLine(map, into, domains, line) {
   if (parts.length !== 4) {
     return;
   }
-  theasn = map.lookup(parts[0]);
   thedomain = domains[parseInt(parts[1], 10)];
+  if (thedomain === undefined) {
+    return;
+  }
+  theasn = map.lookup(parts[0]);
+  if (theasn === 'ZZ') {
+    theasn = 'unknown';
+  }
   try {
-    record = dns.parse(new Buffer(parts[2], 'hex'));
+    record = dns.parse(new Buffer(parts[3], 'hex'));
     if (!into[thedomain][theasn]) {
       into[thedomain][theasn] = {};
     }
@@ -56,7 +62,6 @@ function parseDomainLine(map, into, domains, line) {
     }
   } catch (e) {
     into[thedomain].failed += 1;
-    return;
   }
 }
 
@@ -69,9 +74,6 @@ function collapseSingle(map, domains, file) {
       failed: 0
     };
   });
-  if (fs.existsSync(rundir + '/' + file + '.asn.json')) {
-    return new Q(0);
-  }
 
   return Q.Promise(function (resolve, reject) {
     fs.createReadStream(rundir + '/' + file)
@@ -79,7 +81,7 @@ function collapseSingle(map, domains, file) {
       .pipe(es.mapSync(parseDomainLine.bind({}, map, into, domains)))
       .on('end', resolve)
       .on('error', reject);
-  }).then(function (m) {
+  }).then(function () {
     var i;
     for (i = 0; i < domains.length; i += 1) {
       fs.writeSync(outFD, JSON.stringify(into[domains[i]]) + '\n');
@@ -97,11 +99,11 @@ function collapseAll(asm) {
       n = 0,
       allFiles = [];
     files.forEach(function (file) {
-      if (file.indexOf('.csv') < 0 || file.indexOf('asn.json') > 0 || !fs.existsSync(file.replace(".csv", ".json"))) {
+      if (file.indexOf('.csv') < 0 || !fs.existsSync(rundir + '/' + file.replace('.csv', '.json'))) {
         return;
       }
       allFiles.push(file);
-      var domains = JSON.parse(fs.readFileSync(file.replace(".csv", ".json")));
+      var domains = JSON.parse(fs.readFileSync(rundir + '/' + file.replace('.csv', '.json')));
       n += 1;
       if (n % 10 === 0) {
         base.then(function () {
