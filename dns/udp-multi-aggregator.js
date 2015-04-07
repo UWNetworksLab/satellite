@@ -24,12 +24,12 @@ var outFile = process.argv[4];
 var outFD = fs.openSync(outFile, 'ax');
 
 
-function parseDomainLine(map, into, domains, line) {
+function parseDomainLine(map, blacklist, into, domains, line) {
   var parts = line.toString('ascii').split(','),
     theasn,
     thedomain,
     record;
-  if (parts.length !== 4) {
+  if (parts.length !== 4 || blacklist[parts[0]]) {
     return;
   }
   thedomain = domains[parseInt(parts[1], 10)];
@@ -66,7 +66,7 @@ function parseDomainLine(map, into, domains, line) {
 }
 
 // Read one csv file line by line.
-function collapseSingle(map, domains, file) {
+function collapseSingle(map, blacklist, domains, file) {
   var into = {};
   domains.forEach(function (dom) {
     into[dom] = {
@@ -78,7 +78,7 @@ function collapseSingle(map, domains, file) {
   return Q.Promise(function (resolve, reject) {
     fs.createReadStream(rundir + '/' + file)
       .pipe(es.split())
-      .pipe(es.mapSync(parseDomainLine.bind({}, map, into, domains)))
+      .pipe(es.mapSync(parseDomainLine.bind({}, map, blacklist, into, domains)))
       .on('end', resolve)
       .on('error', reject);
   }).then(function () {
@@ -91,7 +91,7 @@ function collapseSingle(map, domains, file) {
   });
 }
 
-function collapseAll(asm) {
+function collapseAll(asm, blacklist) {
   var files = fs.readdirSync(rundir);
   console.log(chalk.blue("Starting Aggregation of %d files"), files.length);
   return Q.Promise(function (resolve, reject) {
@@ -107,7 +107,7 @@ function collapseAll(asm) {
       n += 1;
       if (n % 10 === 0) {
         base.then(function () {
-          console.log(chalk.blue("."));
+          console.log(chalk.blue('.'));
         });
       }
       if (n % 100 === 0) {
@@ -115,7 +115,7 @@ function collapseAll(asm) {
           console.log(chalk.green(x));
         }.bind({}, n));
       }
-      base = base.then(collapseSingle.bind({}, asm, domains, file));
+      base = base.then(collapseSingle.bind({}, asm, blacklist, domains, file));
     });
     return base.then(function () {
       console.log(chalk.green('Done.'));
@@ -124,8 +124,37 @@ function collapseAll(asm) {
   });
 }
 
-asn.getMap(asnTable)
-  .then(collapseAll)
+function parseBlackList(into, line) {
+  var parts = line.split(','),
+    record;
+  if (parts.length == 3) {
+    try {
+      record = dns.parse(new Buffer(parts[2], 'hex'));
+    } catch (e) {
+      return;
+    }
+    if (record.header.ra == 1 && record.answer.length > 0 && record.answer[0].address !== '128.208.3.200') {
+      into[parts[0]] = true;
+    }
+  }
+}
+
+function getBlackList(filename) {
+  return Q.Promise(function (resolve, reject) {
+    var into = {};
+    console.log(chalk.blue("Generating Server Filter List"));
+    fs.createReadStream(rundir + '/' + filename)
+      .pipe(es.split())
+      .pipe(es.mapSync(parseBlacklistLine.bind({}, into)))
+      .on('end', function () {
+        console.log(chalk.green('Done.'));
+        resolve(into);
+      })
+      .on('error', reject);
+  });
+}
+
+Q.spread([asn.getMap(asnTable), getBlackList('cs.washington.edu.csv')], collapseAll)
   .then(function () {
     fs.closeSync(outFD);
     console.log(chalk.green('Done'));
