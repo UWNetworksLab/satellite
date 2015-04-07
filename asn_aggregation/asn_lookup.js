@@ -5,23 +5,29 @@
  */
 var Q = require('q');
 var fs = require('fs');
-var es = require('event-stream')
-var chalk = require('chalk')
+var es = require('event-stream');
+var chalk = require('chalk');
 var sys = require('sys');
 var exec = require('child_process').exec;
 var ip_utils = require('../util/ip_utils');
-function puts(error, stdout, stderr) { sys.puts(stdout) }
   
 
 // actually: http://archive.routeviews.org/dnszones/originas.bz2
 // but domain defaults to broken ipv6 resolution.
 var as_file = "http://128.223.51.20/dnszones/originas.bz2";
 
-if (!fs.existsSync('originas.bz2') ||
-    new Date() - fs.statSync('originas.bz2').mtime > (1000 * 60 * 60 * 24 * 30)) {
-  console.log(chalk.blue("Refreshing OriginAS List"));
-  exec("curl -O " + as_file, puts);
-  exec("bunzip2 originas.bz2", puts);
+function fetchOriginAS () {
+  console.log(chalk.blue('Refreshing OriginAS List'));
+  return Q.Promise(function (resolve, reject) {
+    exec('curl ' + as_file + ' | bunzip2 > originas', function (error) {
+      if (error) {
+        reject(new Error(error));
+      } else {
+        console.log(chalk.green('Done.'));
+        resolve();
+      }
+    });
+  });
 }
 
 // Take a line of the origin AS file and load it into a hash map.
@@ -85,7 +91,10 @@ function makeASMap() {
     fs.createReadStream("originas", {flags: 'r'})
       .pipe(es.split())  //split on new lines
       .pipe(es.mapSync(parseASLine.bind({}, map)))
-      .on('end', function() {resolve(map);})
+      .on('end', function() {
+        console.log(chalk.green('Done.'));
+        resolve(map);
+      })
       .on('error', function(err) { reject('Error Building ASN Mapping' + err); });
   });
 }
@@ -101,7 +110,7 @@ function loadASMap(mapFile) {
     });
   } else if (!fs.existsSync('asmap.json') ||
       new Date() - fs.statSync('asmap.json').mtime > (1000 * 60 * 60 * 24 * 30)) {
-        prom = prom.then(makeASMap).then(function(map) {
+        prom = prom.then(fetchOriginAS).then(makeASMap).then(function(map) {
           var lu = map.lookup;
           delete map.lookup;
           fs.writeFileSync("asmap.json", JSON.stringify(map));
