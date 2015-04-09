@@ -1,0 +1,21 @@
+extends layout
+
+block css
+  link(rel='stylesheet', href='/stylesheets/map.css')
+
+block content
+  div.container
+    div#map
+
+  div.modal.fade(tabindex='-1', role='dialog', data-backdrop='false')
+    div.modal-dialog
+      div.modal-content
+        div.modal-header
+          button.close(type='button', data-dismiss='modal') x
+          h3.title
+        div.modal-body
+
+  script(src='http://d3js.org/d3.v3.min.js')
+  script(src='http://d3js.org/topojson.v1.min.js')
+  script(src='/javascripts/map.js')
+  
