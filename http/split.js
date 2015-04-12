@@ -17,7 +17,7 @@ exports.split = function (asnTable, file, out_dir) {
     console.log(chalk.blue('Reading ' + file));
 
     var input = fs.createReadStream(file),
-      spliter = exports.makeSplitter(map);
+      splitter = exports.makeSplitter(map);
 
     return Q.Promise(function (resolve, reject) {
       input.pipe(liner).pipe(splitter);
@@ -30,7 +30,7 @@ exports.split = function (asnTable, file, out_dir) {
     splitter.finish(out_dir);
     console.log(chalk.green('done.'));
   }).catch(function (e) {
-    console.error(chal.red(e));
+    console.dir(e);
   });
 };
 
@@ -38,7 +38,7 @@ exports.split = function (asnTable, file, out_dir) {
 // can subsubsequently write out to a directory.
 exports.makeSplitter = function (map) {
   var table = {},
-    sink = new stream.Writable({ objectMode: true });
+    sink = new stream.Writable({ decodeStrings:false });
 
   sink._write = function (line, encoding, done) {
     var asn = map.lookup(line);
