@@ -21,7 +21,7 @@ exports.split = function (asnTable, file, out_dir) {
 
     return Q.Promise(function (resolve, reject) {
       input.pipe(liner).pipe(splitter);
-      splitter.on('finish', function () {
+      input.on('end', function () {
         resolve(splitter);
       });
     });
@@ -36,9 +36,9 @@ exports.split = function (asnTable, file, out_dir) {
 // can subsubsequently write out to a directory.
 exports.makeSplitter = function (map) {
   var table = {},
-    watcher = new stream.Transform( { objectMode: true } );
+    sink = new stream.Writable({ objectMode: true });
 
-  watcher._transform = function (line, encoding, done) {
+  sink._write = function (line, encoding, done) {
     var asn = map.lookup(line);
     if (asn && asn !== 'ZZ') {
       if (!table[asn]) {
@@ -47,14 +47,15 @@ exports.makeSplitter = function (map) {
       table[asn].push(line);
     }
     done();
-  }
-  watcher.get = function (asn) {
+  };
+
+  sink.get = function (asn) {
     if (!asn) {
       return table;
     }
     return table[asn];
   };
-  watcher.finish = function (out_dir) {
+  sink.finish = function (out_dir) {
     var asns = Object.keys(table),
       i;
     asns.forEach(function (asn) {
@@ -67,5 +68,5 @@ exports.makeSplitter = function (map) {
     table = {};
   };
 
-  return watcher;
+  return sink;
 }
