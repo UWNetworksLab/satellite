@@ -69,7 +69,15 @@ recordLookupTable()
   node asn_aggregation/makemap.js $thisRun runs/
 }
 
-##9. Archive
+##9. Run HTTP Scans.
+runHTTPScans()
+{
+  echo "Scanning HTTP(s)..."
+  mkdir runs/$thisRun-http
+  node http/managedscans.js runs/$thisRun-http
+}
+
+##10. Archive
 makeArchive()
 {
   echo "Archiving..."
@@ -78,14 +86,14 @@ makeArchive()
   node generateStudyMetadata.js
 }
 
-##10. Aggregate
+##11. Aggregate
 aggregateRun()
 {
   echo "Aggregating..."
   node dns/udp-multi-aggregator.js runs/$thisRun runs/$thisRun.lookup.json runs/$thisRun.asn.json
 }
 
-##10. Clean up
+##12. Clean up
 cleanup()
 {
   echo "Cleaning up..."
@@ -100,6 +108,7 @@ getActiveResolvers  # does cs.washington.edu run
 getGoodHosts        # recreates dns_servers.txt from the cs.washington.edu run
 runTopSites          # runs all top domains against dns_servers.txt
 recordLookupTable    # Build lookup table of current bgp annoncements.
+runHTTPScans         # scan ports 80 & 443
 makeArchive          # creates archive.
 aggregateRun         # replace folder with ASN aggreates.
 cleanup

@@ -21,7 +21,7 @@ exports.split = function (asnTable, file, out_dir) {
 
     return Q.Promise(function (resolve, reject) {
       input.pipe(liner).pipe(splitter);
-      input.on('end', function () {
+      splitter.on('finish', function () {
         resolve(splitter);
       });
     });
@@ -29,6 +29,8 @@ exports.split = function (asnTable, file, out_dir) {
     console.log(chalk.blue('Writing Output.'));
     splitter.finish(out_dir);
     console.log(chalk.green('done.'));
+  }).catch(function (e) {
+    console.error(chal.red(e));
   });
 };
 
