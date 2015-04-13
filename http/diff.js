@@ -94,10 +94,10 @@ exports.diffASN = function (file_a, name_a, file_b, name_b, asn, out_dir) {
     ips_bonly = [];
 
   if (fs.existsSync(file_a)) {
-    ips_a = JSON.parse(fs.readFileSync(file_a));
+    ips_a = fs.readFileSync(file_a, {encoding: 'utf8'}).split('\n');
   }
   if (fs.existsSync(file_b)) {
-    ips_b = JSON.parse(fs.readFileSync(file_b));
+    ips_b = fs.readFileSync(file_b, {encoding: 'utf8'}).split('\n');
   }
 
   ips_a.forEach(function (ip) {
