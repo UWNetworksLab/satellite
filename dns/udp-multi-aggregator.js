@@ -145,7 +145,7 @@ function getBlackList(filename) {
     console.log(chalk.blue("Generating Server Filter List"));
     fs.createReadStream(rundir + '/' + filename)
       .pipe(es.split())
-      .pipe(es.mapSync(parseBlacklistLine.bind({}, into)))
+      .pipe(es.mapSync(parseBlackList.bind({}, into)))
       .on('end', function () {
         console.log(chalk.green('Done.'));
         resolve(into);
@@ -157,7 +157,7 @@ function getBlackList(filename) {
 Q.spread([asn.getMap(asnTable), getBlackList('cs.washington.edu.csv')], collapseAll)
   .then(function () {
     fs.closeSync(outFD);
-    console.log(chalk.green('Done'));
+    console.log(chalk.green('Done.'));
     process.exit(0);
   }, function (err) {
     console.error(chalk.red(err));
