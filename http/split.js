@@ -43,7 +43,7 @@ exports.makeSplitter = function (map, out_dir) {
   var table = {},
     sink = new stream.Writable({ decodeStrings:false });
 
-  sing.out_dir = out_dir;
+  sink.out_dir = out_dir;
   sink._write = function (line, encoding, done) {
     var asn = map.lookup(line);
     if (asn && asn !== 'ZZ') {
