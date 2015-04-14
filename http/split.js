@@ -68,7 +68,7 @@ exports.makeSplitter = function (map, out_dir) {
       i;
     asns.forEach(function (asn) {
       if (table[asn].length) {
-        this.flush_asn(asn);
+        sink.flush_asn(asn);
         i += 1;
         if (i % 1000 === 0) {
           console.write(chalk.yellow('.'));
