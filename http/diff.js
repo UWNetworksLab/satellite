@@ -45,8 +45,8 @@ exports.diff = function (asnInfo, file_a, file_b) {
     // Get asns & run sorted walk.
     var asns_a = fs.readdirSync(dir_a),
       asns_b = fs.readdirSync(dir_b),
-      i = 0, asni,
-      j = 0, asnj;
+      i = 0, asn_i,
+      j = 0, asn_j;
     while (i < asns_a.length && j < asns_b.length) {
       asn_i = asns_a[i], asn_j = asns_b[j];
       if ((asn_i < asn_j && i < asns_a.length) || j === asns_b.length) {
@@ -113,10 +113,13 @@ exports.diffASN = function (file_a, name_a, file_b, name_b, asn, out_dir) {
     }
   });
 
-  fs.writeFileSync(JSON.stringify(ips_both),
-      out_dir + '/' + name_a + '+' + name_b + '/' + asn + '.json');
-  fs.writeFileSync(JSON.stringify(ips_aonly),
-      out_dir + '/' + name_a + '-' + name_b + '/' + asn + '.json');
-  fs.writeFileSync(JSON.stringify(ips_bonly),
-      out_dir + '/' + name_b + '-' + name_a + '/' + asn + '.json');
+  fs.writeFileSync(
+      out_dir + '/' + name_a + '+' + name_b + '/' + asn + '.json',
+      JSON.stringify(ips_both));
+  fs.writeFileSync(
+      out_dir + '/' + name_a + '-' + name_b + '/' + asn + '.json',
+      JSON.stringify(ips_aonly));
+  fs.writeFileSync(
+      out_dir + '/' + name_b + '-' + name_a + '/' + asn + '.json',
+      JSON.stringify(ips_bonly));
 };

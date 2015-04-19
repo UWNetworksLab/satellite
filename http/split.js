@@ -51,7 +51,7 @@ exports.makeSplitter = function (map, out_dir) {
         table[asn] = [];
       }
       table[asn].push(line);
-      if (table[asn].length > 1000) {
+      if (table[asn].length > 5000) {
         this.flush_asn(asn);
       }
     }
