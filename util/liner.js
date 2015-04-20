@@ -11,10 +11,10 @@ var makeLiner = function() {
     if (this._lastLineData) {
       data = this._lastLineData + data;
     }
-  
+
     lines = data.split('\n');
     this._lastLineData = lines.splice(lines.length - 1, 1)[0];
-  
+
     lines.forEach(this.push.bind(this));
     done();
   };
@@ -29,8 +29,19 @@ var makeLiner = function() {
   return liner;
 }
 /** end line chunker */
+var makeReturner = function () {
+  var obj = new stream.Transform({objectMode: true});
+
+  obj._transform = function (chunk, encoding, done) {
+    this.push(chunk + '\n');
+    done();
+  };
+  return obj;
+};
+
 
 module.exports = {
   liner: makeLiner(),
-  get: makeLiner
+  get: makeLiner,
+  newline: makeReturner
 };

@@ -7,8 +7,8 @@ var fse = require('fs-extra');
 var path = require('path');
 var mkdirp = require('mkdirp');
 var Q = require('q');
-var liner = require('../util/liner').liner;
-var diffStream = require('sorted-diff-stream');
+var liner = require('../util/liner');
+var differ = require('../util/differ');
 
 var splitter = require('./split');
 
@@ -108,33 +108,16 @@ exports.diffASN = function (file_a, name_a, file_b, name_b, asn, out_dir) {
 
       var both = fs.createWriteStream(
             ot + '/' + na + '+' + nb + '/' + as),
-          aonly = fs.writeFileSync(
+          aonly = fs.createWriteStream(
             ot + '/' + na + '-' + nb + '/' + as),
-          bonly = fs.writeFileSync(
+          bonly = fs.createWriteStream(
             ot + '/' + nb + '-' + na + '/' + as);
 
-      var iseq = function (a, b) {
-        if (a === b) {
-          both.write(a);
-          both.write('\n');
-          return true;
-        }
-        return false;
-      };
-
-      var diffs = diffStream(stream_a.pipe(liner), stream_b.pipe(liner), iseq);
-      diffs.on('data', function(diff) {
-        if (diff[0]) {
-          aonly.write(diff[0]);
-          aonly.write('\n');
-        } else {
-          bonly.write(diff[1]);
-          bonly.write('\n');
-        }
-      });
-      diffs.on('end', function () {
-        both.end();
-        resolve();
-      });
+      both.on('finish', resolve);
+      var bothin = liner.newline();
+      bothin.pipe(both);
+      var handles = differ(bothin);
+      stream_a.pipe(liner.get()).pipe(handles[0]).pipe(liner.newline()).pipe(aonly);
+      stream_b.pipe(liner.get()).pipe(handles[1]).pipe(liner.newline()).pipe(bonly);
     }.bind({},file_a, name_a, file_b, name_b, asn, out_dir));
 };
