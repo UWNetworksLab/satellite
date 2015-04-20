@@ -107,11 +107,11 @@ exports.diffASN = function (file_a, name_a, file_b, name_b, asn, out_dir) {
       stream_b = fs.createReadStream(fb);
 
       var both = fs.createWriteStream(
-            ot + '/' + na + '+' + nb + '/' + as + '.json'),
+            ot + '/' + na + '+' + nb + '/' + as),
           aonly = fs.writeFileSync(
-            ot + '/' + na + '-' + nb + '/' + as + '.json'),
+            ot + '/' + na + '-' + nb + '/' + as),
           bonly = fs.writeFileSync(
-            ot + '/' + nb + '-' + na + '/' + as + '.json');
+            ot + '/' + nb + '-' + na + '/' + as);
 
       var iseq = function (a, b) {
         if (a === b) {
