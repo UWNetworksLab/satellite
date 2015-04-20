@@ -19,6 +19,7 @@
   "devDependencies": {
     "chalk": "^0.5.1",
     "event-stream": "^3.1.7",
+    "fs-extra": "^0.18.2",
     "ip2country": "^0.2.3",
     "linebyline": "0.0.7",
     "moment": "^2.9.0",

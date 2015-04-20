@@ -3,6 +3,7 @@
 
 var chalk = require('chalk');
 var fs = require('fs');
+var fse = require('fs-extra');
 var path = require('path');
 var mkdirp = require('mkdirp');
 var Q = require('q');
@@ -43,61 +44,61 @@ exports.diff = function (asnInfo, file_a, file_b) {
       return splitter.split(asnInfo, file_b, dir_b);
     });
   }
-  return ret.then(function () {
-    // Get asns & run sorted walk.
-    var asns_a = fs.readdirSync(dir_a),
-      asns_b = fs.readdirSync(dir_b),
-      i = 0, asn_i,
-      j = 0, asn_j;
+  // Get asns & run sorted walk.
+  var asns_a = fs.readdirSync(dir_a),
+    asns_b = fs.readdirSync(dir_b),
+    i = 0, asn_i,
+    j = 0, asn_j;
 
-    var chain = Q(0);
-    while (i < asns_a.length && j < asns_b.length) {
+  return ret.then(function loop() {
+    if (i < asns_a.length && j < asns_b.length) {
       asn_i = asns_a[i], asn_j = asns_b[j];
       if ((asn_i < asn_j && i < asns_a.length) || j === asns_b.length) {
-        chain = chain.then(exports.diffASN(
+        i += 1;
+        return exports.diffASN(
           dir_a + '/' + asn_i,
           name_a,
           undefined,
           name_b,
           asn_i,
           out_dir
-        ));
-        i += 1;
+        ).then(loop);
       } else if (asn_i == asn_j) {
-        chain = chain.then(exports.diffASN(
+        i += 1;
+        j += 1;
+        return exports.diffASN(
           dir_a + '/' + asn_i,
           name_a,
           dir_b + '/' + asn_j,
           name_b,
           asn_i,
           out_dir
-        ));
-        i += 1;
-        j += 1;
+        ).then(loop);
       } else { // asn_i > asn_j
-        chain = chain.then(exports.diffASN(
+        j += 1;
+        return exports.diffASN(
           undefined,
           name_a,
           dir_b + '/' + asn_j,
           name_b,
           asn_j,
           out_dir
-        ));
-        j += 1;
+        ).then(loop);
       }
     }
-    return chain;
+    console.log('Done.');
+    return Q(0);
   });
 };
 
 /// For pair of ips in an ASN, calculate intersection & partials
 exports.diffASN = function (file_a, name_a, file_b, name_b, asn, out_dir) {
   if (!fs.existsSync(file_a)) {
-    fs.copyFileSync(file_b, out_dir + '/' + name_b + '-' + name_a + '/' + asn + '.json')
+    fse.copySync(file_b, out_dir + '/' + name_b + '-' + name_a + '/' + asn + '.json')
     return Q(0);
   }
   if (!fs.existsSync(file_b)) {
-    fs.copyFileSync(file_a, out_dir + '/' + name_a + '-' + name_b + '/' + asn + '.json')
+    fse.copySync(file_a, out_dir + '/' + name_a + '-' + name_b + '/' + asn + '.json')
     return Q(0);
   }
 
