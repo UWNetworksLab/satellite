@@ -6,6 +6,8 @@ var fs = require('fs');
 var path = require('path');
 var mkdirp = require('mkdirp');
 var Q = require('q');
+var liner = require('../util/liner').liner;
+var diffStream = require('sorted-diff-stream');
 
 var splitter = require('./split');
 
@@ -47,79 +49,91 @@ exports.diff = function (asnInfo, file_a, file_b) {
       asns_b = fs.readdirSync(dir_b),
       i = 0, asn_i,
       j = 0, asn_j;
+
+    var chain = Q(0);
     while (i < asns_a.length && j < asns_b.length) {
       asn_i = asns_a[i], asn_j = asns_b[j];
       if ((asn_i < asn_j && i < asns_a.length) || j === asns_b.length) {
-        exports.diffASN(
+        chain = chain.then(exports.diffASN(
           dir_a + '/' + asn_i,
           name_a,
           undefined,
           name_b,
           asn_i,
           out_dir
-        );
+        ));
         i += 1;
       } else if (asn_i == asn_j) {
-        exports.diffASN(
+        chain = chain.then(exports.diffASN(
           dir_a + '/' + asn_i,
           name_a,
           dir_b + '/' + asn_j,
           name_b,
           asn_i,
           out_dir
-        );
+        ));
         i += 1;
         j += 1;
       } else { // asn_i > asn_j
-        exports.diffASN(
+        chain = chain.then(exports.diffASN(
           undefined,
           name_a,
           dir_b + '/' + asn_j,
           name_b,
           asn_j,
           out_dir
-        );
+        ));
         j += 1;
       }
     }
+    return chain;
   });
 };
 
 /// For pair of ips in an ASN, calculate intersection & partials
 exports.diffASN = function (file_a, name_a, file_b, name_b, asn, out_dir) {
-  var ips_a = [],
-    ips_b = [],
-    ips_both = [],
-    ips_aonly = [],
-    ips_bonly = [];
-
-  if (fs.existsSync(file_a)) {
-    ips_a = fs.readFileSync(file_a, {encoding: 'utf8'}).split('\n');
+  if (!fs.existsSync(file_a)) {
+    fs.copyFileSync(file_b, out_dir + '/' + name_b + '-' + name_a + '/' + asn + '.json')
+    return Q(0);
   }
-  if (fs.existsSync(file_b)) {
-    ips_b = fs.readFileSync(file_b, {encoding: 'utf8'}).split('\n');
+  if (!fs.existsSync(file_b)) {
+    fs.copyFileSync(file_a, out_dir + '/' + name_a + '-' + name_b + '/' + asn + '.json')
+    return Q(0);
   }
 
-  ips_a.forEach(function (ip) {
-    if (ips_b.indexOf(ip) > -1) {
-      ips_both.push(ip);
-    } else {
-      ips_aonly.push(ip);
-    }
-  });
-  ips_b.forEach(function (ip) {
-    if (ips_both.indexOf(ip) < -1) {
-      ips_bonly.push(ip);
-    }
-  });
+  return Q.Promise(function (fa, na, fb, nb, as, ot, resolve) {
+    var stream_a = fs.createReadStream(fa),
+      stream_b = fs.createReadStream(fb);
 
-  fs.writeFileSync(
-      out_dir + '/' + name_a + '+' + name_b + '/' + asn + '.json',
-      JSON.stringify(ips_both));
-  fs.writeFileSync(
-      out_dir + '/' + name_a + '-' + name_b + '/' + asn + '.json',
-      JSON.stringify(ips_aonly));
-  fs.writeFileSync(
-      out_dir + '/' + name_b + '-' + name_a + '/' + asn + '.json',
-      JSON.stringify(ips_bonly));
+      var both = fs.createWriteStream(
+            ot + '/' + na + '+' + nb + '/' + as + '.json'),
+          aonly = fs.writeFileSync(
+            ot + '/' + na + '-' + nb + '/' + as + '.json'),
+          bonly = fs.writeFileSync(
+            ot + '/' + nb + '-' + na + '/' + as + '.json');
+
+      var iseq = function (a, b) {
+        if (a === b) {
+          both.write(a);
+          both.write('\n');
+          return true;
+        }
+        return false;
+      };
+
+      var diffs = diffStream(stream_a.pipe(liner), stream_b.pipe(liner), iseq);
+      diffs.on('data', function(diff) {
+        if (diff[0]) {
+          aonly.write(diff[0]);
+          aonly.write('\n');
+        } else {
+          bonly.write(diff[1]);
+          bonly.write('\n');
+        }
+      });
+      diffs.on('end', function () {
+        both.end();
+        resolve();
+      });
+    }.bind({},file_a, name_a, file_b, name_b, asn, out_dir));
 };
