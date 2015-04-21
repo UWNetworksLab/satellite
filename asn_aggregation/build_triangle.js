@@ -4,8 +4,6 @@ var ProgressBar = require('progress');
 var chalk = require('chalk');
 var getClassC = require('../util/ip_utils.js').getClassC;
 
-var inFile = process.argv[2];
-
 function collapseToClassC(table) {
   var into = {};
 
@@ -17,7 +15,7 @@ function collapseToClassC(table) {
 
       into[domain][classC] = into[domain][classC] || 0;
       into[domain][classC] += table[domain][ip];
-    })
+    });
   });
 
   return into;
@@ -37,7 +35,7 @@ function getIDX(triangle, domain1, domain2) {
   return idx1 + Math.floor(0.5 * (idx2 - 1) * idx2);
 }
 
-function buildTriangle(filename) {
+function buildMatrix(filename) {
   var table = collapseToClassC(JSON.parse(fs.readFileSync(filename))),
     domains = Object.keys(table),
     triangle = {
@@ -63,13 +61,14 @@ function buildTriangle(filename) {
         bTotal = 0,
         intersection = 0;
 
+      Object.keys(a).filter(function (classC) {
+        return b[classC];
+      }).forEach(function (classC) {
+        intersection += Math.min(b[classC], a[classC]);
+      });
+
       Object.keys(a).forEach(function (classC) {
         aTotal += a[classC];
-        if (b[classC]) {
-          intersection += b[classC];
-          bTotal += b[classC];
-          delete b[classC];
-        }
       });
 
       Object.keys(b).forEach(function (classC) {
@@ -77,7 +76,7 @@ function buildTriangle(filename) {
       });
 
       // TODO: how to calc this
-      triangle._array[getIDX(triangle, a, b)] = Math.max(intersection / aTotal, intersection / bTotal);
+      triangle._array[getIDX(triangle, domains[i], domains[j])] = Math.max(intersection / aTotal, intersection / bTotal);
 
       bar.tick();
     }
@@ -86,6 +85,4 @@ function buildTriangle(filename) {
   return triangle;
 }
 
-//console.log(buildTriangle('runs/00-00-0000.domain-ips.json')._array);
-
-exports.getTriangle = buildTriangle;
+exports.getMatrix = buildMatrix;
