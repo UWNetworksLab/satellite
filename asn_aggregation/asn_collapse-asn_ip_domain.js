@@ -94,7 +94,7 @@ function mapDomain(allCSVs, outdir, line) {
       var csv = outdir + '/' + asn + '.csv';
 
       allCSVs[csv] = true;
-      fs.appendFileSync(csv, records.join('\n'));
+      fs.appendFileSync(csv, records.join('\n') + '\n');
     }
   });
 }
