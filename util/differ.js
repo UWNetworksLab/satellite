@@ -53,9 +53,10 @@ var getDiff = function (union, comparison) {
       else if (aqueue.length > 0 && bqueue.length > 0) {
         var comp = comparison(aqueue[0][0], bqueue[0][0]);
         if (comp === 0) {
-          union.write(aqueue[0][0]);
-          aqueue.shift()[1]();
-          bqueue.shift()[1]();
+          var item = [aqueue.shift(), bqueue.shift()];
+          union.write(item[0][0]);
+          item[0][1]();
+          item[1][1]();
         } else if (comp < 0) {
           inone.push(aqueue[0][0]);
           aqueue.shift()[1]();
