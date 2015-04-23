@@ -75,7 +75,7 @@ function buildMatrix(domainToIP, outprefix) {
 
       Object.keys(a).forEach(function (classC) {
         if (b[classC]) {
-          intersection += Math.min(a[classC], b[classC]) * 2;
+          intersection += a[classC] + b[classC];
         }
         total += a[classC];
       });
