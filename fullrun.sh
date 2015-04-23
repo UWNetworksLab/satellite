@@ -9,6 +9,9 @@ getTopSites()
   unzip top-1m.csv.zip
   rm top-1m.csv.zip
   cut -d "," -f 2 top-1m.csv | head -10000 > domains.txt
+  if [[ -n $(node util/config.js domainlist) ]]; then
+    curl -s `node util/config.js domainlist` >> domains.txt
+  fi
   rm top-1m.csv
   cd ..
 }
