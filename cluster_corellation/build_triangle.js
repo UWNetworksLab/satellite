@@ -4,6 +4,12 @@ var ProgressBar = require('progress');
 var chalk = require('chalk');
 var getClassC = require('../util/ip_utils.js').getClassC;
 
+
+// Usage: node build_triangle.js [domain-ip-count table] [output prefix]
+if (process.argv[1].indexOf('build_triangle') > -1) {
+  buildMatrix(process.argv[2], process.argv[3]);
+}
+
 function collapseToClassC(table) {
   var into = {};
 
@@ -44,7 +50,7 @@ function lookup(domain1, domain2) {
 }
 
 function buildMatrix(domainToIP, outprefix) {
-  var table = collapseToClassC(JSON.parse(fs.readFileSync(domainToIP)));
+  var table = collapseToClassC(JSON.parse(fs.readFileSync(domainToIP))),
     domains = Object.keys(table),
     triangle = {
       lookup: lookup,
@@ -57,16 +63,20 @@ function buildMatrix(domainToIP, outprefix) {
   });
 
   console.log(chalk.blue("Building Correlation Matrix"));
-  bar = new ProgressBar(':bar :percent :eta', triangle._buffer.length / 4);
+  bar = new ProgressBar(':bar :percent :eta', Math.floor(triangle._buffer.length / 1000));
 
   for (var i = 0; i < domains.length; i++) {
     for (var j = i + 1; j < domains.length; j++) {
       var a = table[domains[i]],
         b = table[domains[j]],
         total = 0,
-        intersection = 0;
+        intersection = 0,
+        offset = getOffset(triangle, domains[i], domains[j]);
 
       Object.keys(a).forEach(function (classC) {
+        if (b[classC]) {
+          intersection += Math.min(a[classC], b[classC]) * 2;
+        }
         total += a[classC];
       });
 
@@ -74,15 +84,11 @@ function buildMatrix(domainToIP, outprefix) {
         total += b[classC];
       });
 
-      Object.keys(a).filter(function (classC) {
-        return b[classC];
-      }).forEach(function (classC) {
-        intersection += a[classC] + a[classC];
-      });
+      triangle._buffer.writeFloatLE(intersection / total, offset);
 
-      triangle._buffer.writeFloatLE(intersection / total, getOffset(triangle, domains[i], domains[j]));
-
-      bar.tick();
+      if (offset % 1000 == 0) {
+        bar.tick();
+      }
     }
   }
 
