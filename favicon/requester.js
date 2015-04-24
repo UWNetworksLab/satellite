@@ -63,6 +63,7 @@ exports.getFavicon = function(ip, hostname, port) {
     }
   }
   req.on('error', function (err) {
+    req.abort();
     // Timeout/TCP/HTTP-parse errors here
     if (err.code === 'ECONNREFUSED') {
       errfcn(sc.STATUS_CODES.CONNECT_REFUSED);
@@ -80,6 +81,7 @@ exports.getFavicon = function(ip, hostname, port) {
     }
   });
   req.setTimeout(TIMEOUT, function() {
+    req.abort();
     errfcn(sc.STATUS_CODES.TIMEOUT);
   });
 
@@ -87,29 +89,3 @@ exports.getFavicon = function(ip, hostname, port) {
   return deferred.promise;
 };
 
-
-/*
-TODO: Remove test code
-var success = function(success) {
-  console.log("success:");
-  console.log(success);
-};
-var error = function(error) {
-  console.log("error:");
-  console.log(error);
-};
-
-exports.t1 = function() {
-  exports.getFavicon('127.0.0.1', 'www.google.com', 1234).then(success,error);
-};
-
-
-exports.t2 = function() {
-  exports.getFavicon('216.58.216.142', 'www.google.com', 80).then(success,error);
-};
-
-exports.t3 = function() {
-  exports.getFavicon('2.5.2.1', 'www.google.com', 80).then(success,error);
-};
-
-*/

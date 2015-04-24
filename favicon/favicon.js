@@ -15,6 +15,11 @@
  *  ** Present if the response was valid http
  *  *** Present if response was valid http and has the header set.
  *
+ * Usage
+ *  node <favicons.js path> <SourceFile> <OutputFile>
+ *
+ *  * SourceFile should contain mappings of ip to a list of hostnames
+ *  * OutputFile will contain a mapping of ip to another mapping of hostname to result
  */
 
 var http = require('http');
@@ -25,30 +30,17 @@ var requester = require('./requester.js');
 
 http.globalAgent.maxSockets = 100; //TODO: optimal?
 if (process.argv.length !== 4) {
-  console.log('Usage:\n\tnode icons.js <SourceFile> <OutputFile>');
+  console.log('Usage:\n\tnode <favicons.js path> <SourceFile> <OutputFile>');
   process.exit(1);
 }
 var inFile = process.argv[2];
 var outFile = process.argv[3];
 
-
 fs.createReadStream(inFile)
   .pipe(es.split())
   .pipe(es.map(processIP))
   .pipe(es.join('\n'))
-  .pipe(fs.createWriteStream(outFile))
-  .on('error', handleError)
-  .on('end', function() {
-    console.log('Done!');
-  });
-
-
-function handleError(error) {
-  console.log("Error while running: " + error);
-}
-function writeOutput(output) {
-  return Q.nfcall(fs.writeFile, outFile, output);
-}
+  .pipe(fs.createWriteStream(outFile));
 
 function processIP(data, callback) {
   if (data.length === 0) {
@@ -72,7 +64,7 @@ function processIP(data, callback) {
       requester.getFavicon(ip, host, 80).then(function (result) {
         output[ip][host] = result;
         lastresult = result;
-/*TODO: DEBUG*/console.log(host); console.log(lastresult);
+/*TODO: DEBUG*/console.log(ip + " " + host); console.log(lastresult);
         if (hosts.length === 0) {
           callback(null, JSON.stringify(output));
         } else {
@@ -91,7 +83,7 @@ function processIP(data, callback) {
       while (hosts.length > 0) {
         host = hosts.pop();
         output[ip][host] = lastresult;
-/*TODO: DEBUG*/console.log(host); console.log(lastresult);
+/*TODO: DEBUG*/console.log(ip + " " + host); console.log(lastresult);
       }
       callback(null, JSON.stringify(output));
     }
