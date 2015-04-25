@@ -24,11 +24,12 @@
 
 var http = require('http');
 var fs = require('fs');
+var async = require('async');
 var Q = require('q');
 var es = require('event-stream');
 var requester = require('./requester.js');
 
-http.globalAgent.maxSockets = 100; //TODO: optimal?
+http.globalAgent.maxSockets = 500;
 if (process.argv.length !== 4) {
   console.log('Usage:\n\tnode <favicons.js path> <SourceFile> <OutputFile>');
   process.exit(1);
@@ -36,39 +37,46 @@ if (process.argv.length !== 4) {
 var inFile = process.argv[2];
 var outFile = process.argv[3];
 
-fs.createReadStream(inFile)
-  .pipe(es.split())
-  .pipe(es.map(processIP))
-  .pipe(es.join('\n'))
-  .pipe(fs.createWriteStream(outFile));
+Q.nfcall(fs.readFile, inFile)
+  .then(JSON.parse)
+  .then(function(data) {
+    var allIPs = Object.keys(data);
+    var results = {};
+    return Q.promise(function (resolveCB, rejectCB) {
+      async.eachLimit(allIPs, 100, processIP.bind(undefined, data, results), function (err) {
+        if (err) {
+          rejectCB(err);
+        } else {
+          resolveCB(results);
+        }
+      });
+    });
+  })
+  .then(JSON.stringify)
+  .then(function(output) { return Q.nfcall(fs.writeFile, outFile, output); })
+  .catch();
 
-function processIP(data, callback) {
-  if (data.length === 0) {
-    // Ignore Implicit newline at EOF
-    return callback();
-  }
-  var params = JSON.parse(data);
-  var ip = Object.keys(params)[0];
-  var hosts = params[ip];
+function processIP(data, results, ip, callback) {
+  var hosts = Object.keys(data[ip]);
   var good = true;
   var lastresult = null;
 
   // The results of the run.
   var output = {};
-  output[ip] = {};
 
   function oneRun() {
     var host;
     if (good) {
       host = hosts.pop();
-      requester.getFavicon(ip, host, 80).then(function (result) {
-        output[ip][host] = result;
-        lastresult = result;
+      requester.getFavicon(ip, host, 80).then(function (ipresult) {
+        output[host] = ipresult;
+        lastresult = ipresult;
 /*TODO: DEBUG*/console.log(ip + " " + host); console.log(lastresult);
         if (hosts.length === 0) {
-          callback(null, JSON.stringify(output));
+          results[ip] = output;
+          callback(null);
         } else {
-          if (result[0] < 0) {
+          if (ipresult[0] < 0) {
             // Bad result, don't keep trying
             good = false;
             setTimeout(oneRun, 0);
@@ -77,15 +85,16 @@ function processIP(data, callback) {
           }
         }
       }, function (error) {
-        callback(JSON.stringify(error));
+        callback(error);
       }).done();
     } else {
       while (hosts.length > 0) {
         host = hosts.pop();
-        output[ip][host] = lastresult;
+        output[host] = lastresult;
 /*TODO: DEBUG*/console.log(ip + " " + host); console.log(lastresult);
       }
-      callback(null, JSON.stringify(output));
+      results[ip] = output;
+      callback(null);
     }
   }
   oneRun();
