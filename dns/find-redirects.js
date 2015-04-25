@@ -16,11 +16,11 @@ var CONCURRENT_HTTP_REQUESTS = 10;
 var CONCURRENT_DNS_REQUESTS = 10;
 var RETRIES = 3;
 
-function doHTTP(domain) {
+function doHTTP(domain, method) {
   return Q.Promise(function (resolve, reject) {
     var req = http.request({
       host: domain,
-      method: 'HEAD',
+      method: method,
       agent: false,
       headers: {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36'}
     });
@@ -49,14 +49,14 @@ function doHTTP(domain) {
   });
 }
 
-function httpWorker(domains, data) {
+function httpWorker(domains, method, data) {
   return Q.Promise(function (resolve, reject) {
     var doQuery = function () {
       var domain;
 
       if (domains.length > 0) {
         domain = domains.pop();
-        return doHTTP(domain).then(function (result) {
+        return doHTTP(domain, method).then(function (result) {
           data[domain].code = result.code;
           data[domain].location = result.location;
           return doQuery();
@@ -91,7 +91,11 @@ function doAllHTTP(domains) {
   for (i = 0; i < RETRIES && todo.length > 0; i++) {
     base = base.then(function () {
       return Q.all(new Array(CONCURRENT_HTTP_REQUESTS).join().split(',').map(function () {
-        return httpWorker(todo, data);
+        if (i == RETRIES - 1) { // do a GET as a last resort
+          return httpWorker(todo, 'GET', data);
+        } else {
+          return httpWorker(todo, 'HEAD', data);
+        }
       }))
     }, console.error).then(function () {
       return Q.Promise(function (resolve, reject) {
