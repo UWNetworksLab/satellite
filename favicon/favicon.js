@@ -29,7 +29,9 @@ var Q = require('q');
 var es = require('event-stream');
 var requester = require('./requester.js');
 
-http.globalAgent.maxSockets = 500;
+var CONCURRENT_IPS = 1000;
+
+http.globalAgent.maxSockets = 10000;
 if (process.argv.length !== 4) {
   console.log('Usage:\n\tnode <favicons.js path> <SourceFile> <OutputFile>');
   process.exit(1);
@@ -43,7 +45,7 @@ Q.nfcall(fs.readFile, inFile)
     var allIPs = Object.keys(data);
     var results = {};
     return Q.promise(function (resolveCB, rejectCB) {
-      async.eachLimit(allIPs, 100, processIP.bind(undefined, data, results), function (err) {
+      async.eachLimit(allIPs, CONCURRENT_IPS, processIP.bind(undefined, data, results), function (err) {
         if (err) {
           rejectCB(err);
         } else {
@@ -54,7 +56,9 @@ Q.nfcall(fs.readFile, inFile)
   })
   .then(JSON.stringify)
   .then(function(output) { return Q.nfcall(fs.writeFile, outFile, output); })
-  .catch();
+  .catch(function (err) {
+    console.log(err);
+  });
 
 function processIP(data, results, ip, callback) {
   var hosts = Object.keys(data[ip]);
@@ -71,7 +75,6 @@ function processIP(data, results, ip, callback) {
       requester.getFavicon(ip, host, 80).then(function (ipresult) {
         output[host] = ipresult;
         lastresult = ipresult;
-/*TODO: DEBUG*/console.log(ip + " " + host); console.log(lastresult);
         if (hosts.length === 0) {
           results[ip] = output;
           callback(null);
@@ -91,7 +94,6 @@ function processIP(data, results, ip, callback) {
       while (hosts.length > 0) {
         host = hosts.pop();
         output[host] = lastresult;
-/*TODO: DEBUG*/console.log(ip + " " + host); console.log(lastresult);
       }
       results[ip] = output;
       callback(null);

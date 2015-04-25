@@ -53,7 +53,6 @@ function getFaviconHttps(ip, hostname, port, deferred) {
   options.rejectUnauthorized = false;
   var req = https.request(options);
 
-  console.log('Switched to https');
   req.on('response', function(res) {
     buildResult(res, deferred.resolve);
   });
