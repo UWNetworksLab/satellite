@@ -9,8 +9,8 @@ getTopSites()
   unzip top-1m.csv.zip
   rm top-1m.csv.zip
   cut -d "," -f 2 top-1m.csv | head -10000 > domains.txt
-  if [[ -n $(node util/config.js domainlist) ]]; then
-    curl -s `node util/config.js domainlist` >> domains.txt
+  if [[ -n $(node ../util/config.js domainlist) ]]; then
+    curl -s `node ../util/config.js domainlist` >> domains.txt
   fi
   rm top-1m.csv
   cd ..
@@ -20,7 +20,7 @@ getTopSites()
 addRedirects()
 {
   echo "Learning Redirects..."
-  node dns/find-redirects.js runs temp/domains.txt temp/extra
+  node dns/find-redirects.js temp/domains.txt temp/extra
   cat temp/extra-uniqRedirects.txt >> temp/domains.txt
   rm temp/extra-uniqRedirects.txt
 }
