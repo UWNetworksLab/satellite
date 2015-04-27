@@ -5,8 +5,8 @@ var chalk = require('chalk');
 var getClassC = require('../util/ip_utils.js').getClassC;
 
 
-// Usage: node build_triangle.js [domain-ip-count table] [output prefix]
-if (process.argv[1].indexOf('build_triangle') > -1) {
+// Usage: node correlation-matrix.js [domain-ip-count table] [output prefix]
+if (process.argv[1] && process.argv[1].indexOf('correlation-matrix') > -1) {
   buildMatrix(process.argv[2], process.argv[3]);
 }
 
@@ -43,7 +43,7 @@ function getOffset(triangle, domain1, domain2) {
 
 function lookup(domain1, domain2) {
   if (domain1 === domain2) {
-    return undefined;
+    return 1.0;
   }
 
   return this._buffer.readFloatLE(getOffset(this, domain1, domain2));

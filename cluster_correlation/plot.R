@@ -10,7 +10,7 @@ dev.off()
 # sort(d,partial=n-1000)[n-1000]
 # [1] 0.9938439
 
-# var m = require('../satellite/asn_aggregation/build_triangle.js').loadMatrix('matrix')
+# var m = require('../satellite/asn_aggregation/correlation-matrix.js').loadMatrix('matrix')
 # var fs = require('fs')
 # var result = []
 # var domains = Object.keys(m._domains)
