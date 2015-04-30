@@ -27,78 +27,71 @@ var fs = require('fs');
 var async = require('async');
 var Q = require('q');
 var es = require('event-stream');
+var mapConcurrent = require('map-stream-concurrent');
 var requester = require('./requester.js');
 
 var CONCURRENT_IPS = 1000;
 
 http.globalAgent.maxSockets = 10000;
-if (process.argv.length !== 4) {
-  console.log('Usage:\n\tnode <favicons.js path> <SourceFile> <OutputFile>');
+if (process.argv.length !== 5) {
+  console.log('Usage:\n\tnode <favicon.js> <ip-domains> <domain-hash> <OutputFile>');
   process.exit(1);
 }
-var inFile = process.argv[2];
-var outFile = process.argv[3];
+var infile = JSON.parse(fs.readFileSync(process.argv[2]));
+var hashes = JSON.parse(fs.readFileSync(process.argv[3]));
+var outFile = fs.createWriteStream(process.argv[4]);
+console.log('Files loaded in memory');
 
-Q.nfcall(fs.readFile, inFile)
-  .then(JSON.parse)
-  .then(function(data) {
-    var allIPs = Object.keys(data);
-    var results = {};
-    return Q.promise(function (resolveCB, rejectCB) {
-      async.eachLimit(allIPs, CONCURRENT_IPS, processIP.bind(undefined, data, results), function (err) {
-        if (err) {
-          rejectCB(err);
-        } else {
-          resolveCB(results);
-        }
-      });
-    });
-  })
-  .then(JSON.stringify)
-  .then(function(output) { return Q.nfcall(fs.writeFile, outFile, output); })
-  .catch(function (err) {
-    console.log(err);
+var ips = Object.keys(infile);
+from(ips).pipe(mapConcurrent(CONCURRENT_IPS, processIP)).pipe(es.join('\n')).pipe(outfile);
+
+function processIP(ip, callback) {
+  var hosts = Object.keys(infile[ip]);
+  hosts = hosts.filter(function (host) {
+    return hashes[host] !== undefined;
   });
 
-function processIP(data, results, ip, callback) {
-  var hosts = Object.keys(data[ip]);
-  var good = true;
-  var lastresult = null;
+  var state = {
+    ip: ip,
+    hosts: hosts,
+    good: true,
+    lastresult: null,
+    callback: callback,
+    output: {};
+  };
 
-  // The results of the run.
-  var output = {};
-
-  function oneRun() {
-    var host;
-    if (good) {
-      host = hosts.pop();
-      requester.getFavicon(ip, host, 80).then(function (ipresult) {
-        output[host] = ipresult;
-        lastresult = ipresult;
-        if (hosts.length === 0) {
-          results[ip] = output;
-          callback(null);
-        } else {
-          if (ipresult[0] < 0) {
-            // Bad result, don't keep trying
-            good = false;
-            setTimeout(oneRun, 0);
-          } else {
-            setTimeout(oneRun, 1000);
-          }
-        }
-      }, function (error) {
-        callback(error);
-      }).done();
+  state.onFavicon = function (state, ipresult) {
+    state.output[host] = ipresult;
+    state.lastresult = ipresult;
+    if (state.hosts.length === 0) {
+      state.callback([state.ip, state.output]);
     } else {
-      while (hosts.length > 0) {
-        host = hosts.pop();
-        output[host] = lastresult;
+      if (ipresult[0] < 0) {
+        // Bad result, don't keep trying
+        state.good = false;
+        setTimeout(state.next, 0);
+      } else {
+        setTimeout(state.next, 1000);
       }
-      results[ip] = output;
-      callback(null);
     }
-  }
-  oneRun();
-}
+  }.bind({}, state);
 
+  state.next = function(state) {
+    var host;
+    if (state.good) {
+      host = state.hosts.shift();
+      requester.getFavicon(state.ip, host, 80).then(state.onFavicon, function (error) {
+        console.warn(error);
+        setTimeout(state.next, 1000);
+      });
+    } else {
+      while (state.hosts.length > 0) {
+        host = state.hosts.pop();
+        state.output[host] = state.lastresult;
+      }
+      state.callback([state.ip, state.output]);
+    }
+  }.bind({}, state);
+
+  state.next();
+}
