@@ -3,9 +3,12 @@
 
 var chalk = require('chalk');
 var fs = require('fs');
+var fse = require('fs-extra');
 var path = require('path');
 var mkdirp = require('mkdirp');
 var Q = require('q');
+var liner = require('../util/liner');
+var differ = require('../util/differ');
 
 var splitter = require('./split');
 
@@ -41,82 +44,80 @@ exports.diff = function (asnInfo, file_a, file_b) {
       return splitter.split(asnInfo, file_b, dir_b);
     });
   }
-  return ret.then(function () {
-    // Get asns & run sorted walk.
-    var asns_a = fs.readdirSync(dir_a),
-      asns_b = fs.readdirSync(dir_b),
-      i = 0, asni,
-      j = 0, asnj;
-    while (i < asns_a.length && j < asns_b.length) {
+  // Get asns & run sorted walk.
+  var asns_a = fs.readdirSync(dir_a),
+    asns_b = fs.readdirSync(dir_b),
+    i = 0, asn_i,
+    j = 0, asn_j;
+
+  return ret.then(function loop() {
+    if (i < asns_a.length && j < asns_b.length) {
       asn_i = asns_a[i], asn_j = asns_b[j];
       if ((asn_i < asn_j && i < asns_a.length) || j === asns_b.length) {
-        exports.diffASN(
+        i += 1;
+        return exports.diffASN(
           dir_a + '/' + asn_i,
           name_a,
           undefined,
           name_b,
           asn_i,
           out_dir
-        );
-        i += 1;
+        ).then(loop);
       } else if (asn_i == asn_j) {
-        exports.diffASN(
+        i += 1;
+        j += 1;
+        return exports.diffASN(
           dir_a + '/' + asn_i,
           name_a,
           dir_b + '/' + asn_j,
           name_b,
           asn_i,
           out_dir
-        );
-        i += 1;
-        j += 1;
+        ).then(loop);
       } else { // asn_i > asn_j
-        exports.diffASN(
+        j += 1;
+        return exports.diffASN(
           undefined,
           name_a,
           dir_b + '/' + asn_j,
           name_b,
           asn_j,
           out_dir
-        );
-        j += 1;
+        ).then(loop);
       }
     }
+    console.log('Done.');
+    return Q(0);
   });
 };
 
 /// For pair of ips in an ASN, calculate intersection & partials
 exports.diffASN = function (file_a, name_a, file_b, name_b, asn, out_dir) {
-  var ips_a = [],
-    ips_b = [],
-    ips_both = [],
-    ips_aonly = [],
-    ips_bonly = [];
-
-  if (fs.existsSync(file_a)) {
-    ips_a = JSON.parse(fs.readFileSync(file_a));
+  if (!fs.existsSync(file_a)) {
+    fse.copySync(file_b, out_dir + '/' + name_b + '-' + name_a + '/' + asn + '.json')
+    return Q(0);
   }
-  if (fs.existsSync(file_b)) {
-    ips_b = JSON.parse(fs.readFileSync(file_b));
+  if (!fs.existsSync(file_b)) {
+    fse.copySync(file_a, out_dir + '/' + name_a + '-' + name_b + '/' + asn + '.json')
+    return Q(0);
   }
 
-  ips_a.forEach(function (ip) {
-    if (ips_b.indexOf(ip) > -1) {
-      ips_both.push(ip);
-    } else {
-      ips_aonly.push(ip);
-    }
-  });
-  ips_b.forEach(function (ip) {
-    if (ips_both.indexOf(ip) < -1) {
-      ips_bonly.push(ip);
-    }
-  });
+  return Q.Promise(function (fa, na, fb, nb, as, ot, resolve) {
+    var stream_a = fs.createReadStream(fa),
+      stream_b = fs.createReadStream(fb);
 
-  fs.writeFileSync(JSON.stringify(ips_both),
-      out_dir + '/' + name_a + '+' + name_b + '/' + asn + '.json');
-  fs.writeFileSync(JSON.stringify(ips_aonly),
-      out_dir + '/' + name_a + '-' + name_b + '/' + asn + '.json');
-  fs.writeFileSync(JSON.stringify(ips_bonly),
-      out_dir + '/' + name_b + '-' + name_a + '/' + asn + '.json');
+      var both = fs.createWriteStream(
+            ot + '/' + na + '+' + nb + '/' + as),
+          aonly = fs.createWriteStream(
+            ot + '/' + na + '-' + nb + '/' + as),
+          bonly = fs.createWriteStream(
+            ot + '/' + nb + '-' + na + '/' + as);
+
+      both.on('finish', resolve);
+      var bothin = liner.newline();
+      bothin.pipe(both);
+      var handles = differ(bothin);
+      stream_a.pipe(liner.get()).pipe(handles[0]).pipe(liner.newline()).pipe(aonly);
+      stream_b.pipe(liner.get()).pipe(handles[1]).pipe(liner.newline()).pipe(bonly);
+    }.bind({},file_a, name_a, file_b, name_b, asn, out_dir));
 };

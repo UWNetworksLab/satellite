@@ -5,6 +5,7 @@ var chalk = require('chalk');
 var Q = require('q');
 var fs = require('fs');
 var stream = require('stream');
+var progress = require('progressbar-stream');
 
 var asn = require('../asn_aggregation/asn_lookup');
 var liner = require('../util/liner').liner;
@@ -17,17 +18,19 @@ exports.split = function (asnTable, file, out_dir) {
     console.log(chalk.blue('Reading ' + file));
 
     var input = fs.createReadStream(file),
-      splitter = exports.makeSplitter(map);
+      splitter = exports.makeSplitter(map, out_dir),
+      total = 0;
+    total = fs.statSync(file).size;
 
     return Q.Promise(function (resolve, reject) {
-      input.pipe(liner).pipe(splitter);
+      input.pipe(progress({total: total})).pipe(liner).pipe(splitter);
       splitter.on('finish', function () {
         resolve(splitter);
       });
     });
   }).then(function (splitter) {
     console.log(chalk.blue('Writing Output.'));
-    splitter.finish(out_dir);
+    splitter.finish();
     console.log(chalk.green('done.'));
   }).catch(function (e) {
     console.dir(e);
@@ -36,10 +39,11 @@ exports.split = function (asnTable, file, out_dir) {
 
 // A stream-splitter that stores data passed through it into a table, which it
 // can subsubsequently write out to a directory.
-exports.makeSplitter = function (map) {
+exports.makeSplitter = function (map, out_dir) {
   var table = {},
     sink = new stream.Writable({ decodeStrings:false });
 
+  sink.out_dir = out_dir;
   sink._write = function (line, encoding, done) {
     var asn = map.lookup(line);
     if (asn && asn !== 'ZZ') {
@@ -47,24 +51,28 @@ exports.makeSplitter = function (map) {
         table[asn] = [];
       }
       table[asn].push(line);
+      if (table[asn].length > 5000) {
+        this.flush_asn(asn);
+      }
     }
     done();
   };
 
-  sink.get = function (asn) {
-    if (!asn) {
-      return table;
-    }
-    return table[asn];
+  sink.flush_asn = function (asn) {
+    fs.appendFileSync(out_dir + '/' + asn + '.json', table[asn].join('\n'));
+    table[asn] = [];
   };
-  sink.finish = function (out_dir) {
+
+  sink.finish = function () {
     var asns = Object.keys(table),
       i;
     asns.forEach(function (asn) {
-      fs.writeFileSync(out_dir + '/' + asn + '.json', JSON.stringify(table[asn]));
-      i += 1;
-      if (i % 100 === 0) {
-        console.write(chalk.yellow('.'));
+      if (table[asn].length) {
+        sink.flush_asn(asn);
+        i += 1;
+        if (i % 1000 === 0) {
+          console.write(chalk.yellow('.'));
+        }
       }
     });
     table = {};

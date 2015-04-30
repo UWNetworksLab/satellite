@@ -9,6 +9,8 @@
     "mkdirp": "^0.5.0",
     "native-dns": "git://github.com/sidberg/node-dns.git",
     "native-dns-packet": "git://github.com/willscott/native-dns-packet.git",
+    "progress": "^1.1.8",
+    "progressbar-stream": "0.0.1",
     "q": "^1.0.1",
     "async": "^0.9.0"
   },
@@ -19,9 +21,11 @@
   "devDependencies": {
     "chalk": "^0.5.1",
     "event-stream": "^3.1.7",
+    "fs-extra": "^0.18.2",
     "ip2country": "^0.2.3",
     "linebyline": "0.0.7",
-    "moment": "^2.9.0"
+    "moment": "^2.9.0",
+    "sorted-diff-stream": "^1.0.1"
   },
   "scripts": {
     "run": "bash fullrun.sh"

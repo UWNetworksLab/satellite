@@ -9,11 +9,23 @@ getTopSites()
   unzip top-1m.csv.zip
   rm top-1m.csv.zip
   cut -d "," -f 2 top-1m.csv | head -10000 > domains.txt
+  if [[ -n $(node ../util/config.js domainlist) ]]; then
+    curl -s `node ../util/config.js domainlist` >> domains.txt
+  fi
   rm top-1m.csv
   cd ..
 }
 
-##2. Get the blacklist.
+##2. Add in redirects
+addRedirects()
+{
+  echo "Learning Redirects..."
+  node dns/find-redirects.js temp/domains.txt temp/extra
+  cat temp/extra-uniqRedirects.txt >> temp/domains.txt
+  rm temp/extra-uniqRedirects.txt
+}
+
+##3. Get the blacklist.
 getBlacklist()
 {
 echo "Getting Blacklist..."
@@ -28,7 +40,7 @@ echo "Getting Blacklist..."
   fi
 }
 
-##3. Create output for run.
+##4. Create output for run.
 generateRun()
 {
   echo "Starting new run..."
@@ -59,6 +71,8 @@ getGoodHosts()
 runTopSites()
 {
   echo "Scanning all domains..."
+  cp temp/domains.txt runs/${thisRun}-domains.txt
+  cp temp/dns_servers.txt runs/${thisRun}-servers.txt
   node dns/managedscans.js temp/domains.txt temp/dns_servers.txt runs/$thisRun
 }
 
@@ -101,7 +115,11 @@ cleanup()
   rm -r runs/$thisRun
 }
 
+
+if [ $# -eq 0 ]
+then
 getTopSites          # downloads alexa.
+addRedirects         # follow redirects and include in top sites.
 getBlacklist         # downloads blacklist.
 generateRun          # creates date-based folder
 getActiveResolvers  # does cs.washington.edu run
@@ -112,3 +130,6 @@ runHTTPScans         # scan ports 80 & 443
 makeArchive          # creates archive.
 aggregateRun         # replace folder with ASN aggreates.
 cleanup
+else
+  ${1}
+fi

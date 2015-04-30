@@ -97,7 +97,8 @@ function getArgs(ip, hostname, port) {
     port: port,
     method: 'GET',
     path: '/favicon.ico',
-    headers: { Host: hostname }
+    headers: { Host: hostname },
+    agent:false
   };
 }
 
@@ -118,6 +119,7 @@ function buildResult(res, callback) {
     if (res.headers['content-type']) {
       result.push(res.headers['content-type']);
     }
+    res.socket.destroy();
     callback(result);
   });
 }

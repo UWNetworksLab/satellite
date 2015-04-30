@@ -13,6 +13,8 @@ var es = require('event-stream');
 var chalk = require('chalk');
 var asn = require('../asn_aggregation/asn_lookup');
 var dns = require('native-dns-packet');
+var ProgressBar = require('progress');
+var progressBarStream = require('progressbar-stream');
 
 if (!process.argv[4]) {
   console.error(chalk.red("Usage: asn_aggregator.js <rundir> <ASN table> <output file>"));
@@ -28,7 +30,8 @@ function parseDomainLine(map, blacklist, into, domains, line) {
   var parts = line.toString('ascii').split(','),
     theasn,
     thedomain,
-    record;
+    record,
+    answers;
   if (parts.length !== 4 || blacklist[parts[0]]) {
     return;
   }
@@ -45,19 +48,20 @@ function parseDomainLine(map, blacklist, into, domains, line) {
     if (!into[thedomain][theasn]) {
       into[thedomain][theasn] = {};
     }
-    if (record.answer.length > 0) {
-      record.answer.forEach(function (answer) {
+
+    answers = record.answer.filter(function (answer) {
+      return answer.type === dns.consts.NAME_TO_QTYPE.A;
+    });
+
+    into[thedomain][theasn] = into[thedomain][theasn] || {};
+    if (answers.length > 0) {
+      answers.forEach(function (answer) {
         var ip = answer.address;
-        if (!into[thedomain][theasn][ip]) {
-          into[thedomain][theasn][ip] = 1;
-        } else {
-          into[thedomain][theasn][ip] += 1;
-        }
+        into[thedomain][theasn][ip] = into[thedomain][theasn][ip] || 0;
+        into[thedomain][theasn][ip] += 1;
       });
     } else {
-      if (!into[thedomain][theasn].empty) {
-        into[thedomain][theasn].empty = 0;
-      }
+      into[thedomain][theasn].empty = into[thedomain][theasn].empty || 0;
       into[thedomain][theasn].empty += 1;
     }
   } catch (e) {
@@ -92,36 +96,26 @@ function collapseSingle(map, blacklist, domains, file) {
 }
 
 function collapseAll(asm, blacklist) {
-  var files = fs.readdirSync(rundir);
-  console.log(chalk.blue("Starting Aggregation of %d files"), files.length);
-  return Q.Promise(function (resolve, reject) {
-    var base = new Q(0),
-      n = 0,
-      allFiles = [];
-    files.forEach(function (file) {
-      if (file.indexOf('.csv') < 0 || !fs.existsSync(rundir + '/' + file.replace('.csv', '.json'))) {
-        return;
-      }
-      allFiles.push(file);
-      var domains = JSON.parse(fs.readFileSync(rundir + '/' + file.replace('.csv', '.json')));
-      n += 1;
-      if (n % 10 === 0) {
-        base.then(function () {
-          console.log(chalk.blue('.'));
-        });
-      }
-      if (n % 100 === 0) {
-        base.then(function (x) {
-          console.log(chalk.green(x));
-        }.bind({}, n));
-      }
-      base = base.then(collapseSingle.bind({}, asm, blacklist, domains, file));
-    });
-    return base.then(function () {
-      console.log(chalk.green('Done.'));
-      return allFiles;
-    }).then(resolve, reject);
+  var base = Q(),
+    files, bar;
+
+  files = fs.readdirSync(rundir).filter(function (file) {
+    return /.csv$/.test(file);
+  }).filter(function (file) {
+    return fs.existsSync(rundir + '/' + file.replace('.csv', '.json'))
   });
+
+  console.log(chalk.blue("Starting Aggregation of %d files"), files.length);
+  bar = new ProgressBar(':bar :percent :eta', {total: files.length});
+
+  files.forEach(function (file) {
+    var domains = JSON.parse(fs.readFileSync(rundir + '/' + file.replace('.csv', '.json')));
+    base = base.then(collapseSingle.bind({}, asm, blacklist, domains, file)).then(function () {
+      bar.tick();
+    });
+  });
+
+  return base;
 }
 
 function parseBlackList(into, line) {
@@ -141,15 +135,15 @@ function parseBlackList(into, line) {
 
 function getBlackList(filename) {
   return Q.Promise(function (resolve, reject) {
-    var into = {};
+    var into = {},
+      total = fs.statSync(rundir + '/' + filename).size;
+
     console.log(chalk.blue("Generating Server Filter List"));
     fs.createReadStream(rundir + '/' + filename)
+      .pipe(progressBarStream({total: total}))
       .pipe(es.split())
-      .pipe(es.mapSync(parseBlacklistLine.bind({}, into)))
-      .on('end', function () {
-        console.log(chalk.green('Done.'));
-        resolve(into);
-      })
+      .pipe(es.mapSync(parseBlackList.bind({}, into)))
+      .on('end', resolve.bind({}, into))
       .on('error', reject);
   });
 }
@@ -157,7 +151,6 @@ function getBlackList(filename) {
 Q.spread([asn.getMap(asnTable), getBlackList('cs.washington.edu.csv')], collapseAll)
   .then(function () {
     fs.closeSync(outFD);
-    console.log(chalk.green('Done'));
     process.exit(0);
   }, function (err) {
     console.error(chalk.red(err));
