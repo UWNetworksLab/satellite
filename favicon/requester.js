@@ -81,7 +81,7 @@ function attachErrorHandlers(req, deferred) {
       errfcn(sc.STATUS_CODES.CONNECT_REFUSED);
     } else if (err.code === 'ECONNRESET') {
       errfcn(sc.STATUS_CODES.CONNECTION_RESET);
-    } else if (err.code.substring(0, 3) === 'HPE') {
+    } else if (err.code && err.code.substring(0, 3) === 'HPE') {
       errfcn(sc.STATUS_CODES.INVALID_HTTP);
     } else if (err.code === 'ETIMEOUT') {
       errfcn(sc.STATUS_CODES.TIMEOUT);
