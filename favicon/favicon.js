@@ -79,17 +79,16 @@ function processIP(ip, callback) {
   }.bind({}, state);
 
   state.next = function(state) {
-    var host;
     if (state.good) {
       state.host = state.hosts.shift();
-      requester.getFavicon(state.ip, host, 80).then(state.onFavicon, function (error) {
+      requester.getFavicon(state.ip, state.host, 80).then(state.onFavicon, function (error) {
         console.warn(error);
         setTimeout(state.next, 1000);
       });
     } else {
       while (state.hosts.length > 0) {
-        host = state.hosts.shift();
-        state.output[host] = state.lastresult;
+        state.host = state.hosts.shift();
+        state.output[state.host] = state.lastresult;
       }
       delete state.onFavicon;
       delete state.next;
