@@ -5,12 +5,16 @@ var chalk = require('chalk');
 var getClassC = require('../util/ip_utils.js').getClassC;
 
 
-// Usage: node correlation-matrix.js [domain-ip-count table] [output prefix]
-if (process.argv[1] && process.argv[1].indexOf('correlation-matrix') > -1) {
+// Usage: node correlation-matrix.js [domain-ip-count table] [output prefix] ([scored])
+if (process.argv[1] && process.argv[1].indexOf('correlation-matrix') > -1 &&
+    process.argv.length === 4) {
   buildMatrix(process.argv[2], process.argv[3]);
 }
 
 function collapseToClassC(table) {
+  if (process.argv.length === 5 && process.argv[4] === 'true') {
+    return table;
+  }
   var into = {};
 
   Object.keys(table).forEach(function (domain) {
@@ -65,6 +69,35 @@ function buildMatrix(domainToIP, outprefix) {
   console.log(chalk.blue("Building Correlation Matrix"));
   bar = new ProgressBar(':bar :percent :eta', Math.floor(triangle._buffer.length / 1000));
 
+  if (process.argv.length === 5 && process.argv[4] === 'true') {
+    for (var i = 0; i < domains.length; i++) {
+      for (var j = i + 1; j < domains.length; j++) {
+        var a = table[domains[i]],
+          b = table[domains[j]],
+          total = 0,
+          intersection = 0,
+          offset = getOffset(triangle, domains[i], domains[j]);
+
+
+        Object.keys(a).forEach(function (ip) {
+          if (b[ip]) {
+            intersection += a[ip]['total'] * a[ip]['coeff'] + b[ip]['total'] * b[ip]['coeff'];
+          }
+          total += a[ip]['total'] * a[ip]['coeff'];
+        });
+
+        Object.keys(b).forEach(function (ip) {
+          total += b[ip]['total'] * b[ip]['coeff'];
+        });
+
+        triangle._buffer.writeFloatLE(intersection / total, offset);
+
+        if (offset % 1000 == 0) {
+          bar.tick();
+        }
+      }
+    }
+  } else {
   for (var i = 0; i < domains.length; i++) {
     for (var j = i + 1; j < domains.length; j++) {
       var a = table[domains[i]],
@@ -72,6 +105,7 @@ function buildMatrix(domainToIP, outprefix) {
         total = 0,
         intersection = 0,
         offset = getOffset(triangle, domains[i], domains[j]);
+
 
       Object.keys(a).forEach(function (classC) {
         if (b[classC]) {
@@ -90,6 +124,7 @@ function buildMatrix(domainToIP, outprefix) {
         bar.tick();
       }
     }
+  }
   }
 
   if (outprefix) {
