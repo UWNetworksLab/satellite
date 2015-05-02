@@ -81,8 +81,10 @@ function buildMatrix(domainToIP, outprefix) {
 
 
         Object.keys(a).forEach(function (ip) {
+          var overlap;
           if (b[ip]) {
-            intersection += a[ip]['total'] * a[ip]['coeff'] + b[ip]['total'] * b[ip]['coeff'];
+            overlap = Math.min(a[ip]['total'], b[ip]['total']);
+            intersection += overlap * a[ip]['coeff'] + overlap * b[ip]['coeff'];
           }
           total += a[ip]['total'] * a[ip]['coeff'];
         });
@@ -110,7 +112,7 @@ function buildMatrix(domainToIP, outprefix) {
 
       Object.keys(a).forEach(function (classC) {
         if (b[classC]) {
-          intersection += a[classC] + b[classC];
+          intersection += Math.min(a[classC], b[classC]) * 2;
         }
         total += a[classC];
       });
