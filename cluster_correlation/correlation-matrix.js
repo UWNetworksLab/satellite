@@ -75,25 +75,26 @@ function buildMatrix(domainToIP, outprefix) {
       for (var j = i + 1; j < domains.length; j++) {
         var a = table[domains[i]],
           b = table[domains[j]],
-          total = 0,
-          intersection = 0,
+          aTotal = 0,
+          bTotal = 0,
+          aIntersection = 0,
+          bIntersection = 0,
           offset = getOffset(triangle, domains[i], domains[j]);
 
 
         Object.keys(a).forEach(function (ip) {
-          var overlap;
           if (b[ip]) {
-            overlap = Math.min(a[ip]['total'], b[ip]['total']);
-            intersection += overlap * a[ip]['coeff'] + overlap * b[ip]['coeff'];
+            aIntersection += a[ip] * a[ip]['coeff'];
+            bIntersection += b[ip] * b[ip]['coeff'];
           }
-          total += a[ip]['total'] * a[ip]['coeff'];
+          aTotal += a[ip]['total'] * a[ip]['coeff'];
         });
 
         Object.keys(b).forEach(function (ip) {
-          total += b[ip]['total'] * b[ip]['coeff'];
+          bTotal += b[ip]['total'] * b[ip]['coeff'];
         });
 
-        triangle._buffer.writeFloatLE(intersection / total, offset);
+        triangle._buffer.writeFloatLE(Math.max(aIntersection / aTotal, bIntersection / bTotal), offset);
 
         if (offset % 1000 == 0) {
           bar.tick();
@@ -105,23 +106,26 @@ function buildMatrix(domainToIP, outprefix) {
     for (var j = i + 1; j < domains.length; j++) {
       var a = table[domains[i]],
         b = table[domains[j]],
-        total = 0,
-        intersection = 0,
+        aTotal = 0,
+        bTotal = 0,
+        aIntersection = 0,
+        bIntersection = 0,
         offset = getOffset(triangle, domains[i], domains[j]);
 
 
       Object.keys(a).forEach(function (classC) {
         if (b[classC]) {
-          intersection += Math.min(a[classC], b[classC]) * 2;
+          aIntersection += a[classC];
+          bIntersection += b[classC];
         }
-        total += a[classC];
+        aTotal += a[classC];
       });
 
       Object.keys(b).forEach(function (classC) {
-        total += b[classC];
+        bTotal += b[classC];
       });
 
-      triangle._buffer.writeFloatLE(intersection / total, offset);
+      triangle._buffer.writeFloatLE(Math.max(aIntersection / aTotal, bIntersection / bTotal), offset);
 
       if (offset % 1000 == 0) {
         bar.tick();
