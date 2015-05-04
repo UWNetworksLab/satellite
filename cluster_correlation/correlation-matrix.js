@@ -7,12 +7,13 @@ var getClassC = require('../util/ip_utils.js').getClassC;
 
 // Usage: node correlation-matrix.js [domain-ip-count table] [output prefix] ([scored])
 if (process.argv[1] && process.argv[1].indexOf('correlation-matrix') > -1 &&
-    process.argv.length === 4) {
+    process.argv.length >= 4) {
   buildMatrix(process.argv[2], process.argv[3]);
 }
 
 function collapseToClassC(table) {
   if (process.argv.length === 5 && process.argv[4] === 'true') {
+    console.log('skipping class c collapse.');
     return table;
   }
   var into = {};
