@@ -15,18 +15,26 @@ var bar = new ProgressBar(':bar :percent :eta', {total: Object.keys(domainToIP).
 
 Object.keys(domainToIP).forEach(function (domain) {
   out[domain] = {};
+  var memoized = {};
+
   Object.keys(domainToIP[domain]).forEach(function (ip) {
     var total = 0,
-      coeff = 0;
+      coeff = 0,
+      id = Object.keys(IPToDomain[ip]);
 
-    Object.keys(IPToDomain[ip]).forEach(function (other) {
-      total += IPToDomain[ip][other];
-      coeff += IPToDomain[ip][other] * matrix.lookup(domain, other);
-    });
+    if (memoized[id]) {
+      out[domain][ip] = memoized[id];
+    } else {
+      id.forEach(function (other) {
+        total += IPToDomain[ip][other];
+        coeff += IPToDomain[ip][other] * matrix.lookup(domain, other);
+      });
 
-    out[domain][ip] = {
-      coeff: coeff / total,
-      total: domainToIP[domain][ip]
+      out[domain][ip] = {
+        coeff: coeff / total,
+        total: domainToIP[domain][ip]
+      }
+      memoized[id] = out[domain][ip];
     }
   });
   bar.tick();
