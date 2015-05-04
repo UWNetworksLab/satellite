@@ -1,23 +1,25 @@
-var Q = require('q');
-var ProgressBar = require('progress');
 var fs = require('fs');
 var chalk = require('chalk');
+var ProgressBar = require('progress');
 var loadMatrix = require('./correlation-matrix.js').loadMatrix;
 
-var PERMUTATIONS = 10;
-
 var matrix = loadMatrix(process.argv[2]);
-var outFile = process.argv[3];
+var permutations = parseInt(process.argv[3]);
+var outFD = fs.openSync(process.argv[4], 'w');
 
-var domains = Object.keys(matrix._domains);
 
-function clusterDomains(domains) {
-  var clusters = [];
-  domains.forEach(function (domain) {
+function vote(domains) {
+  var result = {
+    clusters: [],
+    domains: domains,
+    domainToCluster: []
+  };
+
+  domains.forEach(function (domain, domainIdx) {
     var bestCluster,
       bestNetWeight = 0;
 
-    clusters.forEach(function (cluster) {
+    result.clusters.forEach(function (cluster, clusterIdx) {
       var netWeight = cluster.reduce(function (prev, other) {
         var coeff = matrix.lookup(domain, other);
         return prev + coeff - (1 - coeff);
@@ -25,45 +27,57 @@ function clusterDomains(domains) {
 
       if (netWeight > bestNetWeight) {
         bestNetWeight = netWeight;
-        bestCluster = cluster;
+        bestCluster = clusterIdx;
       }
     });
 
     if (bestCluster && bestNetWeight > 0) {
-      bestCluster.push(domain);
+      result.clusters[bestCluster].push(domain);
+      result.domainToCluster[domainIdx] = bestCluster;
     } else {
-      clusters.push([domain]);
+      result.domainToCluster[domainIdx] = result.clusters.length;
+      result.clusters.push([domain]);
     }
   });
-  return clusters;
+
+  return result;
 }
 
-function findBestClustering(clusterings) {
-  var bestClustering = undefined,
-    bestNetWeight = 0;
+// we want to minimize this
+// probably a better number to use than weight but also more expensive to calc
+function objective(clusters) {
+  var result = 0;
 
-  console.log(chalk.blue("\nFinding best permutation"));
-
-  clusterings.forEach(function (clustering) {
-    var netWeight = 0;
-    clustering.forEach(function (cluster) {
-      var i, j;
-      for (i = 0; i < cluster.length; i++) {
-        for (j = i + 1; j < cluster.length; j++) {
-          var coeff = matrix.lookup(cluster[i], cluster[j]);
-          netWeight += coeff - (1 - coeff);
+  clusters.domains.forEach(function (a, aIdx) {
+    clusters.domains.forEach(function (b, bIdx) {
+      if (aIdx != bIdx) {
+        if (clusters.domainToCluster[aIdx] === clusters.domainToCluster[bIdx]) {
+          result += 1 - matrix.lookup(a, b);
+        } else {
+          result += matrix.lookup(a, b);
         }
       }
     });
+  });
 
-    if (netWeight > bestNetWeight) {
-      bestNetWeight = netWeight;
-      bestClustering = clustering;
+  return result;
+}
+
+// we want to maximize this
+function weight(clusters) {
+  var result = 0;
+
+  clusters.clusters.forEach(function (cluster) {
+    var i, j;
+    for (i = 0; i < cluster.length; i++) {
+      for (j = i + 1; j < cluster.length; j++) {
+        var coeff = matrix.lookup(cluster[i], cluster[j]);
+        result += coeff - (1 - coeff);
+      }
     }
   });
 
-  console.log(chalk.green('Done.'));
-  return bestClustering;
+  return result;
 }
 
 function shuffle(array) {
@@ -78,12 +92,20 @@ function shuffle(array) {
   return array;
 }
 
-console.log(chalk.blue("Trying %d permutations"), PERMUTATIONS);
-var bar = new ProgressBar(':bar :percent :eta', PERMUTATIONS);
-var clusterings = [];
-for (var i = 0; i < PERMUTATIONS; i++) {
-  clusterings.push(clusterDomains(shuffle(domains)));
+console.log(chalk.blue("Trying %d permutations"), permutations);
+var bar = new ProgressBar(':bar :percent :eta', permutations);
+for (var i = 0; i < permutations; i++) {
+  var clusters = vote(shuffle(Object.keys(matrix._domains)));
+
+  fs.writeSync(outFD, JSON.stringify({
+    clusters: clusters.clusters,
+    weight: weight(clusters)
+  }));
+
   bar.tick();
 }
 
-fs.writeFileSync(outFile, JSON.stringify(findBestClustering(clusterings)));
+fs.closeSync(outFD);
+
+
+
