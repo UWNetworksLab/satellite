@@ -125,18 +125,18 @@ function buildMatrix(domainToIP, outprefix) {
         scale = 1,
         offset = getOffset(triangle, domains[i], domains[j]);
 
-      var i = 100;
-      if (ak.length > i) {
-        ak = getRandomSubArray(ak, i);
-        scale = ak.length / i;
+      var k = 100;
+      if (ak.length > k) {
+        ak = getRandomSubArray(ak, k);
+        scale = ak.length / k;
       }
-      i = ak.length - 1;
-      while (i >= 0) {
-        if (b[ak[i]]) {
-          aIntersection += a[ak[i]];
-          bIntersection += b[ak[i]];
+      k = ak.length - 1;
+      while (k >= 0) {
+        if (b[ak[k]]) {
+          aIntersection += a[ak[k]];
+          bIntersection += b[ak[k]];
         }
-        i -= 1;
+        k -= 1;
       }
 
       triangle._buffer.writeFloatLE(scale * Math.max(aIntersection / aTotal, bIntersection / bTotal), offset);
