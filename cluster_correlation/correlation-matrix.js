@@ -94,8 +94,8 @@ function buildMatrix(domainToIP, outprefix) {
 
         Object.keys(a).forEach(function (ip) {
           if (b[ip]) {
-            aIntersection += a[ip] * a[ip]['coeff'];
-            bIntersection += b[ip] * b[ip]['coeff'];
+            aIntersection += a[ip]['total'] * a[ip]['coeff'];
+            bIntersection += b[ip]['total'] * b[ip]['coeff'];
           }
           aTotal += a[ip]['total'] * a[ip]['coeff'];
         });
