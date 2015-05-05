@@ -57,13 +57,23 @@ function lookup(domain1, domain2) {
 function buildMatrix(domainToIP, outprefix) {
   var table = collapseToClassC(JSON.parse(fs.readFileSync(domainToIP))),
     domains = Object.keys(table),
+    totals = {},
     triangle = {
       lookup: lookup,
       _domains: {},
       _buffer: new Buffer(Math.floor(0.5 * (domains.length - 1) * domains.length) * 4)
     };
 
+  console.log(chalk.blue("Calculating totals & filling triangle."));
+
   domains.forEach(function (domain, idx) {
+    var keys = Object.keys(table[domain]),
+      total = 0;
+    for (var i = 0; i < keys.length; i += 1) {
+      total += table[domain][keys[i]];
+    }
+    totals[domain] = total;
+
     triangle._domains[domain] = idx;
   });
 
@@ -84,8 +94,8 @@ function buildMatrix(domainToIP, outprefix) {
 
         Object.keys(a).forEach(function (ip) {
           if (b[ip]) {
-            aIntersection += a[ip] * a[ip]['coeff'];
-            bIntersection += b[ip] * b[ip]['coeff'];
+            aIntersection += a[ip]['total'] * a[ip]['coeff'];
+            bIntersection += b[ip]['total'] * b[ip]['coeff'];
           }
           aTotal += a[ip]['total'] * a[ip]['coeff'];
         });
@@ -105,27 +115,31 @@ function buildMatrix(domainToIP, outprefix) {
   for (var i = 0; i < domains.length; i++) {
     for (var j = i + 1; j < domains.length; j++) {
       var a = table[domains[i]],
+        ak = Object.keys(a),
         b = table[domains[j]],
-        aTotal = 0,
-        bTotal = 0,
+        bk = Object.keys(b),
+        aTotal = totals[domains[i]],
+        bTotal = totals[domains[j]],
         aIntersection = 0,
         bIntersection = 0,
+        scale = 1,
         offset = getOffset(triangle, domains[i], domains[j]);
 
-
-      Object.keys(a).forEach(function (classC) {
-        if (b[classC]) {
-          aIntersection += a[classC];
-          bIntersection += b[classC];
+      var i = 100;
+      if (ak.length > i) {
+        ak = getRandomSubArray(ak, i);
+        scale = ak.length / i;
+      }
+      i = ak.length - 1;
+      while (i >= 0) {
+        if (b[ak[i]]) {
+          aIntersection += a[ak[i]];
+          bIntersection += b[ak[i]];
         }
-        aTotal += a[classC];
-      });
+        i -= 1;
+      }
 
-      Object.keys(b).forEach(function (classC) {
-        bTotal += b[classC];
-      });
-
-      triangle._buffer.writeFloatLE(Math.max(aIntersection / aTotal, bIntersection / bTotal), offset);
+      triangle._buffer.writeFloatLE(scale * Math.max(aIntersection / aTotal, bIntersection / bTotal), offset);
 
       if (offset % 1000 == 0) {
         bar.tick();
@@ -140,6 +154,17 @@ function buildMatrix(domainToIP, outprefix) {
   }
 
   return triangle;
+}
+
+function getRandomSubarray(arr, size) {
+    var shuffled = arr.slice(0), i = arr.length, min = i - size, temp, index;
+    while (i-- > min) {
+        index = Math.floor((i + 1) * Math.random());
+        temp = shuffled[index];
+        shuffled[index] = shuffled[i];
+        shuffled[i] = temp;
+    }
+    return shuffled.slice(min);
 }
 
 function loadMatrix(prefix) {
