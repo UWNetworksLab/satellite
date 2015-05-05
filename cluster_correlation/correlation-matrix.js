@@ -127,7 +127,7 @@ function buildMatrix(domainToIP, outprefix) {
 
       var k = 100;
       if (ak.length > k) {
-        ak = getRandomSubArray(ak, k);
+        ak = getRandomSubarray(ak, k);
         scale = ak.length / k;
       }
       k = ak.length - 1;
