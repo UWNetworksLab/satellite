@@ -30,10 +30,7 @@ Object.keys(domainToIP).forEach(function (domain) {
         coeff += IPToDomain[ip][other] * matrix.lookup(domain, other);
       });
 
-      out[domain][ip] = {
-        coeff: coeff / total,
-        total: domainToIP[domain][ip]
-      }
+      out[domain][ip] =  coeff / total * domainToIP[domain][ip];
       memoized[id] = out[domain][ip];
     }
   });
