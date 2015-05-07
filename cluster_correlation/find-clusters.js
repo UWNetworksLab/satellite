@@ -48,17 +48,15 @@ function vote(domains) {
 function objective(clusters) {
   var result = 0;
 
-  clusters.domains.forEach(function (a, aIdx) {
-    clusters.domains.forEach(function (b, bIdx) {
-      if (aIdx != bIdx) {
-        if (clusters.domainToCluster[aIdx] === clusters.domainToCluster[bIdx]) {
-          result += 1 - matrix.lookup(a, b);
-        } else {
-          result += matrix.lookup(a, b);
-        }
+  for (var i = 0; i < clusters.domains.length; i++) {
+    for (var j = i + 1; j < clusters.domains.length; j++) {
+      if (clusters.domainToCluster[i] == clusters.domainToCluster[j]) {
+        result += 1 - matrix.lookup(a, b);
+      } else {
+        result += matrix.lookup(a, b);
       }
-    });
-  });
+    }
+  }
 
   return result;
 }
