@@ -2,7 +2,7 @@
  * Collapse. From:
  *
  * to:
- * {ip_classC -> {domain -> #resolutions}}  &&  {domain -> {ip_classC -> #resolutions}}
+ * {classC -> {domain -> #resolutions}}  &&  {domain -> {classC -> #resolutions}}
  */
 
 var fs = require('fs');
@@ -13,7 +13,7 @@ var progress = require('progressbar-stream');
 var getClassC = require('../util/ip_utils.js').getClassC;
 
 if (!process.argv[4]) {
-  console.error(chalk.red('Usage: asn_collapse-ip_classC.js <input file> <ip-classC out file> <classC-ip out file>'));
+  console.error(chalk.red('Usage: asn_collapse-classC_domains.js <input file> <classC-domain out file> <domain-classC out file>'));
   process.exit(1);
 }
 
