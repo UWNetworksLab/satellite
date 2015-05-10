@@ -1,6 +1,6 @@
 /*
  * Collapse. From:
- *
+ * {domain -> {asn -> {ip -> #resolutions}}}
  * to:
  * {classC -> {domain -> #resolutions}}  &&  {domain -> {classC -> #resolutions}}
  */
