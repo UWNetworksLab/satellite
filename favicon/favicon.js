@@ -74,6 +74,9 @@ function processIP(ip, callback) {
   hosts = hosts.filter(function (host) {
     return hashes[host] !== undefined;
   });
+  if (hosts.length === 0) {
+    return callback();
+  }
 
   var state = {
     ip: ip,
