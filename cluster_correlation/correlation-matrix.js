@@ -62,16 +62,21 @@ function buildMatrix(countTable, coeffTable, outprefix) {
         b = counts[domains[j]],
         aCoeffs = coeffs[domains[i]],
         bCoeffs = coeffs[domains[j]],
-        intersection = 0,
-        offset = getOffset(triangle, domains[i], domains[j]);
+        aIntersection = 0,
+        bIntersection = 0,
+        offset = getOffset(triangle, domains[i], domains[j]),
+        coeff;
 
       Object.keys(a).forEach(function (classC) {
         if (b[classC]) {
-          intersection += Math.min(a[classC] * aCoeffs[classC], b[classC] * bCoeffs[classC]);
+          aIntersection += a[classC] + a[classC] * (aCoeffs[classC] - (1 - aCoeffs[classC]));
+          bIntersection += b[classC] + b[classC] * (bCoeffs[classC] - (1 - bCoeffs[classC]));
         }
       });
 
-      triangle._buffer.writeFloatLE(intersection / Math.min(totals[domains[i]], totals[domains[j]]), offset);
+      coeff = Math.max(0, Math.min(1, (aIntersection / totals[domains[i]] + bIntersection / totals[domains[j]]) / 2.0));
+
+      triangle._buffer.writeFloatLE(coeff, offset);
       if (offset % 1000 == 0) {
         bar.tick();
       }
