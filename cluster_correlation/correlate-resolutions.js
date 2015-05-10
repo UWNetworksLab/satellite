@@ -1,7 +1,14 @@
+'use strict';
+
 var fs = require('fs');
 var ProgressBar = require('progress');
 var cm = require('./correlation-matrix.js');
 var chalk = require('chalk');
+
+// Generate socres for IPs from the resoluton lookup tables and a similarity matrix
+// Usage: correlate-resolutions.js <domainToIp> <ipToDomain> <matrix sim prefix> <output.json>
+// Output format is:
+// {domain -> {ip -> score}}
 
 var domainToIP = JSON.parse(fs.readFileSync(process.argv[2]));
 var IPtoDomain = JSON.parse(fs.readFileSync(process.argv[3]));
