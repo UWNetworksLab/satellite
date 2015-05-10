@@ -16,50 +16,53 @@
  * Usage
  *  node <compare.js path> <ActualResults> <ExpectedHashes> <OutputFile>
  *
+ * Note: it might be useful to run thus in paralell over several cores to speed up
+ *  processing. Split input then do something like this:
+ * find ../fav/ -name "fava*" | xargs -P 4 -I {} node favicon/compare.js ../domains-localvalidation.json {} {}.out
  */
 
-var http = require('http');
 var fs = require('fs');
 var async = require('async');
 var Q = require('q');
 var es = require('event-stream');
-var requester = require('./requester.js');
+var mapConcurrent = require('map-stream-concurrent');
 
-var CONCURRENT_IPS = 1000;
-
-http.globalAgent.maxSockets = 10000;
 if (process.argv.length !== 5) {
-  console.log('Usage:\n\tnode <compare.js path> <ActualResults> <ExpectedHashes> <OutputFile>');
+  console.log('Usage:\n\tnode <compare.js path> <ExpectedHashes> <ActualResults> <OutputFile>');
   process.exit(1);
 }
-var actualFile = process.argv[2];
-var expectedFile = process.argv[3];
-var outFile = process.argv[4];
+var expected = JSON.parse(fs.readFileSync(process.argv[2]));
+var actual = fs.createReadStream(process.argv[3]);
+var outFile = fs.createWriteStream(process.argv[4]);
 
-Q.all([
-    Q.nfcall(fs.readFile, actualFile).then(JSON.parse),
-    Q.nfcall(fs.readFile, expectedFile).then(JSON.parse)
-  ])
-  .spread(function(actual, expected) {
-    var results = {};
-    Object.keys(actual).forEach(function (ip) {
-      var ipData = actual[ip];
-      var ipRes = {};
-      Object.keys(ipData).forEach(function(host) {
-        if (expected[host]) {
-          // Check that it gives back a 200 and check hash
-          ipRes[host] = ipData[host][0] === 200 && ipData[host][2] === expected[host];
-        }
-      });
-      results[ip] = ipRes;
-    });
-    return results;
-  }, function (err1, err2) {
-    console.log(err1);
-    console.log(err2);
-  })
-  .then(JSON.stringify)
-  .then(function (output) { return Q.nfcall(fs.writeFile, outFile, output); })
-  .then(function () { console.log('Done'); })
-  .catch(function(error) { console.log(error); });
+actual
+  .pipe(es.split())
+  .pipe(es.map(mapToBoolean))
+  .pipe(es.join('\n'))
+  .pipe(outFile);
+
+function mapToBoolean(data, callback) {
+  var ipDataArray;
+  try {
+    ipDataArray = JSON.parse(data);
+  } catch (e) {
+    return callback();
+  }
+
+  var ip = ipDataArray[0];
+  var hosts = ipDataArray[1];
+
+  var results = {};
+  Object.keys(hosts).forEach(function(host) {
+    if (expected[host]) {
+      // Check that it gives back a 200 and check hash
+      results[host] = hosts[host][0] === 200 && hosts[host][2] === expected[host];
+    }
+  });
+  if (Object.keys(results).length > 0) {
+    return callback(null, JSON.stringify([ip, results]));
+  } else {
+    return callback();
+  }
+}
 

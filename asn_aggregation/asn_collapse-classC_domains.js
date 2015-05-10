@@ -2,7 +2,7 @@
  * Collapse. From:
  * {domain -> {asn -> {ip -> #resolutions}}}
  * to:
- * {ip -> {domain -> #resolutions}}  &&  {domain -> {ip -> #resolutions}}
+ * {classC -> {domain -> #resolutions}}  &&  {domain -> {classC -> #resolutions}}
  */
 
 var fs = require('fs');
@@ -10,9 +10,10 @@ var Q = require('q');
 var chalk = require('chalk');
 var es = require('event-stream');
 var progress = require('progressbar-stream');
+var getClassC = require('../util/ip_utils.js').getClassC;
 
 if (!process.argv[4]) {
-  console.error(chalk.red('Usage: asn_collapse-ip_domains.js <input file> <ip-domain out file> <domain-ip out file>'));
+  console.error(chalk.red('Usage: asn_collapse-classC_domains.js <input file> <classC-domain out file> <domain-classC out file>'));
   process.exit(1);
 }
 
@@ -40,9 +41,11 @@ function doDomain(into, line) {
     }).filter(function (ip) {
       return ip.indexOf(':') < 0;
     }).forEach(function (ip) {
-      into[ip] = into[ip] || {};
-      into[ip][domain] = into[ip][domain] || 0;
-      into[ip][domain] += asn_ip[asn][ip];
+      var classC = getClassC(ip);
+
+      into[classC] = into[classC] || {};
+      into[classC][domain] = into[classC][domain] || 0;
+      into[classC][domain] += asn_ip[asn][ip];
     });
   });
 }
@@ -68,11 +71,11 @@ function doAll() {
 function flipMap(table) {
   var result = {};
 
-  Object.keys(table).forEach(function (ip) {
-    Object.keys(table[ip]).forEach(function (domain) {
+  Object.keys(table).forEach(function (classC) {
+    Object.keys(table[classC]).forEach(function (domain) {
       result[domain] = result[domain] || {};
-      result[domain][ip] = result[domain][ip] || 0;
-      result[domain][ip] += table[ip][domain];
+      result[domain][classC] = result[domain][classC] || 0;
+      result[domain][classC] += table[classC][domain];
     });
   });
 
