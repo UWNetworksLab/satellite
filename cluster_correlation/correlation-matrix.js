@@ -86,9 +86,11 @@ function buildMatrix(countTable, coeffTable, outprefix) {
           coeff;
       Object.keys(a).forEach(function (classC) {
         if (b[classC]) {
-          var a2 = a[classC] * a[classC],
-              b2 = b[classC] * b[classC];
-          coeff += (a2 * b[classC] + b2 * a[classC]) / (a2 + b2);
+          var fa = a[classC] / totals[domains[i]],
+              fb = b[classC] / totals[domains[j]],
+              a2 = fa * fa,
+              b2 = fb * fb;
+          coeff += (a2 * fb + b2 * fa) / (a2 + b2);
         }
       });
 
