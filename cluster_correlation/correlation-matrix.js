@@ -58,6 +58,7 @@ function buildMatrix(countTable, coeffTable, outprefix) {
 
   for (var i = 0; i < domains.length; i++) {
     for (var j = i + 1; j < domains.length; j++) {
+      /* Attempt #2: (# * (2*coeff))/sum(#)
       var a = counts[domains[i]],
         b = counts[domains[j]],
         aCoeffs = coeffs[domains[i]],
@@ -75,6 +76,24 @@ function buildMatrix(countTable, coeffTable, outprefix) {
       });
 
       coeff = Math.max(0, Math.min(1, (aIntersection / totals[domains[i]] + bIntersection / totals[domains[j]]) / 2.0));
+      */
+      /* attempt #3: (a*b) * n
+       * the sum of the intersections (%a resolving as x)*(%b resolving as x)
+       * times the average number of distinct IPs resolved
+       */
+      var a = counts[domains[i]],
+          b = counts[domains[j]],
+          ta = totals[domains[i]],
+          tb = totals[domains[j]],
+          n = (Object.keys(a).length + Object.keys(b).length) / 2,
+          offset = getOffset(triangle, domains[i], domains[j]),
+          coeff;
+      Object.keys(a).forEach(function (classC) {
+        if (b[classC]) {
+          coeff += a[classC] * b[classC]
+        }
+      });
+      coeff = coeff / ta * n / tb;
 
       triangle._buffer.writeFloatLE(coeff, offset);
       if (offset % 1000 == 0) {
