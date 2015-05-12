@@ -83,7 +83,7 @@ function buildMatrix(countTable, coeffTable, outprefix) {
       var a = counts[domains[i]],
           b = counts[domains[j]],
           offset = getOffset(triangle, domains[i], domains[j]),
-          coeff;
+          coeff = 0;
       Object.keys(a).forEach(function (classC) {
         if (b[classC]) {
           var fa = a[classC] / totals[domains[i]],
