@@ -1,4 +1,4 @@
-// calculates the number of domain requests for each ASN
+// calculates the number of domain queries from each ASN
 var fs = require('fs');
 var Q = require('q');
 var asn = require('../asn_aggregation/asn_lookup');
@@ -8,29 +8,40 @@ var resolverFile = process.argv[2];
 var runDir = process.argv[3];
 var asnTable = process.argv[4];
 var outFile = process.argv[5];
-
 var outFD = fs.openSync(outFile, 'wx');
 
 
-function doASNs(domains, asnToResolver) {
-  Object.keys(asnToResolver).forEach(function (asn) {
-    var result = {
-      asn: asn
-    };
+function doDomains(domains, asnToResolver) {
+  var memomize = {};
 
-    domains.forEach(function (group) {
-      var resolvers = Array.apply(null, new Array(group.length)).map(Number.prototype.valueOf, 0);
+  domains.forEach(function (group) {
+    var asnToRequests = memomize[group.length];
 
-      asnToResolver[asn].forEach(function (resolver) {
-        resolvers[resolver % group.length]++;
+    if (!asnToRequests) {
+      asnToRequests = {};
+      Object.keys(asnToResolver).forEach(function (asn) {
+        var requests = Array.apply(null, new Array(group.length)).map(Number.prototype.valueOf, 0);
+        asnToResolver[asn].forEach(function (resolver) {
+          requests[resolver % group.length]++;
+        });
+        asnToRequests[asn] = requests;
+      });
+      memomize[group.length] = asnToRequests;
+    }
+
+    group.forEach(function (domain, idx) {
+      var result = {
+        name: domain
+      };
+
+      Object.keys(asnToRequests).filter(function (asn) {
+        return asnToRequests[asn][idx] > 0;
+      }).forEach(function (asn) {
+        result[asn] = asnToRequests[asn][idx];
       });
 
-      group.forEach(function (domain, idx) {
-        result[domain] = resolvers[idx];
-      });
+      fs.writeSync(outFD, JSON.stringify(result) + '\n');
     });
-
-    fs.writeSync(outFD, JSON.stringify(result) + '\n');
   });
 
   return 'Done.';
@@ -55,8 +66,12 @@ function asnToResolver(asm) {
         var resolver = line.slice(0, line.length - 3),
           asn = asm.lookup(resolver);
 
+        if (line === '') {
+          return;
+        }
+
         result[asn] = result[asn] || [];
-        result[asn].push(new Buffer('243.123.231.4'.split('.')).readUInt32BE(0));
+        result[asn].push(new Buffer(resolver.split('.')).readUInt32BE(0));
       }))
       .on('end', resolve.bind(undefined, result))
       .on('error', reject);
@@ -66,5 +81,5 @@ function asnToResolver(asm) {
 Q.all([
   loadDomains(runDir),
   asn.getMap(asnTable).then(asnToResolver)
-]).spread(doASNs)
+]).spread(doDomains)
   .then(console.log, console.error);
