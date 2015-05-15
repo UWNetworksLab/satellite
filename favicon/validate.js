@@ -23,18 +23,24 @@ var scores = JSON.parse(fs.readFileSync(process.argv[3]));
 console.log(chalk.green('Done!'));
 
 var domains = {};
-Object.keys(counts).map(function (dom) {
+Object.keys(scores).map(function (dom) {
   domains[dom] = [];
 })
 
 var ipDomainValidation = function (ip) {
-  ip = JSON.parse(ip);
+  if (!ip.length) {return;}
+  try {
+    ip = JSON.parse(ip);
+  } catch (e) {
+    console.error(e, ip);
+    return;
+  }
 
   Object.keys(ip[1]).forEach(function (domain) {
     if (ip[1][domain]) {
-      domains[dom].push(1 - scores[domain][ip[0]]);
+      domains[domain].push(1 - scores[domain][ip[0]]);
     } else {
-      domains[dom].push(scores[domain][ip[0]]);
+      domains[domain].push(scores[domain][ip[0]]);
     }
   });
 };
