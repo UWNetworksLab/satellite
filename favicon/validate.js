@@ -29,6 +29,12 @@ Object.keys(scores).map(function (dom) {
 
 var ipDomainValidation = function (ip) {
   if (!ip.length) {return;}
+  if (ip[0] !== '[') {
+    ip = '[' + ip;
+  }
+  if (ip[ip.length - 1] !== ']') {
+    ip = ip + ']';
+  }
   try {
     ip = JSON.parse(ip);
   } catch (e) {
@@ -59,6 +65,6 @@ var reduceDomains = function () {
 
 var validation = fs.createReadStream(process.argv[2]);
 validation
-  .pipe(es.split())
+  .pipe(es.split()).pipe(es.split(']['))
   .pipe(es.map(ipDomainValidation))
   .on('finish', reduceDomains);
