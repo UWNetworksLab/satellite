@@ -17,6 +17,7 @@
 var chalk = require('chalk');
 var es = require('event-stream');
 var fs = require('fs');
+var iu = require('../util/ip_utils');
 
 console.log(chalk.blue('Reading Input.'));
 var scores = JSON.parse(fs.readFileSync(process.argv[3]));
@@ -29,33 +30,37 @@ Object.keys(scores).map(function (dom) {
 
 var ipDomainValidation = function (ip) {
   if (!ip.length) {return;}
-  if (ip[0] !== '[') {
-    ip = '[' + ip;
-  }
-  if (ip[ip.length - 1] !== ']') {
-    ip = ip + ']';
-  }
   try {
     ip = JSON.parse(ip);
+    if (ip.length < 2) {return;}
+
+    var doms = Object.keys(ip[1]);
+    var cc = iu.getClassC(ip[0]);
+    for (var i = 0; i < doms.length; i +=1) {
+      if (scores[doms[i]] && scores[doms[i]][cc] !== undefined) {
+        var score = scores[doms[i]][cc];
+        if (!score) {score = -1;}
+        score = (score + 1) / 2;
+        if (ip[1][doms[i]]) {
+          domains[doms[i]].push(1 - score);
+        } else {
+          domains[doms[i]].push(score);
+        }
+      }
+    }
   } catch (e) {
     console.error(e, ip);
     return;
   }
-
-  Object.keys(ip[1]).forEach(function (domain) {
-    if (ip[1][domain]) {
-      domains[domain].push(1 - scores[domain][ip[0]]);
-    } else {
-      domains[domain].push(scores[domain][ip[0]]);
-    }
-  });
+  return;
 };
 
 var reduceDomains = function () {
   console.log('reducing.');
   var dscores = [];
   Object.keys(domains).forEach(function (d) {
-    var score = domains[d].reduce(function (a,b) {return a + b;}) / domains[d].length;
+    if (!domains[d].length) {return;}
+    var score = domains[d].reduce(function (a,b) {return a + b;}, 0) / domains[d].length;
     dscores.push(score);
   });
   fs.writeFileSync(process.argv[4], JSON.stringify(dscores));
@@ -67,4 +72,4 @@ var validation = fs.createReadStream(process.argv[2]);
 validation
   .pipe(es.split()).pipe(es.split(']['))
   .pipe(es.mapSync(ipDomainValidation))
-  .on('finish', reduceDomains);
+  .pipe(es.wait(reduceDomains));
