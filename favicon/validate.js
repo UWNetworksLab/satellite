@@ -27,30 +27,31 @@ var domains = {};
 Object.keys(scores).map(function (dom) {
   domains[dom] = [];
 })
+console.log('domains read');
 
 var ipDomainValidation = function (ip) {
   if (!ip.length) {return;}
   try {
     ip = JSON.parse(ip);
-    if (ip.length < 2) {return;}
+    if (ip.length < 2) { return; }
 
     var doms = Object.keys(ip[1]);
     var cc = iu.getClassC(ip[0]);
-    for (var i = 0; i < doms.length; i +=1) {
-      if (scores[doms[i]] && scores[doms[i]][cc] !== undefined) {
-        var score = scores[doms[i]][cc];
-        if (!score) {score = -1;}
+    for (var i = 0; i < doms.length; i += 1) {
+      var domain = doms[i];
+      if (scores[domain] && scores[domain][cc] !== undefined) {
+        var score = scores[domain][cc];
+        if (!score) { score = -1; }
         score = (score + 1) / 2;
-        if (ip[1][doms[i]]) {
-          domains[doms[i]].push(1 - score);
+        if (ip[1][domain]) {
+          domains[domain].push(1 - score);
         } else {
-          domains[doms[i]].push(score);
+          domains[domain].push(score);
         }
       }
     }
   } catch (e) {
     console.error(e, ip);
-    return;
   }
   return;
 };
@@ -59,7 +60,7 @@ var reduceDomains = function () {
   console.log('reducing.');
   var dscores = [];
   Object.keys(domains).forEach(function (d) {
-    if (!domains[d].length) {return;}
+    if (!domains[d].length) { return; }
     var score = domains[d].reduce(function (a,b) {return a + b;}, 0) / domains[d].length;
     dscores.push(score);
   });
