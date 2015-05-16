@@ -5,8 +5,8 @@ var chalk = require('chalk');
 
 console.log(chalk.blue("Reading"));
 var DomainToIP = JSON.parse(fs.readFileSync(process.argv[2]));
-var scores = JSON.parse(fs.readFileSync(process.argv[4]));
-var outFile = process.argv[5];
+var scores = JSON.parse(fs.readFileSync(process.argv[3]));
+var outFile = process.argv[4];
 
 console.log(chalk.blue("rescoring on IP diversity."));
 
