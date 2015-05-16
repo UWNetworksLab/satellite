@@ -45,7 +45,7 @@ var ipDomainValidation = function (ip) {
       if (scores[domain] && scores[domain][cc] !== undefined) {
         var score = scores[domain][cc];
         if (score && ip[1][domain]) {
-          t_tf += 1;
+          t_tt += 1;
           if (score > 0.5) {
             t_c += 1;
           }
@@ -82,7 +82,7 @@ var reduceDomains = function () {
   fs.writeFileSync(process.argv[4]+'.frac', JSON.stringify(fracs));
   console.log('done.');
   console.log('Gave score of true to', t_c, ' of ', t_tt);
-  console.log('Gave score of false to', t_f, ' of ', t_tf)
+  console.log('Gave score of false to', t_f, ' of ', t_tf);
   process.exit(0);
 };
 
