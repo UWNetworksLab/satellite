@@ -71,9 +71,6 @@ var reduceDomains = function () {
 
 var validation = fs.createReadStream(process.argv[2]);
 validation
-  .pipe(es.split())
+  .pipe(es.split()).pipe(es.split(']['))
   .pipe(es.mapSync(ipDomainValidation))
-  .pipe(es.wait(reduceDomains))
-  .on('error', function(e) {
-    console.error('err', e);
-  });
+  .pipe(es.wait(reduceDomains));
