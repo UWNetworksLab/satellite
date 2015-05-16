@@ -25,7 +25,7 @@ console.log(chalk.green('Done!'));
 
 var domains = {};
 var cdomains = {};
-var t_c = t_t = 0;
+var t_c = 0, t_t = 0;
 Object.keys(scores).map(function (dom) {
   cdomains[dom] = [];
   domains[dom] = [];
