@@ -25,7 +25,7 @@ console.log(chalk.green('Done!'));
 
 var domains = {};
 var cdomains = {};
-var t_c = 0, t_t = 0;
+var t_c = 0, t_f = 0, t_tf = 0, t_tt = 0;
 Object.keys(scores).map(function (dom) {
   cdomains[dom] = [];
   domains[dom] = [];
@@ -45,13 +45,17 @@ var ipDomainValidation = function (ip) {
       if (scores[domain] && scores[domain][cc] !== undefined) {
         var score = scores[domain][cc];
         if (score && ip[1][domain]) {
-          t_t += 1;
+          t_tf += 1;
           if (score > 0.5) {
             t_c += 1;
           }
           cdomains[domain].push(score > 0.5 ? 1 : 0);
           domains[domain].push(score);
         } else if (score) {
+          t_tf += 1;
+          if (score < 0.5) {
+            t_f += 1;
+          }
           domains[domain].push(1 - score);
         }
       }
@@ -77,7 +81,8 @@ var reduceDomains = function () {
   fs.writeFileSync(process.argv[4], JSON.stringify(dscores));
   fs.writeFileSync(process.argv[4]+'.frac', JSON.stringify(fracs));
   console.log('done.');
-  console.log('correctly classified ', t_c, ' of ', t_t);
+  console.log('Gave score of true to', t_c, ' of ', t_tt);
+  console.log('Gave score of false to', t_f, ' of ', t_tf)
   process.exit(0);
 };
 
