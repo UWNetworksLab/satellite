@@ -37,16 +37,17 @@ var outFile = fs.createWriteStream(process.argv[4]);
 
 actual
   .pipe(es.split())
-  .pipe(es.map(mapToBoolean))
+  .pipe(es.mapSync(mapToBoolean))
+  .pipe(es.stringify())
   .pipe(es.join('\n'))
   .pipe(outFile);
 
-function mapToBoolean(data, callback) {
+function mapToBoolean(data) {
   var ipDataArray;
   try {
     ipDataArray = JSON.parse(data);
   } catch (e) {
-    return callback();
+    return;
   }
 
   var ip = ipDataArray[0];
@@ -60,9 +61,9 @@ function mapToBoolean(data, callback) {
     }
   });
   if (Object.keys(results).length > 0) {
-    return callback(null, JSON.stringify([ip, results]));
+    return [ip, results];
   } else {
-    return callback();
+    return;
   }
 }
 
