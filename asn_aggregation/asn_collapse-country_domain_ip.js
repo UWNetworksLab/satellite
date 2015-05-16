@@ -24,7 +24,7 @@ var tempDir = outFile + '-collapse-temp';
 // Read one csv file line by line.
 function reduceASN(file) {
   var into = {
-    country: file.slice(0, file.length - 4)
+    country: file.slice(file.length - 6, file.length - 4)
   };
 
   return Q.Promise(function (resolve, reject) {
