@@ -41,12 +41,10 @@ var ipDomainValidation = function (ip) {
       var domain = doms[i];
       if (scores[domain] && scores[domain][cc] !== undefined) {
         var score = scores[domain][cc];
-        if (!score) { score = -1; }
-        score = (score + 1) / 2;
-        if (ip[1][domain]) {
-          domains[domain].push(1 - score);
-        } else {
+        if (score && ip[1][domain]) {
           domains[domain].push(score);
+        } else if (score) {
+          domains[domain].push(1 - score);
         }
       }
     }
@@ -71,6 +69,6 @@ var reduceDomains = function () {
 
 var validation = fs.createReadStream(process.argv[2]);
 validation
-  .pipe(es.split()).pipe(es.split(']['))
+  .pipe(es.split())
   .pipe(es.mapSync(ipDomainValidation))
   .pipe(es.wait(reduceDomains));

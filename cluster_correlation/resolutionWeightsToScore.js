@@ -23,3 +23,4 @@ Object.keys(DomainToIP).forEach(function (domain) {
 });
 
 fs.writeFileSync(outFile, JSON.stringify(scores));
+console.log(chalk.green("Done!"));
