@@ -24,7 +24,10 @@ var scores = JSON.parse(fs.readFileSync(process.argv[3]));
 console.log(chalk.green('Done!'));
 
 var domains = {};
+var cdomains = {};
+var t_c = t_t = 0;
 Object.keys(scores).map(function (dom) {
+  cdomains[dom] = [];
   domains[dom] = [];
 })
 console.log('domains read');
@@ -42,6 +45,11 @@ var ipDomainValidation = function (ip) {
       if (scores[domain] && scores[domain][cc] !== undefined) {
         var score = scores[domain][cc];
         if (score && ip[1][domain]) {
+          t_t += 1;
+          if (score > 0.5) {
+            t_c += 1;
+          }
+          cdomains[domain].push(score > 0.5 ? 1 : 0);
           domains[domain].push(score);
         } else if (score) {
           domains[domain].push(1 - score);
@@ -57,13 +65,19 @@ var ipDomainValidation = function (ip) {
 var reduceDomains = function () {
   console.log('reducing.');
   var dscores = [];
+  var fracs = [];
   Object.keys(domains).forEach(function (d) {
     if (!domains[d].length) { return; }
     var score = domains[d].reduce(function (a,b) {return a + b;}, 0) / domains[d].length;
     dscores.push(score);
+
+    var frac = cdomains[d].reduce(function (a,b) {return a + b;}, 0) / domains[d].length;
+    fracs.push(frac);
   });
   fs.writeFileSync(process.argv[4], JSON.stringify(dscores));
+  fs.writeFileSync(process.argv[4]+'.frac', JSON.stringify(fracs));
   console.log('done.');
+  console.log('correctly classified ', t_c, ' of ', t_t);
   process.exit(0);
 };
 
