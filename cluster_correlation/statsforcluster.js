@@ -6,7 +6,7 @@ var ip2country = require('ip2country');
 
 // statsforcluster.js <domains.txt> <scores> <asntable> [threshold]
 
-var domains = fs.readFileSync(process.argv[2]).split('\n');
+var domains = fs.readFileSync(process.argv[2]).toString().split('\n');
 var scores = JSON.parse(fs.readFileSync(process.argv[3]));
 var lookup = require('../asn_aggregation').loadASMap(process.argv[4]);
 
