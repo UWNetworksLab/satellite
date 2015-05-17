@@ -8,7 +8,7 @@ var ip2country = require('ip2country');
 
 var domains = fs.readFileSync(process.argv[2]).toString().split('\n');
 var scores = JSON.parse(fs.readFileSync(process.argv[3]));
-var lookup = require('../asn_aggregation/asn_lookup').loadASMap(process.argv[4]);
+var lookup = require('../asn_aggregation/asn_lookup').getMap(process.argv[4]);
 
 var data = lookup.then(function (map) {
   console.log(chalk.blue('Files Loaded.'));
