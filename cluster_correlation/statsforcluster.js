@@ -15,7 +15,7 @@ var data = lookup.then(function (map) {
   var ips = {};
   domains.forEach(function (dom) {
     if (!dom) { return; }
-    scores[dom].forEach(function (ip) {
+    Object.keys(scores[dom]).forEach(function (ip) {
       if (!ips[ip]) {
         ips[ip] = [];
       }
@@ -52,6 +52,8 @@ var data = lookup.then(function (map) {
     asns: ASNs,
     countries: countries
   };
+}).catch(function (e) {
+  console.error(e);
 });
 
 module.exports = data;
