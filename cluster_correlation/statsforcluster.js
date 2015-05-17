@@ -3,6 +3,7 @@
 var fs = require('fs');
 var chalk = require('chalk');
 var ip2country = require('ip2country');
+var add = function (a, b) { return a + b; };
 
 // statsforcluster.js <domains.txt> <scores> <asntable> [threshold]
 
