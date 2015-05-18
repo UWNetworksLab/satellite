@@ -3,6 +3,7 @@
 var fs = require('fs');
 var chalk = require('chalk');
 var ip2country = require('ip2country');
+var iputil = require('../util/ip_utils');
 var add = function (a, b) { return a + b; };
 
 var getData = function (domains, scores, lookup, threshold) {
@@ -20,11 +21,14 @@ return lookup.then(function (map) {
   });
   console.log(chalk.blue(Object.keys(ips).length) + chalk.yellow(' IPs under consideration'));
   var goodIPs = [];
+  var goodScores = [];
 
   Object.keys(ips).forEach(function (ip) {
     var thold = eval(threshold.replace('n', ips[ip].length));
-    if (ips[ip].reduce(add, 0) > thold) {
+    var score = ips[ip].reduce(add, 0);
+    if (score > thold) {
       goodIPs.push(ip);
+      goodScores.push(score);
     }
   });
   console.log(chalk.blue(goodIPs.length) + chalk.yellow(' In Cluster.'))
@@ -43,7 +47,8 @@ return lookup.then(function (map) {
   console.log(chalk.blue(countries.length) + chalk.yellow(' Countries.'));
 
   return {
-    ips: goodIPs,
+    ips: goodIPs.map(iputil.format),
+    scores: goodScores,
     asns: ASNs,
     countries: countries
   };
