@@ -16,3 +16,9 @@ exports.getClassC = function (ip) {
   return classC;
 };
 
+exports.format = function (numstr) {
+  var num = Number(numstr);
+  var buf = new Buffer(4);
+  buf.writeUInt32BE(num, 0);
+  return buf[0] + '.' + buf[1] + '.' + buf[2] + '.' + buf[3];
+}
