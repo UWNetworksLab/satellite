@@ -24,7 +24,7 @@ return lookup.then(function (map) {
   var goodScores = [];
 
   Object.keys(ips).forEach(function (ip) {
-    var thold = eval(threshold.replace('n', ips[ip].length));
+    var thold = eval(threshold.replace('n', ips[ip].length).replace('m', domains.length));
     var score = ips[ip].reduce(add, 0);
     if (score > thold) {
       goodIPs.push(ip);
