@@ -5,13 +5,8 @@ var chalk = require('chalk');
 var ip2country = require('ip2country');
 var add = function (a, b) { return a + b; };
 
-// statsforcluster.js <domains.txt> <scores> <asntable> [threshold]
-
-var domains = fs.readFileSync(process.argv[2]).toString().split('\n');
-var scores = JSON.parse(fs.readFileSync(process.argv[3]));
-var lookup = require('../asn_aggregation/asn_lookup').getMap(process.argv[4]);
-
-var data = lookup.then(function (map) {
+var getData = function (domains, scores, lookup, threshold) {
+return lookup.then(function (map) {
   console.log(chalk.blue('Files Loaded.'));
   var ips = {};
   domains.forEach(function (dom) {
@@ -25,7 +20,6 @@ var data = lookup.then(function (map) {
   });
   console.log(chalk.blue(Object.keys(ips).length) + chalk.yellow(' IPs under consideration'));
   var goodIPs = [];
-  var threshold = process.argv[5] || '1';
 
   Object.keys(ips).forEach(function (ip) {
     var thold = eval(threshold.replace('n', ips[ip].length));
@@ -56,5 +50,15 @@ var data = lookup.then(function (map) {
 }).catch(function (e) {
   console.error(e);
 });
+};
 
-module.exports = data;
+exports.getData = getData;
+
+// statsforcluster.js <domains.txt> <scores> <asntable> [threshold]
+
+if (process.argv.length >= 5) {
+  var domains = fs.readFileSync(process.argv[2]).toString().split('\n');
+  var scores = JSON.parse(fs.readFileSync(process.argv[3]));
+  var lookup = require('../asn_aggregation/asn_lookup').getMap(process.argv[4]);
+  getData(domains, scores, lookup, process.argv[5] || '1');
+}
