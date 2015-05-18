@@ -59,9 +59,29 @@ return lookup.then(function (map) {
 
 exports.getData = getData;
 
-// statsforcluster.js <domains.txt> <scores> <asntable> [threshold]
+// statsforcluster.js <domains.txt> <scores> <asntable> [threshold] [outfile]
 
-if (process.argv.length >= 5) {
+if (process.argv.length === 7) {
+  var domains = fs.readFileSync(process.argv[2]).toString();
+  var scores = JSON.parse(fs.readFileSync(process.argv[3]));
+  var lookup = require('../asn_aggregation/asn_lookup').getMap(process.argv[4]);
+
+  var dobj = JSON.parse(domains);
+  var output = {};
+  lookup.then(function() {
+    Object.keys(dobj).forEach(function (cluster) {
+      var doms = dobj[cluster];
+      getData(doms, scores, lookup, process.argv[5] || '1').then(function (cluster, result) {
+        output[cluster] = result;
+        if (Object.keys(output).length === Object.keys(dobj).length) {
+          fs.writeFileSync(process.argv[6], JSON.stringify(output));
+          console.log(chalk.green('done!'));
+          process.exit(0);
+        }
+      }.bind({}, cluster))
+    });
+  });
+} else if (process.argv.length >= 5) {
   var domains = fs.readFileSync(process.argv[2]).toString().split('\n');
   var scores = JSON.parse(fs.readFileSync(process.argv[3]));
   var lookup = require('../asn_aggregation/asn_lookup').getMap(process.argv[4]);
