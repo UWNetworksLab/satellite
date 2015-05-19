@@ -20,7 +20,7 @@ function doDomains(asm) {
     fs.createReadStream(aggregation)
       .pipe(es.split())
       .pipe(es.mapSync(function (line) {
-        var entry, sorted, median, stdev counts = {}, result = {};
+        var entry, sorted, median, stdev, counts = {}, result = {};
 
         if (line === '' || line === 'undefined') {
           return;
@@ -43,9 +43,11 @@ function doDomains(asm) {
           counts[asn] = Object.keys(asns).length;
         });
 
-        sorted = Object.keys(counts).sort(function (a, b) {
+        sorted = Object.keys(counts).map(function(asn) {
+          return counts[asn];
+	}).sort(function (a, b) {
           return counts[a] - counts[b];
-        };
+        });
         mean = stats.mean(sorted);
         stdev = stats.stdev(sorted);
 
@@ -55,7 +57,9 @@ function doDomains(asm) {
           result[asn] = counts[asn];
         });
 
-        results[entry.name] = result;
+        if (Object.keys(result).length > 0) {
+          results[entry.name] = result;
+        }
       }))
       .on('end', resolve.bind({}, results))
       .on('error', reject);
