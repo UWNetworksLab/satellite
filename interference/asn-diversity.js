@@ -5,6 +5,7 @@ var fs = require('fs');
 var es = require('event-stream');
 var Q = require('q');
 var getMap = require('../asn_aggregation/asn_lookup.js').getMap;
+var stats = require('stats-lite');
 
 var aggregation = process.argv[2];
 var asnTable = process.argv[3];
@@ -18,7 +19,7 @@ function doDomains(asm) {
     fs.createReadStream(aggregation)
       .pipe(es.split())
       .pipe(es.mapSync(function (line) {
-        var entry, median, counts = {}, result = {};
+        var entry, sorted, median, stdev counts = {}, result = {};
 
         if (line === '' || line === 'undefined') {
           return;
@@ -41,20 +42,19 @@ function doDomains(asm) {
           counts[asn] = Object.keys(asns).length;
         });
 
-        median = counts[Object.keys(counts).sort(function (a, b) {
+        sorted = Object.keys(counts).sort(function (a, b) {
           return counts[a] - counts[b];
-        })[Math.floor(Object.keys(counts).length / 2)]];
+        };
+        mean = stats.mean(sorted);
+        stdev = stats.stdev(sorted);
 
         Object.keys(counts).filter(function (asn) {
-          return counts[asn] > median;
+          return counts[asn] > mean + 3 * stdev;
         }).forEach(function (asn) {
           result[asn] = counts[asn];
         });
 
-        results[entry.name] = {
-          median: median,
-          asns: result
-        };
+        results[entry.name] = result;
       }))
       .on('end', resolve.bind({}, results))
       .on('error', reject);
