@@ -7,6 +7,7 @@ var Q = require('q');
 var getMap = require('../asn_aggregation/asn_lookup.js').getMap;
 var stats = require('stats-lite');
 
+//Usage: asn-diversity.js <domain-asn-ip> <.lookup.json> <output>
 var aggregation = process.argv[2];
 var asnTable = process.argv[3];
 var outFile = process.argv[4];

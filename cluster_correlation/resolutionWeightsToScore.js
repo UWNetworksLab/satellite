@@ -3,6 +3,7 @@
 var fs = require('fs');
 var chalk = require('chalk');
 
+// Usage: resolutionWeightsToScore.js <domain-to-ip> <scores> <outfile>
 console.log(chalk.blue("Reading"));
 var DomainToIP = JSON.parse(fs.readFileSync(process.argv[2]));
 var scores = JSON.parse(fs.readFileSync(process.argv[3]));
