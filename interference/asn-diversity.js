@@ -19,7 +19,7 @@ function doDomains(asm) {
     fs.createReadStream(aggregation)
       .pipe(es.split())
       .pipe(es.mapSync(function (line) {
-        var entry, sorted, median, stdev, counts = {}, result = {};
+        var entry, sorted, median, stdev, counts = {},statcounts={}, result = {};
 
         if (line === '' || line === 'undefined') {
           return;
@@ -36,10 +36,21 @@ function doDomains(asm) {
           }).forEach(function (answer) {
             var asn = asm.lookup(answer);
             if (answer !== 'unknown') {
-              asns[asn] = true;
+              if (!asns[asn]) {asns[asn] =0;}
+              asns[asn] += 1;
             }
           });
-          counts[asn] = Object.keys(asns).length;
+          var max = 0, total = 0;
+          Object.keys(asns).forEach(function (asn) {
+            total += asns[asn];
+            if (asns[asn] > max) {
+              max = asns[asn];
+            }
+          });
+          counts[asn] = total/max;
+          if (total >= 20) {
+            statcounts[asn] = total/max;
+          }
         });
 
         sorted = Object.keys(counts).map(function(asn) {
@@ -50,10 +61,10 @@ function doDomains(asm) {
         mean = stats.mean(sorted);
         stdev = stats.stdev(sorted);
 
-        Object.keys(counts).filter(function (asn) {
-          return counts[asn] > mean + 3 * stdev;
+        Object.keys(statcounts).filter(function (asn) {
+          return statcounts[asn] > mean + 3 * stdev;
         }).forEach(function (asn) {
-          result[asn] = counts[asn];
+          result[asn] = statcounts[asn];
         });
 
         if (Object.keys(result).length > 0) {
