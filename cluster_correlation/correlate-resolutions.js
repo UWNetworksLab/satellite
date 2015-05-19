@@ -4,8 +4,9 @@ var fs = require('fs');
 var ProgressBar = require('progress');
 var cm = require('./correlation-matrix.js');
 var chalk = require('chalk');
+var isReserved = require('../util/ip_utils.js').isReserved;
 
-// Generate socres for IPs from the resoluton lookup tables and a similarity matrix
+// Generate scores for IPs from the resolution lookup tables and a similarity matrix
 // Usage: correlate-resolutions.js <domainToIp> <ipToDomain> <matrix sim prefix> <output.json>
 // Output format is:
 // {domain -> {ip -> score}}
@@ -29,6 +30,10 @@ Object.keys(domainToIP).forEach(function (domain) {
       coeff = 0,
       id = Object.keys(IPtoDomain[ip]);
 
+    if (isReserved(ip)) {
+      return 0.0;
+    }
+
     if (memoized[id]) {
       out[domain][ip] = memoized[id];
     } else {
@@ -37,7 +42,7 @@ Object.keys(domainToIP).forEach(function (domain) {
         coeff += IPtoDomain[ip][other] * matrix.lookup(domain, other);
       });
 
-      out[domain][ip] =  coeff / total * domainToIP[domain][ip];
+      out[domain][ip] = coeff / total * domainToIP[domain][ip];
       memoized[id] = out[domain][ip];
     }
   });
