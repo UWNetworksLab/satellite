@@ -16,9 +16,6 @@
  * Usage
  *  node <compare.js path> <ActualResults> <ExpectedHashes> <OutputFile>
  *
- * Note: it might be useful to run thus in paralell over several cores to speed up
- *  processing. Split input then do something like this:
- * find ../fav/ -name "fava*" | xargs -P 4 -I {} node favicon/compare.js ../domains-localvalidation.json {} {}.out
  */
 
 var fs = require('fs');
