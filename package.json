@@ -13,7 +13,8 @@
     "native-dns-packet": "git://github.com/willscott/native-dns-packet.git",
     "progress": "^1.1.8",
     "progressbar-stream": "0.0.1",
-    "q": "^1.0.1"
+    "q": "^1.0.1",
+    "stats-lite": "^1.0.3"
   },
   "repository": {
     "type": "git",

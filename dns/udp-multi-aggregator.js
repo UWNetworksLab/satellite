@@ -45,14 +45,13 @@ function parseDomainLine(map, blacklist, into, domains, line) {
   }
   try {
     record = dns.parse(new Buffer(parts[3], 'hex'));
-    if (!into[thedomain][theasn]) {
-      into[thedomain][theasn] = {};
-    }
+    thedomain = record.question[0].name;
 
     answers = record.answer.filter(function (answer) {
       return answer.type === dns.consts.NAME_TO_QTYPE.A;
     });
 
+    into[thedomain] = into[thedomain] || {};
     into[thedomain][theasn] = into[thedomain][theasn] || {};
     if (answers.length > 0) {
       answers.forEach(function (answer) {
