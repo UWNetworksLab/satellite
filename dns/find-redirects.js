@@ -1,3 +1,12 @@
+'use strict';
+
+/**
+ * Locally make HTTP requests to a list of domains to determine what the
+ * Preferred URL is. This is used to determine if 'expedia.com' actually displays
+ * content at 'www.expedia.com', which may be hosted on a different serving
+ * platform.
+ */
+
 var Q = require('q');
 var fs = require('fs');
 var http = require('http');
@@ -69,7 +78,7 @@ function httpWorker(domains, method, data) {
             data[domain].httpErr = err;
           }
           return doQuery();
-        })
+        });
       } else {
         resolve();
       }
@@ -79,7 +88,7 @@ function httpWorker(domains, method, data) {
 }
 
 function doAllHTTP(domains) {
-  var base = Q(),
+  var base = new Q(),
     data = {},
     todo, i;
 
@@ -91,12 +100,12 @@ function doAllHTTP(domains) {
   for (i = 0; i < RETRIES && todo.length > 0; i++) {
     base = base.then(function () {
       return Q.all(new Array(CONCURRENT_HTTP_REQUESTS).join().split(',').map(function () {
-        if (i == RETRIES - 1) { // do a GET as a last resort
+        if (i === RETRIES - 1) { // do a GET as a last resort
           return httpWorker(todo, 'GET', data);
         } else {
           return httpWorker(todo, 'HEAD', data);
         }
-      }))
+      }));
     }, console.error).then(function () {
       return Q.Promise(function (resolve, reject) {
         todo = Object.keys(data).filter(function (domain) {
@@ -128,7 +137,7 @@ function dnsWorker(domains, data) {
           data[domain].ipsErrors += 1;
           data[domain].ipsLastErr = err;
           return doQuery();
-        })
+        });
       } else {
         resolve();
       }
@@ -138,12 +147,12 @@ function dnsWorker(domains, data) {
 }
 
 function doAllDNS(data) {
-  var base = Q(),
+  var base = new Q(),
     todo, i;
 
   todo = Object.keys(data).filter(function (domain) {
     var redirect;
-    if (Math.floor(data[domain].code / 100) == 3 && data[domain].location) {
+    if (Math.floor(data[domain].code / 100) === 3 && data[domain].location) {
       redirect = data[domain].location.match(/https?:\/\/([a-zA-Z0-9.-]*)/);
       if (redirect && redirect[1]) {
         data[domain].redirect = redirect[1];
@@ -162,7 +171,7 @@ function doAllDNS(data) {
     base = base.then(function () {
       return Q.all(new Array(CONCURRENT_DNS_REQUESTS).join().split(',').map(function () {
         return dnsWorker(todo, data);
-      }))
+      }));
     }).then(function () {
       return Q.Promise(function (resolve, reject) {
         todo = [];
@@ -222,7 +231,7 @@ function findUniqRedirect(data) {
 doAllHTTP(fs.readFileSync(inFile).toString()
   .split('\n')
   .filter(function (domain) {
-    return domain != '';
+    return domain !== '';
   }))
   .then(doAllDNS)
   .then(findUniqRedirect, console.error);

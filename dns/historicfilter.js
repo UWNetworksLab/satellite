@@ -1,6 +1,11 @@
-// Input: domains whitelist from current and previous period.
-// Output: Intersection of lists.
-// Used to limit scanning / processing to IPs which have been seen previously.
+'use strict';
+
+/**
+ * Filter hosts to the intersection of two runs.
+ * Used to only query IPs which are long-lived.
+ * Usage:
+ * node historicfilter.js <hosts.txt> <old-hosts.txt> <intersection.txt>
+ */
 
 var fs = require('fs');
 var ip_utils = require('../util/ip_utils');

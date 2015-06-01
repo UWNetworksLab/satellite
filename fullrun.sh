@@ -104,7 +104,7 @@ makeArchive()
 aggregateRun()
 {
   echo "Aggregating..."
-  node dns/udp-multi-aggregator.js runs/$thisRun runs/$thisRun.lookup.json runs/$thisRun.asn.json
+  node dns/aggregator.js runs/$thisRun runs/$thisRun.lookup.json runs/$thisRun.asn.json
 }
 
 ##12. Clean up
