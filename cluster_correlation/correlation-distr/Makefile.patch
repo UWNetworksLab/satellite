@@ -1,0 +1,14 @@
+12,13c12,13
+< CPLEXDIR      = /com/ilog/cplex112/
+< CONCERTDIR    = /com/ilog/concert27/
+---
+> #CPLEXDIR      = /com/ilog/cplex112/
+> #CONCERTDIR    = /com/ilog/concert27/
+57c57
+< CBUNDLEDIR = /u/ws/cluster/micha/ConicBundle
+---
+> #CBUNDLEDIR = /u/ws/cluster/micha/ConicBundle
+59c59
+< CBUNDLEDIR = /u/ws/cluster/micha/ConicBundle64
+---
+> #CBUNDLEDIR = /u/ws/cluster/micha/ConicBundle64
