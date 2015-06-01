@@ -16,9 +16,6 @@
  * Usage
  *  node <compare.js path> <ActualResults> <ExpectedHashes> <OutputFile>
  *
- * Note: it might be useful to run thus in paralell over several cores to speed up
- *  processing. Split input then do something like this:
- * find ../fav/ -name "fava*" | xargs -P 4 -I {} node favicon/compare.js ../domains-localvalidation.json {} {}.out
  */
 
 var fs = require('fs');
@@ -35,26 +32,18 @@ var expected = JSON.parse(fs.readFileSync(process.argv[2]));
 var actual = fs.createReadStream(process.argv[3]);
 var outFile = fs.createWriteStream(process.argv[4]);
 
-actual
-  .pipe(es.split())
-  .pipe(es.mapSync(mapToBoolean))
-  .pipe(es.stringify())
-  .pipe(es.join('\n'))
-  .pipe(outFile);
-
 function mapToBoolean(data) {
-  var ipDataArray;
+  var ipDataArray, ip, hosts, results = {};
   try {
     ipDataArray = JSON.parse(data);
   } catch (e) {
     return;
   }
 
-  var ip = ipDataArray[0];
-  var hosts = ipDataArray[1];
+  ip = ipDataArray[0];
+  hosts = ipDataArray[1];
 
-  var results = {};
-  Object.keys(hosts).forEach(function(host) {
+  Object.keys(hosts).forEach(function (host) {
     if (expected[host]) {
       // Check that it gives back a 200 and check hash
       results[host] = hosts[host][0] === 200 && hosts[host][2] === expected[host];
@@ -66,4 +55,11 @@ function mapToBoolean(data) {
     return;
   }
 }
+
+actual
+  .pipe(es.split())
+  .pipe(es.mapSync(mapToBoolean))
+  .pipe(es.stringify())
+  .pipe(es.join('\n'))
+  .pipe(outFile);
 

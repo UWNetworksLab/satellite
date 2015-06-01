@@ -2,9 +2,9 @@
 'use strict';
 
 /*
- * Aggregate a study by ASN#
- * Given an uncompressed study directory, the data is compressed to a denser mapping of
- * domain -> {asn -> {ip -> %}}
+ * Aggregate the directory of zmap scans into the .asn.json.
+ * The resulting file is a json object on each line, of the format:
+ *  domain -> {asn -> {ip -> %}}
  */
 
 var Q = require('q');
@@ -95,13 +95,13 @@ function collapseSingle(map, blacklist, domains, file) {
 }
 
 function collapseAll(asm, blacklist) {
-  var base = Q(),
+  var base = new Q(),
     files, bar;
 
   files = fs.readdirSync(rundir).filter(function (file) {
     return /.csv$/.test(file);
   }).filter(function (file) {
-    return fs.existsSync(rundir + '/' + file.replace('.csv', '.json'))
+    return fs.existsSync(rundir + '/' + file.replace('.csv', '.json'));
   });
 
   console.log(chalk.blue("Starting Aggregation of %d files"), files.length);
@@ -120,13 +120,13 @@ function collapseAll(asm, blacklist) {
 function parseBlackList(into, line) {
   var parts = line.split(','),
     record;
-  if (parts.length == 3) {
+  if (parts.length === 3) {
     try {
       record = dns.parse(new Buffer(parts[2], 'hex'));
     } catch (e) {
       return;
     }
-    if (record.header.ra == 1 && record.answer.length > 0 && record.answer[0].address !== '128.208.3.200') {
+    if (record.header.ra === 1 && record.answer.length > 0 && record.answer[0].address !== '128.208.3.200') {
       into[parts[0]] = true;
     }
   }

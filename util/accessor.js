@@ -1,4 +1,4 @@
-/* jslint node:true */
+/*jslint node:true */
 'use strict';
 
 var fs = require('fs');
@@ -11,32 +11,35 @@ var fs = require('fs');
  * ...
  * }
  * This module creates the methods you want, namely:
- * new accessor(file).ports() -> [80]
+ *
+ * new Accessor(file).ports() -> [80]
  *                   .modes() -> ['syn', 'ack']
  */
 
-function mapper (key) {
+function mapper(data, key) {
   var out = {};
-  this.data.map(function (item) {
+  data.map(function (item) {
     out[item[key]] = true;
   });
   return Object.keys(out);
 }
 
-function filterer (key, val) {
-  return this.data.filter(function (item) {
-    return item[key] == val;
+function filterer(data, key, val) {
+  return data.filter(function (item) {
+    return item[key] === val;
   });
 }
 
-module.exports = function (file) {
-  var keys;
+var Accessor = function (file) {
+  var keys, data;
 
-  this.data = JSON.parse(fs.readFileSync(file));
-  keys = Object.keys(this.data[0]);
+  data = JSON.parse(fs.readFileSync(file));
+  keys = Object.keys(data[0]);
 
   keys.forEach(function (key) {
-    this[key + 's'] = mapper.bind(this, key);
-    this['with' + key] = filterer.bind(this, key);
+    this[key + 's'] = mapper.bind(this, data, key);
+    this['with' + key] = filterer.bind(this, data, key);
   }.bind(this));
 };
+
+module.exports = Accessor;

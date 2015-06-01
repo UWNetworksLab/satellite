@@ -2,6 +2,7 @@ var fs = require('fs');
 var Q = require('q');
 var ProgressBar = require('progress');
 var chalk = require('chalk');
+var isReserved = require('../util/ip_utils.js').isReserved;
 
 // Usage: node correlation-matrix.js domain-classC-count [domain-classC-reweight] output-prefix
 //
@@ -29,7 +30,7 @@ function getOffset(triangle, domain1, domain2) {
     idx2 = tmp;
   }
 
-  return (idx1 + Math.floor(0.5 * (idx2 - 1) * idx2)) * 4;
+  return (Math.floor(0.5 * (idx1 - 1) * idx1) + idx2) * 4;
 }
 
 function lookup(domain1, domain2) {
@@ -56,11 +57,16 @@ function buildMatrix(countTable, reweightingTable, outprefix) {
     reweights = JSON.parse(fs.readFileSync(reweightingTable));
   } else {
     // re-weight everything with a 0 factor if table wasn't specified
+    // unless reserved, then -1.0
     reweights = {};
     Object.keys(counts).forEach(function (domain) {
       reweights[domain] = {};
       Object.keys(counts[domain]).forEach(function (classC) {
-        reweights[domain][classC] = 0;
+        if (!isReserved(classC)) {
+          reweights[domain][classC] = 0;
+        } else {
+          reweights[domain][classC] = -1.0;
+        }
       });
     });
   }

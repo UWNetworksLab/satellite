@@ -1,3 +1,6 @@
+/*jslint node:true */
+'use strict';
+
 var fs = require('fs');
 var spawn = require('child_process').spawn;
 var filesize = require('filesize');
@@ -5,44 +8,59 @@ var filesize = require('filesize');
 var template = {
     "uniqid": "washington-dns",
     "name": "Longterm DNS Survey",
-    "status": "alpha", 
+    "status": "alpha",
     "short_desc": "Tracking of the resolution of the alexa top-10000 domains resolved against active DNS resolvers.",
-    
     "long_desc": "Periodically a full zmap scan is made to find working DNS resolvers in the ipv4 space. Regular measurements of the top 10000 domains are then performed across the roughly 2million subnets with active resolvers.",
-    
     "organization": {
-        "name": "University of Washington",
-        "website":"https://www.cs.washington.edu"
+      "name": "University of Washington",
+      "website": "https://www.cs.washington.edu"
     },
     "contact": {
-        "name": "Research Team",
-        "email": "satellite-abuse@cs.washington.edu"
+      "name": "Research Team",
+      "email": "satellite-abuse@cs.washington.edu"
     },
-    
     "authors": ["Will Scott", "Adam Lerner", "Tadayoshi Kohno", "Arvind Krishnamurthy"],
-        
     "tags": ["UDP/53", "DNS"],
-    
     "files": [],
-    
     "created_at": "",
-    
     "updated_at": ""
+  };
+
+var conn, buffer, cb;
+var sftp = function (cmd, cb) {
+  conn = spawn('sftp', ['-q', '-b', '-', 'washington@scans.io']);
+  buffer = "";
+  conn.stdout.setEncoding('utf8');
+  conn.stdin.setEncoding('utf8');
+  conn.stderr.setEncoding('utf8');
+  conn.stdout.on('data', function (data) {
+    buffer += data;
+  });
+  conn.stderr.on('data', function (data) {
+    console.log('SFTP STDERR:', data);
+  });
+  conn.stdin.on('STFP ERROR:', console.log.bind(console, 'stdin'));
+  conn.on('exit', function () {
+    conn = undefined;
+    cb(buffer);
+  });
+  conn.stdin.end(cmd);
 };
 
-var finishMetaData = function(files) {
-  var existing = {};
+var finishMetaData = function (files) {
+  var existing = {},
+    templateString;
   if (fs.existsSync('dns.study')) {
-    JSON.parse(fs.readFileSync('dns.study')).files.forEach(function(file) {
+    JSON.parse(fs.readFileSync('dns.study')).files.forEach(function (file) {
       existing[file.name] = file;
     });
   }
-  files.forEach(function(file) {
+  files.forEach(function (file) {
     if (!file.length) {
       return;
     }
     var data = {
-      "name":"runs/" + file,
+      "name": "runs/" + file,
       "description": "scan data from " + file.substr(0, file.indexOf('.')),
       "updated-at": file.substr(0, file.indexOf('.'))
     };
@@ -55,56 +73,35 @@ var finishMetaData = function(files) {
       data.fingerprint = existing[data.name].fingerprint;
     }
     if (fs.existsSync(data.name + '.sig')) {
-      data.fingerprint = fs.readFileSync(data.name + '.sig',"utf-8").toString().trim();
+      data.fingerprint = fs.readFileSync(data.name + '.sig', "utf-8").toString().trim();
     }
     template.files.push(data);
   });
-  var string = JSON.stringify(template, null, 4);
-  fs.writeFileSync('dns.study', string);
+  templateString = JSON.stringify(template, null, 4);
+  fs.writeFileSync('dns.study', templateString);
   console.log('Uploading Metadata...');
-  sftp('cd data/dns\nput dns.study', function() {
+  sftp('cd data/dns\nput dns.study', function () {
     console.log('Done.');
     process.exit(0);
   });
   //queueCmd('put dns.study', function() {
-    console.log('Done.');
+  console.log('Done.');
   //  process.exit(0);
   //});
-}
-
-var conn, buffer, cb;
-var sftp = function(cmd, cb) {
-  conn = spawn('sftp', ['-q', '-b', '-', 'washington@scans.io']);
-  buffer = "";
-  conn.stdout.setEncoding('utf8');
-  conn.stdin.setEncoding('utf8');
-  conn.stderr.setEncoding('utf8');
-  conn.stdout.on('data', function(data) {
-    buffer += data;
-  });
-  conn.stderr.on('data', function(data) {
-    console.log('SFTP STDERR:', data);
-  });
-  conn.stdin.on('STFP ERROR:', console.log.bind(console, 'stdin'));
-  conn.on('exit',function() {
-    delete conn;
-    cb(buffer);
-  });
-  conn.stdin.end(cmd);
-}
+};
 
 
 // Get local list.
-var localArchives = fs.readdirSync('runs').filter(function(file) {
+var localArchives = fs.readdirSync('runs').filter(function (file) {
   return file.indexOf('.tgz') > 0 && file.indexOf('.sig') < file.indexOf('.tgz');
 });
 
 // Wait for remote list
 var remoteArchives = [];
 var finalArchives = [];
-sftp('cd data/dns/runs\nls', function(remote) {
+sftp('cd data/dns/runs\nls', function (remote) {
   remoteArchives = remote.split(/\s+/);
-  remoteArchives.forEach(function(file) {
+  remoteArchives.forEach(function (file) {
     if (file.indexOf('.tgz') < 0 || file.length === 0) {
       return;
     }
@@ -115,11 +112,11 @@ sftp('cd data/dns/runs\nls', function(remote) {
     }
   });
   // Local Archives is now things to upload.
-  var cmd = 'lcd runs\ncd data/dns/runs\n';
-  var todo = 0;
-  localArchives.forEach(function(file) {
+  var cmd = 'lcd runs\ncd data/dns/runs\n',
+    todo = 0;
+  localArchives.forEach(function (file) {
     console.log('new: ' + file);
-    todo++;
+    todo += 1;
     cmd += 'put ' + file + '\n';
     finalArchives.push(file);
   });

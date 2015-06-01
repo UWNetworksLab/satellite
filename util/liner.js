@@ -3,7 +3,7 @@
 
 /** Line chunker from http://strongloop.com/strongblog/practical-examples-of-the-new-node-js-streams-api/ */
 var stream = require('stream');
-var makeLiner = function() {
+var makeLiner = function () {
   var liner = new stream.Transform({objectMode: true});
 
   liner._transform = function (chunk, encoding, done) {
@@ -27,8 +27,9 @@ var makeLiner = function() {
     done();
   };
   return liner;
-}
+};
 /** end line chunker */
+
 var makeReturner = function () {
   var obj = new stream.Transform({objectMode: true});
 

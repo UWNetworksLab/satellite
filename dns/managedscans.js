@@ -1,7 +1,11 @@
-/*jslint node:true */
-// Runs a bunch of overlapping zmap scans.
-// args: <domain file> <dns servers file> <where to put output>
 'use strict';
+
+/**
+ * Schedules dns zmap scans against a list of domains using the custom udp-multi
+ * zmap scan mode.
+ * usage:
+ * managedscans.js <domain file> <dns servers file> <where to put output>
+ */
 
 var fs = require('fs');
 var Q = require('q');
@@ -69,7 +73,7 @@ var doNext = function () {
     process.exit(0);
     return;
   }
-  
+
   var theseHosts = [],
     candidate;
   while (theseHosts.length < perRun && hosts.length) {
@@ -83,11 +87,10 @@ var doNext = function () {
     }
   }
 
-  
+
   run(process.argv[4], process.argv[3], theseHosts).then(function () {
     setTimeout(doNext, 1000);
   });
 };
 
 doNext();
-

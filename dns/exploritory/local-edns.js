@@ -1,10 +1,18 @@
+'use strict';
+
+/**
+ * Do local queries against authoritative servers for a set of domains.
+ * Ask for the A records, the A records using alternate EDNS identities,
+ * and information about the servers.
+ */
+
 var fs = require('fs');
 var dns = require('native-dns');
 var chalk = require('chalk');
 var Q = require('q');
 
 if (!process.argv[4]) {
-  console.error(chalk.red('Usage: dns-baseline.js <domain file> <edns_clients file> <output file>'));
+  console.error(chalk.red('Usage: local-edns.js <domain file> <edns_clients file> <output file>'));
   process.exit(1);
 }
 
@@ -64,13 +72,13 @@ function getNS(domain) {
     doQuery(function (response) {
       if (response) {
         response.answer.concat(response.authority).filter(function (answer) {
-          return answer.type = dns.consts.NAME_TO_QTYPE.NS;
+          return answer.type === dns.consts.NAME_TO_QTYPE.NS;
         }).forEach(function (answer) {
           results[domain].ns = answer.data;
         });
       }
       resolve();
-    }, {name: domain, type: 'NS'}, '8.8.8.8', 3)
+    }, {name: domain, type: 'NS'}, '8.8.8.8', 3);
   });
 }
 
@@ -79,7 +87,7 @@ function getNS_A(domain) {
     doQuery(function (response) {
       if (response && response.answer) {
         var ips = response.answer.filter(function (a) {
-          return a.type == dns.consts.NAME_TO_QTYPE.A;
+          return a.type === dns.consts.NAME_TO_QTYPE.A;
         }).map(function (a) {
           return a.address;
         });
@@ -89,7 +97,7 @@ function getNS_A(domain) {
         }
       }
       resolve();
-    }, {name: results[domain].ns, type: 'A'}, '8.8.8.8', 3)
+    }, {name: results[domain].ns, type: 'A'}, '8.8.8.8', 3);
   });
 }
 
@@ -116,7 +124,7 @@ function getA(domain) {
     doQuery(function (response) {
       if (response) {
         results[domain].ips = response.answer.filter(function (a) {
-          return a.type == dns.consts.NAME_TO_QTYPE.A;
+          return a.type === dns.consts.NAME_TO_QTYPE.A;
         }).map(function (a) {
           return a.address;
         });
@@ -133,10 +141,10 @@ function getEDNS(domain) {
         return a.options;
       }).forEach(function (a) {
         a.options.forEach(function (opt) {
-          if (opt.code == 8 && opt.data[3] > 0) {
+          if (opt.code === 8 && opt.data[3] > 0) {
             results[domain].edns = results[domain].edns || {};
             results[domain].edns[client] = response.answer.filter(function (a) {
-              return a.type == dns.consts.NAME_TO_QTYPE.A;
+              return a.type === dns.consts.NAME_TO_QTYPE.A;
             }).map(function (a) {
               return a.address;
             });
@@ -154,7 +162,7 @@ function getEDNS(domain) {
       3,
       {ip: ednsClients[0], mask: 24});
   }).then(function () {
-    var base = Q().delay(DELAY);
+    var base = (new Q()).delay(DELAY);
 
     if (results[domain].edns) {
       for (var i = 1; i < ednsClients.length; i++) {
@@ -174,10 +182,10 @@ function getEDNS(domain) {
 }
 
 function doAll(f, els) {
-  var base = Q();
+  var base = new Q();
   els.forEach(function (el) {
     base = base.then(function () {
-      return f(el)
+      return f(el);
     });
   });
   return base;
@@ -214,7 +222,7 @@ doAll(getNS, domainsList)
           .delay(DELAY)
           .then(doAll.bind({}, getEDNS, domains));
       })
-    )
+    );
   })
   .then(function () {
     fs.writeFileSync(outFile, JSON.stringify(results));

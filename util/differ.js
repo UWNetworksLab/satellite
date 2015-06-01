@@ -12,11 +12,16 @@
 
 var stream = require('stream');
 var getDiff = function (union, comparison) {
-  var inone = new stream.Transform({objectMode: true});
-  var intwo = new stream.Transform({objectMode: true});
+  var inone = new stream.Transform({objectMode: true}),
+    intwo = new stream.Transform({objectMode: true}),
+    adone = false,
+    bdone = false,
+    aqueue = [],
+    bqueue = [];
+
 
   if (!comparison) {
-    comparison = function(a, b) {
+    comparison = function (a, b) {
       if (a === b) {
         return 0;
       } else if (a < b) {
@@ -27,10 +32,8 @@ var getDiff = function (union, comparison) {
     };
   }
 
-  var adone = false, bdone = false;
-  var aqueue = [], bqueue = [];
-
   function emptyQueue() {
+    var item, comp;
     while (true) {
       // end case.
       if (aqueue.length === 0 && bqueue.length === 0 && adone && bdone) {
@@ -42,18 +45,18 @@ var getDiff = function (union, comparison) {
 
       // deteriorated cases.
       if (aqueue.length === 0 && adone && bqueue.length > 0) {
-        var item = bqueue.shift();
+        item = bqueue.shift();
         intwo.push(item[0]);
         item[1]();
       } else if (bqueue.length === 0 && bdone && aqueue.length > 0) {
-        var item = aqueue.shift();
+        item = aqueue.shift();
         inone.push(item[0]);
         item[1]();
-      } // Comparison case.
-      else if (aqueue.length > 0 && bqueue.length > 0) {
-        var comp = comparison(aqueue[0][0], bqueue[0][0]);
+        // Comparison case.
+      } else if (aqueue.length > 0 && bqueue.length > 0) {
+        comp = comparison(aqueue[0][0], bqueue[0][0]);
         if (comp === 0) {
-          var item = [aqueue.shift(), bqueue.shift()];
+          item = [aqueue.shift(), bqueue.shift()];
           union.write(item[0][0]);
           item[0][1]();
           item[1][1]();
@@ -68,7 +71,7 @@ var getDiff = function (union, comparison) {
         break;
       }
     }
-  };
+  }
 
   inone._transform = function (chunk, encoding, done) {
     aqueue.push([chunk, done]);
@@ -91,7 +94,7 @@ var getDiff = function (union, comparison) {
   };
 
   return [inone, intwo];
-}
+};
 /** end line chunker */
 
 module.exports = getDiff;

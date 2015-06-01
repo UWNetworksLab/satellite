@@ -1,8 +1,18 @@
-// Input: zmap output file (.csv of servers and base64 packets)
-// Output: Return separated list of ip/32 with a functional recursive server.
-//
-// Used, for example, to filter out IPs that look like they're actually DNS
-// servers from the initial zmap scan.
+'use strict';
+
+/**
+ * filter.js filters the initial cs.washington.edu.csv zmap scan to the set of
+ * IPs that should be used for subsequent scans.
+ *
+ * Usage:
+ * dns/filter.js <input.csv> <output.txt>
+ * where:
+ *   input.csv is the zmap output file, (csv of servers and base64 responses)
+ *   ouput.txt is a return-separated list of ip/32's for use as a whitelist.
+ *
+ * Example usage:
+ * node dns/filter.js runs/04-25-2015/cs.washington.edu.csv temp/hosts.txt
+ */
 
 var fs = require('fs'),
     stream = require('stream'),
@@ -26,7 +36,7 @@ var watcher = new stream.Transform( { objectMode: true } );
 watcher._transform = function (line, encoding, done) {
   var info = line.split(','),
       record;
-  if (info.length != 3) {
+  if (info.length !== 3) {
     done();
     return;
   }
@@ -38,19 +48,19 @@ watcher._transform = function (line, encoding, done) {
     return;
   }
 
-  if (record.header.qr == 0 || record.header.ra == 0 ) {
+  if (record.header.qr === 0 || record.header.ra === 0 ) {
     done();
     return;
   }
   recursive += 1;
 
-  if (record.answer.length == 0) {
+  if (record.answer.length === 0) {
     done();
     return;
   }
   answer += 1;
 
-  if (record.answer[0].address == '128.208.3.200') {
+  if (record.answer[0].address === '128.208.3.200') {
     valid += 1;
   }
 
@@ -58,7 +68,7 @@ watcher._transform = function (line, encoding, done) {
     done();
     return;
   }
-  mask.set(ip_utils.getClassC(info[0])/256)
+  mask.set(ip_utils.getClassC(info[0])/256);
   dom += 1;
 
   this.push(info[0] + '/32\n');
