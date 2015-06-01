@@ -107,6 +107,19 @@ aggregateRun()
   node dns/aggregator.js runs/$thisRun runs/$thisRun.lookup.json runs/$thisRun.asn.json
 }
 
+#12. Favicons
+favicon()
+{
+  # TODO : Randomize domains and parallelize
+  echo "Starting Favicons..."
+  mkdir runs/$thisRun-favicon
+  fp = runs/$thisRun-favicon
+  echo "{}" > $fp/ignorelist.json
+  node favicon/original.js temp/domains.txt $fp/domains-localvalidation.json
+  node favicon/favicon.js runs/$thisRun.ip-domains.json $fp/ignorelist.json $fp/favicondomains.jsonlines
+  node favicon/compare.js $fp/domains-localvalidation.json $fp/favicondomains.jsonlines runs/$thisRun.favicons.jsonlines
+}
+
 ##12. Clean up
 cleanup()
 {
@@ -129,6 +142,7 @@ recordLookupTable    # Build lookup table of current bgp annoncements.
 runHTTPScans         # scan ports 80 & 443
 makeArchive          # creates archive.
 aggregateRun         # replace folder with ASN aggreates.
+favicon              # Favicon scan and compare
 cleanup
 else
   ${1}
