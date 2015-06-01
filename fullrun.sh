@@ -107,6 +107,22 @@ aggregateRun()
   node dns/aggregator.js runs/$thisRun runs/$thisRun.lookup.json runs/$thisRun.asn.json
 }
 
+##__. Build Similarity Matrices
+buildMatrices()
+{
+  echo "Generating Tables..."
+  node asn_aggregation/asn_collapse-classC_domains.js runs/$thisRun.asn.json runs/$thisRun/$thisRun
+
+  echo "Generating sim01..."
+  node cluster_correlation/correlation-matrix.js runs/$thisRun/$thisRun.domain-classC.json runs/$thisRun/$thisRun.sim01
+  for i in `seq 1 6`
+  do
+    echo "Generating sim0$(expr $i + 1)..."
+    node cluster_correlation/reweighting-table.js runs/$thisRun/$thisRun.domain-classC.json runs/$thisRun/$thisRun.classC-domain.json runs/$thisRun/$thisRun.sim0$i runs/$thisRun/$thisRun.reweight0$i.json
+    node cluster_correlation/correlation-matrix.js runs/$thisRun/$thisRun.domain-classC.json runs/$thisRun/$thisRun.reweight0$i.json runs/$thisRun/$thisRun.sim0$(expr $i + 1)
+  done
+}
+
 #12. Favicons
 favicon()
 {
@@ -120,7 +136,7 @@ favicon()
   node favicon/compare.js $fp/domains-localvalidation.json $fp/favicondomains.jsonlines runs/$thisRun.favicons.jsonlines
 }
 
-##12. Clean up
+##13. Clean up
 cleanup()
 {
   echo "Cleaning up..."
