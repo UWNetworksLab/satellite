@@ -71,32 +71,33 @@ getGoodHosts()
 runTopSites()
 {
   echo "Scanning all domains..."
-  cp temp/domains.txt runs/${thisRun}-domains.txt
-  cp temp/dns_servers.txt runs/${thisRun}-servers.txt
-  node dns/managedscans.js temp/domains.txt temp/dns_servers.txt runs/$thisRun
+  cp temp/domains.txt runs/${thisRun}/domains.txt
+  cp temp/dns_servers.txt runs/${thisRun}/servers.txt
+  mkdir runs/${thisRun}/zmap
+  node dns/managedscans.js temp/domains.txt temp/dns_servers.txt runs/$thisRun/zmap
 }
 
 ##8. Record IP Ownership.
 recordLookupTable()
 {
   echo "Building ASN tables..."
-  node asn_aggregation/makemap.js $thisRun runs/
+  node asn_aggregation/makemap.js $thisRun runs/$thisRun/lookup.json
 }
 
 ##9. Run HTTP Scans.
 runHTTPScans()
 {
   echo "Scanning HTTP(s)..."
-  mkdir runs/$thisRun-http
-  node http/managedscans.js runs/$thisRun-http
+  mkdir runs/$thisRun/http
+  node http/managedscans.js runs/$thisRun/http
 }
 
 ##10. Archive
 makeArchive()
 {
   echo "Archiving..."
-  tar -czf runs/$thisRun.tgz runs/$thisRun
-  sha1sum runs/$thisRun.tgz | awk '{print $1}' > runs/$thisRun.tgz.sig
+  tar -czf runs/$thisRun/zmap.tgz runs/$thisRun/zmap
+  sha1sum runs/$thisRun/zmap.tgz | awk '{print $1}' > runs/$thisRun/zmap.tgz.sig
   node generateStudyMetadata.js
 }
 
@@ -104,7 +105,23 @@ makeArchive()
 aggregateRun()
 {
   echo "Aggregating..."
-  node dns/aggregator.js runs/$thisRun runs/$thisRun.lookup.json runs/$thisRun.asn.json
+  node dns/aggregator.js runs/$thisRun/zmap runs/$thisRun/lookup.json runs/$thisRun/asn.json
+}
+
+##__. Build Similarity Matrices
+buildMatrices()
+{
+  echo "Generating Tables..."
+  node asn_aggregation/asn_collapse-classC_domains.js runs/$thisRun/asn.json runs/$thisRun/aggregate
+
+  echo "Generating initial Similarity matrix..."
+  node cluster_correlation/correlation-matrix.js runs/$thisRun/aggregate.domain-classC.json runs/$thisRun/similarity01
+  for i in `seq 1 6`
+  do
+    echo "Generating matrix revision $(expr $i + 1)..."
+    node cluster_correlation/reweighting-table.js runs/$thisRun/aggregate.domain-classC.json runs/$thisRun/aggregate.classC-domain.json runs/$thisRun/similarity0$i runs/$thisRun/reweight0$i.json
+    node cluster_correlation/correlation-matrix.js runs/$thisRun/aggregate.domain-classC.json runs/$thisRun/reweight0$i.json runs/$thisRun/similarity0$(expr $i + 1)
+  done
 }
 
 #12. Favicons
@@ -112,20 +129,22 @@ favicon()
 {
   # TODO : Randomize domains and parallelize
   echo "Starting Favicons..."
-  mkdir runs/$thisRun-favicon
-  fp = runs/$thisRun-favicon
+  mkdir runs/$thisRun/favicon
+  fp = runs/$thisRun/favicon
   echo "{}" > $fp/ignorelist.json
-  node favicon/original.js temp/domains.txt $fp/domains-localvalidation.json
-  node favicon/favicon.js runs/$thisRun.ip-domains.json $fp/ignorelist.json $fp/favicondomains.jsonlines
-  node favicon/compare.js $fp/domains-localvalidation.json $fp/favicondomains.jsonlines runs/$thisRun.favicons.jsonlines
+  node favicon/original.js temp/domains.txt $fp/locally-resolved.json
+  node favicon/favicon.js runs/$thisRun/aggregate.ip-domains.json $fp/ignorelist.json $fp/favicons.jsonlines
+  node favicon/compare.js $fp/locally-resolved.json $fp/favicons.jsonlines $fp/validation.jsonlines
 }
 
-##12. Clean up
+##13. Clean up
 cleanup()
 {
   echo "Cleaning up..."
   rm temp/dns_servers.txt
-  rm -r runs/$thisRun
+  rm -r runs/$thisRun/zmap
+  rm runs/$thisRun/similarity0{1-5}
+  rm runs/$thisRun/reweight0{1-5}
 }
 
 

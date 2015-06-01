@@ -5,7 +5,6 @@
  * To:
  * <outprefix>.classC-domain.json :  {classC -> {domain -> #resolutions}}
  * <outprefix>.domain-classC.json :  {domain -> {classC -> #resolutions}}
- * <outprefix>.asn-counts.json    :  {domain -> {asn -> #resolutions}}
  */
 
 var fs = require('fs');
@@ -24,7 +23,7 @@ var inFile = process.argv[2];
 var outPrefix = process.argv[3];
 
 
-function doDomain(into, asns, line) {
+function doDomain(into, line) {
   var asn_ip,
     domain;
 
@@ -34,12 +33,10 @@ function doDomain(into, asns, line) {
     return;
   }
   domain = asn_ip.name;
-  asns[domain] = {};
 
   Object.keys(asn_ip).filter(function (asn) {
     return typeof asn_ip[asn] === 'object' && asn !== 'unknown';
   }).forEach(function (asn) {
-    asns[domain][asn] = 0;
     Object.keys(asn_ip[asn]).filter(function (ip) {
       return ip !== 'empty' && ip !== 'undefined';
     }).filter(function (ip) {
@@ -47,7 +44,6 @@ function doDomain(into, asns, line) {
     }).forEach(function (ip) {
       var classC = getClassC(ip);
 
-      asns[domain][asn] += asn_ip[asn][ip];
       into[classC] = into[classC] || {};
       into[classC][domain] = into[classC][domain] || 0;
       into[classC][domain] += asn_ip[asn][ip];
@@ -57,18 +53,15 @@ function doDomain(into, asns, line) {
 
 function doAll() {
   var total = fs.statSync(inFile).size || 0,
-    into = {},
-    asns = {};
+    into = {};
 
   console.log(chalk.blue('Starting'));
   return Q.Promise(function (resolve, reject) {
     fs.createReadStream(inFile)
       .pipe(progress({total: total}))
       .pipe(es.split())
-      .pipe(es.mapSync(doDomain.bind({}, into, asns)))
+      .pipe(es.mapSync(doDomain.bind({}, into)))
       .on('end', function () {
-        console.log(chalk.green('Done.'));
-        fs.writeFileSync(outPrefix + '.asn-counts.json', JSON.stringify(asns));
         resolve(into);
       })
       .on('error', reject);
