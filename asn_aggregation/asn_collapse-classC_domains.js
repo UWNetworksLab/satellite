@@ -1,8 +1,11 @@
 /*
  * Collapse. From:
  * {domain -> {asn -> {ip -> #resolutions}}}
- * to:
- * {classC -> {domain -> #resolutions}}  &&  {domain -> {classC -> #resolutions}} && {domain -> {asn -> #resolutions}}
+ *
+ * To:
+ * <outprefix>.classC-domain.json :  {classC -> {domain -> #resolutions}}
+ * <outprefix>.domain-classC.json :  {domain -> {classC -> #resolutions}}
+ * <outprefix>.asn-counts.json    :  {domain -> {asn -> #resolutions}}
  */
 
 var fs = require('fs');
@@ -12,14 +15,13 @@ var es = require('event-stream');
 var progress = require('progressbar-stream');
 var getClassC = require('../util/ip_utils.js').getClassC;
 
-if (!process.argv[4]) {
-  console.error(chalk.red('Usage: asn_collapse-classC_domains.js <input file> <classC-domain out file> <domain-classC out file>'));
+if (!process.argv[3]) {
+  console.error(chalk.red('Usage: asn_collapse-classC_domains.js <asn-aggregation> <outprefix>'));
   process.exit(1);
 }
 
 var inFile = process.argv[2];
-var outFile1 = process.argv[3];
-var outFile2 = process.argv[4];
+var outPrefix = process.argv[3];
 
 
 function doDomain(into, asns, line) {
@@ -66,7 +68,7 @@ function doAll() {
       .pipe(es.mapSync(doDomain.bind({}, into, asns)))
       .on('end', function () {
         console.log(chalk.green('Done.'));
-        fs.writeFileSync(outfile1 + '.asncnts.json', JSON.stringify(asns));
+        fs.writeFileSync(outPrefix + '.asn-counts.json', JSON.stringify(asns));
         resolve(into);
       })
       .on('error', reject);
@@ -88,6 +90,6 @@ function flipMap(table) {
 }
 
 doAll().then(function (result) {
-  fs.writeFileSync(outFile1, JSON.stringify(result));
-  fs.writeFileSync(outFile2, JSON.stringify(flipMap(result)));
+  fs.writeFileSync(outPrefix + '.classC-domain.json', JSON.stringify(result));
+  fs.writeFileSync(outPrefix + '.domain-classC.json', JSON.stringify(flipMap(result)));
 });
