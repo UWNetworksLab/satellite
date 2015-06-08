@@ -20,17 +20,17 @@ if (process.argv[1] && process.argv[1].indexOf('correlation-matrix') > -1 && pro
 
 
 function getOffset(triangle, domain1, domain2) {
-  var idx1 = triangle._domains[domain1],
-    idx2 = triangle._domains[domain2];
+  var i = triangle._domains[domain1],
+    j = triangle._domains[domain2],
+    tmp;
 
-  if (idx1 > idx2) {
-    var tmp;
-    tmp = idx1;
-    idx1 = idx2;
-    idx2 = tmp;
+  if (i > j) {
+    tmp = i;
+    i = j;
+    j = tmp;
   }
 
-  return (Math.floor(0.5 * (idx1 - 1) * idx1) + idx2) * 4;
+  return (i + Math.floor(0.5 * (j - 1) * j)) * 4;
 }
 
 function lookup(domain1, domain2) {

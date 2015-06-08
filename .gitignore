@@ -13,3 +13,4 @@ authdata.json
 *.gz
 *.jsonList
 config.json
+cluster_correlation/correlation-distr
