@@ -135,10 +135,10 @@ function parseBlackList(into, line) {
 function getBlackList(filename) {
   return Q.Promise(function (resolve, reject) {
     var into = {},
-      total = fs.statSync(rundir + '/' + filename).size;
+      total = fs.statSync(rundir + '/../' + filename).size;
 
     console.log(chalk.blue("Generating Server Filter List"));
-    fs.createReadStream(rundir + '/' + filename)
+    fs.createReadStream(rundir + '/../' + filename)
       .pipe(progressBarStream({total: total}))
       .pipe(es.split())
       .pipe(es.mapSync(parseBlackList.bind({}, into)))
