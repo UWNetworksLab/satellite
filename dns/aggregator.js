@@ -17,7 +17,7 @@ var ProgressBar = require('progress');
 var progressBarStream = require('progressbar-stream');
 
 if (!process.argv[4]) {
-  console.error(chalk.red("Usage: asn_aggregator.js <rundir> <ASN table> <output file>"));
+  console.error(chalk.red("Usage: asn_aggregator.js <rundir> <ASN table> <output file> [filter]"));
   process.exit(1);
 }
 var rundir = process.argv[2];
@@ -25,6 +25,7 @@ var asnTable = process.argv[3];
 var outFile = process.argv[4];
 var outFD = fs.openSync(outFile, 'ax');
 
+var blfile = process.argv[5];
 
 function parseDomainLine(map, blacklist, into, domains, line) {
   var parts = line.toString('ascii').split(','),
@@ -132,13 +133,17 @@ function parseBlackList(into, line) {
   }
 }
 
-function getBlackList(filename) {
+function getBlackList() {
   return Q.Promise(function (resolve, reject) {
+    if (!blfile) {
+      resolve({});
+    }
+
     var into = {},
-      total = fs.statSync(rundir + '/' + filename).size;
+      total = fs.statSync(blfile).size;
 
     console.log(chalk.blue("Generating Server Filter List"));
-    fs.createReadStream(rundir + '/' + filename)
+    fs.createReadStream(blfile)
       .pipe(progressBarStream({total: total}))
       .pipe(es.split())
       .pipe(es.mapSync(parseBlackList.bind({}, into)))
@@ -147,7 +152,7 @@ function getBlackList(filename) {
   });
 }
 
-Q.spread([asn.getMap(asnTable), getBlackList('cs.washington.edu.csv')], collapseAll)
+Q.spread([asn.getMap(asnTable), getBlackList()], collapseAll)
   .then(function () {
     fs.closeSync(outFD);
     process.exit(0);
