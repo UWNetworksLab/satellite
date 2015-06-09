@@ -1,3 +1,5 @@
+'use strict';
+
 /*
  * Collapse. From:
  * {domain -> {asn -> {ip -> #resolutions}}}

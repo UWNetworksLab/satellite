@@ -1,3 +1,5 @@
+'use strict';
+
 /*
  * Collapse. From:
  * domain -> {resolver_asn -> {ip -> #resolutions}}
@@ -11,7 +13,7 @@ var chalk = require('chalk');
 var es = require('event-stream');
 
 if (!process.argv[3]) {
-  console.error(chalk.red('Usage: asn_collapse-asn_domain_ips.js <ASN table> <out>'));
+  console.error(chalk.red('Usage: pivot_domain-to-asn-domain.js <ASN table> <out>'));
   process.exit(1);
 }
 
@@ -51,7 +53,7 @@ function reduceASN(file) {
 function reduceAll(files) {
   console.log(chalk.blue("Starting Reduce Phase with %d ASNs"), files.length);
   return Q.Promise(function (resolve, reject) {
-    var base = Q(0);
+    var base = new Q(0);
     files.forEach(function (file) {
       base = base.then(reduceASN.bind({}, file));
     });
