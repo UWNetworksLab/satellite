@@ -105,7 +105,7 @@ makeArchive()
 aggregateRun()
 {
   echo "Aggregating..."
-  node dns/aggregator.js runs/$thisRun/zmap runs/$thisRun/lookup.json runs/$thisRun/asn.json
+  node dns/aggregator.js runs/$thisRun/zmap runs/$thisRun/lookup.json runs/$thisRun/asn.json runs/$thisRun/cs.washington.edu.csv
 }
 
 ##__. Build Similarity Matrices

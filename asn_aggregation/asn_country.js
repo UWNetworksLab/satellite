@@ -1,5 +1,16 @@
+'use strict';
+
 /*
  * Set of exported functions for merging asn counts to country counts.
+ * Common usage is to get a fresh ASN->Country lookup table, which can be
+ * accomplished through the slightly awkward:
+ * ```javascript
+ * var country_lookup = require('asn_country');
+ * country_lookup.onReady().then(function () {
+ *   var lookup_table = country_lookup.db;
+ * });
+ * ```
+ * No caching is done - that's up to the consumer.
  */
 var Q = require('q');
 
@@ -30,7 +41,7 @@ var load = function(cb) {
       cb();
     });
   });
-}
+};
 
 exports.onReady = new Q.Promise(function (resolve,reject) {
   load(resolve);
@@ -50,15 +61,15 @@ exports.general2country = function(inmap,start,reduce) {
     }
   });
   return out;
-}
+};
 
 exports.asnmap2country = function(inmap) {
   return exports.general2country(inmap, 0, function(a,b) {return a+b;});
-}
+};
 
 exports.goodbad2country = function(inmap) {
   return exports.general2country(inmap, [0,0,0], function(a,b) {return [a[0]+b[0],a[1]+b[1],b[2]];});
-}
+};
 
 
 exports.listWeirdCases = function(base, test) {

@@ -1,3 +1,6 @@
+/*jslint bitwise:true*/
+'use strict';
+
 /**
  * getMap(optional rip json) -> Promise(<map>)
  * with a lookup function.
@@ -10,7 +13,7 @@ var chalk = require('chalk');
 var sys = require('sys');
 var exec = require('child_process').exec;
 var ip_utils = require('../util/ip_utils');
-  
+
 
 // actually: http://archive.routeviews.org/dnszones/originas.bz2
 // but domain defaults to broken ipv6 resolution.
@@ -38,13 +41,13 @@ function parseASLine(map, line) {
       start;
   if (result) {
     start = new Buffer(result[2].split('.')).readInt32BE(0);
-    start -= start % 256  // make sure it's class C.
+    start -= start % 256;  // make sure it's class C.
     if (!map[start]) {
       map[start] = {};
     }
     map[start][parseInt(result[3])] = parseInt(result[1]);
   }
-};
+}
 
 
 
@@ -76,10 +79,10 @@ function doASLookup(ip, off) {
       }
     }
     off += 1;
-    classC -= classC % (256 << (off)); 
+    classC -= classC % (256 << (off));
   }
   return 'unknown';
-};
+}
 
 // Build the in memory representation of the origin ip->asn mapping.
 // Returns promise with that map.
@@ -100,7 +103,7 @@ function makeASMap() {
 }
 
 function loadASMap(mapFile) {
-  var prom = Q(0);
+  var prom = new Q(0);
   if (mapFile && fs.existsSync(mapFile)) {
     prom = prom.then(function() {
       var map = JSON.parse(fs.readFileSync(mapFile));
@@ -130,4 +133,3 @@ function loadASMap(mapFile) {
 }
 
 exports.getMap = loadASMap;
-
