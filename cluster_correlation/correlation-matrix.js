@@ -1,3 +1,5 @@
+'use strict';
+
 var fs = require('fs');
 var Q = require('q');
 var ProgressBar = require('progress');
@@ -9,14 +11,6 @@ var isReserved = require('../util/ip_utils.js').isReserved;
 // [domain-classC-reweight] is optional
 // - on first iteration exclude it
 // - subsequent iterations use the output from the reweighting-table.js generated from the previous iteration
-
-if (process.argv[1] && process.argv[1].indexOf('correlation-matrix') > -1 && process.argv.length == 5) {
-  buildMatrix(process.argv[2], process.argv[3], process.argv[4]);
-}
-
-if (process.argv[1] && process.argv[1].indexOf('correlation-matrix') > -1 && process.argv.length == 4) {
-  buildMatrix(process.argv[2], null, process.argv[3]);
-}
 
 
 function getOffset(triangle, domain1, domain2) {
@@ -97,7 +91,7 @@ function buildMatrix(countTable, reweightingTable, outprefix) {
   });
 
   console.log(chalk.blue("Building Correlation Matrix"));  // super accurate progress bar
-  bar = new ProgressBar(':bar :percent :eta', Math.floor(triangle._buffer.length / 1000));
+  var bar = new ProgressBar(':bar :percent :eta', Math.floor(triangle._buffer.length / 1000));
 
   domains.forEach(function (a, i) {
     domains.slice(i + 1).forEach(function (b) {
@@ -121,7 +115,7 @@ function buildMatrix(countTable, reweightingTable, outprefix) {
       coeff = Math.min(1, dotProduct / (magnitudes[a] * magnitudes[b]));
 
       triangle._buffer.writeFloatLE(coeff, offset);
-      if (offset % 1000 == 0) {
+      if (offset % 1000 === 0) {
         bar.tick();
       }
     });
@@ -144,11 +138,19 @@ function loadMatrix(prefix) {
 }
 
 function loadMatrixPromise(prefix) {
-  return Q({
+  return new Q({
     lookup: lookup,
     _domains: JSON.parse(fs.readFileSync(prefix + '.json')),
     _buffer: fs.readFileSync(prefix + '.bin')
   });
+}
+
+if (process.argv[1] && process.argv[1].indexOf('correlation-matrix') > -1 && process.argv.length === 5) {
+  buildMatrix(process.argv[2], process.argv[3], process.argv[4]);
+}
+
+if (process.argv[1] && process.argv[1].indexOf('correlation-matrix') > -1 && process.argv.length === 4) {
+  buildMatrix(process.argv[2], null, process.argv[3]);
 }
 
 exports.buildMatrix = buildMatrix;
