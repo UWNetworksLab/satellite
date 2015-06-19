@@ -4,6 +4,6 @@
   "recvrate": 50000,
   "blacklist_example": "http://seahawk.cs.washington.edu:8080/blacklist.conf",
   "domainlist_example": "http://seahawk.cs.washington.edu:8080/domains.txt",
-  "archive_args": ["-q", "-b", "-i", "id_rsa", "-", "washington@scans.io"],
+  "archive_args": [-i", "id_rsa", "-q", "-b", "-", "washington@scans.io"],
   "shards": 10
 }

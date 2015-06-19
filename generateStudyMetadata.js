@@ -53,6 +53,15 @@ var sftp = function (cmd, cb) {
   conn.stdin.end(cmd);
 };
 
+// See if there's a local .tgz for a given date
+var getPathForDate = function (date) {
+  if (fs.existsSync("runs/" + date + "/zmap.tgz")) {
+    return "runs/" + date + "/zmap.tgz";
+  } else if (fs.existsSync("runs/" + date + ".tgz")) {
+    return "runs/" + date + ".tgz";
+  }
+};
+
 var finishMetaData = function (files) {
   var existing = {},
     templateString;
@@ -65,25 +74,24 @@ var finishMetaData = function (files) {
     if (!file.length) {
       return;
     }
-    var filename = file;
-    if (filename.indexOf("/") > -1) {
-      filename = filename.substr(filename.lastIndexOf('/') + 1);
-    }
     var data = {
-      "name": "runs/" + filename,
-      "description": "scan data from " + filename.substr(0, filename.indexOf('.')),
-      "updated-at": filename.substr(0, filename.indexOf('.'))
+      "name": "runs/" + file + '.tgz',
+      "description": "scan data from " + file,
+      "updated-at": file
     };
     if (existing[data.name] && existing[data.name].size) {
       data.size = existing[data.name].size;
-    } else if (fs.existsSync(file)) {
-      data.size = filesize(fs.statSync(file).size, {unix: true});
+    } else {
+      var path = getPathForDate(file);
+      if (path) {
+        data.size = filesize(fs.statSync(path).size, {unix: true});
+      }
+      if (fs.existsSync(path + '.sig')) {
+        data.fingerprint = fs.readFileSync(path + '.sig', "utf-8").toString().trim();
+      }
     }
     if (existing[data.name] && existing[data.name].fingerprint) {
       data.fingerprint = existing[data.name].fingerprint;
-    }
-    if (fs.existsSync(file + '.sig')) {
-      data.fingerprint = fs.readFileSync(file + '.sig', "utf-8").toString().trim();
     }
     template.files.push(data);
   });
@@ -103,6 +111,13 @@ var finishMetaData = function (files) {
 
 // Get local list.
 var localArchives = glob.sync('runs/**/*.tgz');
+var localDates = localArchives.map(function (file) {
+  if (file.indexOf("zmap.tgz") > -1) {
+    return file.split("/zmap.tgz")[0].split("/").pop();
+  } else {
+    return file.split(".tgz")[0].split("/").pop();
+  }
+});
 
 // Wait for remote list
 var remoteArchives = [];
@@ -113,19 +128,26 @@ sftp('cd data/dns/runs\nls', function (remote) {
     if (file.indexOf('.tgz') < 0 || file.length === 0) {
       return;
     }
-    file = file.trim();
+    file = file.split('.tgz')[0].trim();
     finalArchives.push(file);
-    if (localArchives.indexOf(file) > -1) {
-      localArchives.splice(localArchives.indexOf(file), 1);
+    if (localDates.indexOf(file) > -1) {
+      localDates.splice(localDates.indexOf(file), 1);
     }
   });
-  // Local Archives is now things to upload.
+  // Local Dates is now things to upload.
   var cmd = 'cd data/dns/runs\n',
     todo = 0;
-  localArchives.forEach(function (file) {
+  localDates.forEach(function (file) {
     console.log('new: ' + file);
+    var path;
+    for (var i = 0; i < localArchives.length; i += 1) {
+      if (localArchives[i].indexOf(file) > -1) {
+        path = localArchives[i];
+        break;
+      }
+    }
     todo += 1;
-    cmd += 'put ' + file + '\n';
+    cmd += 'put ' + path + ' ' + file + '.tgz\n';
     finalArchives.push(file);
   });
   console.log('Uploading Data [' + todo + ' files]...');
