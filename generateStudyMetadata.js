@@ -29,7 +29,12 @@ var template = {
 
 var conn, buffer, cb;
 var sftp = function (cmd, cb) {
-  conn = spawn('sftp', ['-q', '-b', '-', 'washington@scans.io']);
+  var creds = require('./util/config').getKey('archive_args');
+  if (!creds) {
+    console.error("Unset archive options. Aborting");
+    exit(0);
+  }
+  conn = spawn('sftp', creds);
   buffer = "";
   conn.stdout.setEncoding('utf8');
   conn.stdin.setEncoding('utf8');
