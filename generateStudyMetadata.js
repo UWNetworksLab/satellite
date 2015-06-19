@@ -3,6 +3,7 @@
 
 var fs = require('fs');
 var spawn = require('child_process').spawn;
+var glob = require('glob');
 var filesize = require('filesize');
 
 var template = {
@@ -28,7 +29,12 @@ var template = {
 
 var conn, buffer, cb;
 var sftp = function (cmd, cb) {
-  conn = spawn('sftp', ['-q', '-b', '-', 'washington@scans.io']);
+  var creds = require('./util/config').getKey('archive_args');
+  if (!creds) {
+    console.error("Unset archive options. Aborting");
+    exit(0);
+  }
+  conn = spawn('sftp', creds);
   buffer = "";
   conn.stdout.setEncoding('utf8');
   conn.stdin.setEncoding('utf8');
@@ -59,21 +65,25 @@ var finishMetaData = function (files) {
     if (!file.length) {
       return;
     }
+    var filename = file;
+    if (filename.indexOf("/") > -1) {
+      filename = filename.substr(filename.lastIndexOf('/') + 1);
+    }
     var data = {
-      "name": "runs/" + file,
-      "description": "scan data from " + file.substr(0, file.indexOf('.')),
-      "updated-at": file.substr(0, file.indexOf('.'))
+      "name": "runs/" + filename,
+      "description": "scan data from " + filename.substr(0, filename.indexOf('.')),
+      "updated-at": filename.substr(0, filename.indexOf('.'))
     };
     if (existing[data.name] && existing[data.name].size) {
       data.size = existing[data.name].size;
-    } else if (fs.existsSync(data.name)) {
-      data.size = filesize(fs.statSync(data.name).size, {unix: true});
+    } else if (fs.existsSync(file)) {
+      data.size = filesize(fs.statSync(file).size, {unix: true});
     }
     if (existing[data.name] && existing[data.name].fingerprint) {
       data.fingerprint = existing[data.name].fingerprint;
     }
-    if (fs.existsSync(data.name + '.sig')) {
-      data.fingerprint = fs.readFileSync(data.name + '.sig', "utf-8").toString().trim();
+    if (fs.existsSync(file + '.sig')) {
+      data.fingerprint = fs.readFileSync(file + '.sig', "utf-8").toString().trim();
     }
     template.files.push(data);
   });
@@ -92,9 +102,7 @@ var finishMetaData = function (files) {
 
 
 // Get local list.
-var localArchives = fs.readdirSync('runs').filter(function (file) {
-  return file.indexOf('.tgz') > 0 && file.indexOf('.sig') < file.indexOf('.tgz');
-});
+var localArchives = glob.sync('runs/**/*.tgz');
 
 // Wait for remote list
 var remoteArchives = [];
@@ -112,7 +120,7 @@ sftp('cd data/dns/runs\nls', function (remote) {
     }
   });
   // Local Archives is now things to upload.
-  var cmd = 'lcd runs\ncd data/dns/runs\n',
+  var cmd = 'cd data/dns/runs\n',
     todo = 0;
   localArchives.forEach(function (file) {
     console.log('new: ' + file);
@@ -123,4 +131,3 @@ sftp('cd data/dns/runs\nls', function (remote) {
   console.log('Uploading Data [' + todo + ' files]...');
   sftp(cmd, finishMetaData.bind({}, finalArchives));
 });
-

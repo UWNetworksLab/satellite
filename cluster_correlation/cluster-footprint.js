@@ -1,3 +1,9 @@
+'use strict';
+
+/**
+ * Determines the IPs that are in different clusters.
+ * Usage: cluster-footprint.js <clusters.json> <classC-domain.json> <matrix prefix> <output.json>
+ */
 var fs = require('fs');
 var Q = require('q');
 var chalk = require('chalk');
@@ -40,7 +46,7 @@ function assignClusters1(clusterMap, ipDomains) {
       var clusterCounts = {},
         domainCounts = ipDomains[ip],
         maxCount = 0,
-        maxID = undefined;
+        maxID;
 
       Object.keys(domainCounts).forEach(function (domain) {
         var clusterID = clusterMap[domain];
@@ -58,7 +64,7 @@ function assignClusters1(clusterMap, ipDomains) {
       result[maxID] = result[maxID] || [];
       result[maxID].push(ip);
 
-      if (ipIdx % 100 == 0) {
+      if (ipIdx % 100 === 0) {
         bar.tick();
       }
     });
@@ -82,7 +88,7 @@ function assignClusters2(clusterMap, ipDomains, matrix) {
       var clusterWeights = {},
         domainCounts = ipDomains[ip],
         maxWeight = 0,
-        maxID = undefined,
+        maxID,
         domains = Object.keys(domainCounts);
 
       domains.forEach(function (a, i) {
@@ -109,7 +115,7 @@ function assignClusters2(clusterMap, ipDomains, matrix) {
       result[maxID] = result[maxID] || [];
       result[maxID].push(ip);
 
-      if (ipIdx % 100 == 0) {
+      if (ipIdx % 100 === 0) {
         bar.tick();
       }
     });
