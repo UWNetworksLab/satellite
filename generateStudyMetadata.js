@@ -110,7 +110,7 @@ var finishMetaData = function (files) {
 
 
 // Get local list.
-var localArchives = glob.sync('runs/**/*.tgz');
+var localArchives = glob.sync('runs/{*.tgz,*/*.tgz}');
 var localDates = localArchives.map(function (file) {
   if (file.indexOf("zmap.tgz") > -1) {
     return file.split("/zmap.tgz")[0].split("/").pop();
