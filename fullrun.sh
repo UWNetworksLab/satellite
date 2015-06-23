@@ -51,9 +51,9 @@ generateRun()
 ##5. Find active servers
 getActiveResolvers()
 {
-  node dns/mkpkt.js temp/query.pkt cs.washington.edu
+  node dns/mkpkt.js temp/query.pkt `node util/config.js local_address`
   echo "Running initial scan..."
-  `node util/config.js zmap` -p 53 -o runs/$thisRun/cs.washington.edu.csv \
+  `node util/config.js zmap` -p 53 -o runs/$thisRun/local.csv \
     -b temp/blacklist.conf -c 300 -r `node util/config.js rate` \
     --output-module=csv -f saddr,timestamp-str,data \
     --output-filter="success = 1 && repeat = 0" -M udp \
@@ -64,7 +64,7 @@ getActiveResolvers()
 getGoodHosts()
 {
   echo "Generating IP list..."
-  node dns/filter.js runs/$thisRun/cs.washington.edu.csv temp/dns_servers.txt
+  node dns/filter.js runs/$thisRun/local.csv temp/dns_servers.txt
 }
 
 ##7. Do it!

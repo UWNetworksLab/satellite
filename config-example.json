@@ -5,5 +5,7 @@
   "blacklist_example": "http://seahawk.cs.washington.edu:8080/blacklist.conf",
   "domainlist_example": "http://seahawk.cs.washington.edu:8080/domains.txt",
   "archive_args": [-i", "id_rsa", "-q", "-b", "-", "washington@scans.io"],
+  "local_address": "satellite.cs.washington.edu",
+  "local_ip": "128.48.92.104",
   "shards": 10
 }

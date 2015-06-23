@@ -19,6 +19,7 @@ var fs = require('fs'),
     dns = require('native-dns-packet'),
     liner = require('../util/liner').liner,
     ip_utils = require('../util/ip_utils'),
+    config = require('../util/config'),
     mask = require('../util/mask').newMask(256*256*256);
 
 
@@ -60,11 +61,16 @@ watcher._transform = function (line, encoding, done) {
   }
   answer += 1;
 
-  if (record.answer[0].address === '128.208.3.200') {
-    valid += 1;
+  var isvalid = false;
+  for (var i = 0; i < record.answer.length; i += 1) {
+    if (record.answer[i].address === config.get('local_ip') {
+      isvalid = true;
+      valid += 1;
+      break;
+    }
   }
 
-  if (mask.get(ip_utils.getClassC(info[0])/256)) {
+  if (!isvalid || mask.get(ip_utils.getClassC(info[0])/256)) {
     done();
     return;
   }

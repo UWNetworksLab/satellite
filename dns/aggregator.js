@@ -15,6 +15,7 @@ var asn = require('../asn_aggregation/asn_lookup');
 var dns = require('native-dns-packet');
 var ProgressBar = require('progress');
 var progressBarStream = require('progressbar-stream');
+var filter_ip = require('../util/config').get('local_ip');
 
 if (!process.argv[4]) {
   console.error(chalk.red("Usage: asn_aggregator.js <rundir> <ASN table> <output file> [filter]"));
@@ -127,7 +128,12 @@ function parseBlackList(into, line) {
     } catch (e) {
       return;
     }
-    if (record.header.ra === 1 && record.answer.length > 0 && record.answer[0].address !== '128.208.3.200') {
+    if (record.header.ra === 1 && record.answer.length > 0) {
+      for (var i = 0; i < record.answer.length; i += 1) {
+        if (record.answer[i].address === filter_ip) {
+          return;
+        }
+      }
       into[parts[0]] = true;
     }
   }
