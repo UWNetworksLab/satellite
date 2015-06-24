@@ -15,7 +15,7 @@ var asn = require('../asn_aggregation/asn_lookup');
 var dns = require('native-dns-packet');
 var ProgressBar = require('progress');
 var progressBarStream = require('progressbar-stream');
-var filter_ip = require('../util/config').get('local_ip');
+var filter_ip = require('../util/config').getKey('local_ip');
 
 if (!process.argv[4]) {
   console.error(chalk.red("Usage: asn_aggregator.js <rundir> <ASN table> <output file> [filter]"));
