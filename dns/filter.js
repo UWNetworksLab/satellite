@@ -63,7 +63,7 @@ watcher._transform = function (line, encoding, done) {
 
   var isvalid = false;
   for (var i = 0; i < record.answer.length; i += 1) {
-    if (record.answer[i].address === config.get('local_ip') {
+    if (record.answer[i].address === config.getKey('local_ip')) {
       isvalid = true;
       valid += 1;
       break;
