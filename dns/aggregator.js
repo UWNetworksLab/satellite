@@ -5,6 +5,7 @@
  * Aggregate the directory of zmap scans into the .asn.json.
  * The resulting file is a json object on each line, of the format:
  *  domain -> {asn -> {ip -> %}}
+ * Ooni file is a json object on each line in ooni-compatible format.
  */
 
 var Q = require('q');
@@ -15,16 +16,22 @@ var asn = require('../asn_aggregation/asn_lookup');
 var dns = require('native-dns-packet');
 var ProgressBar = require('progress');
 var progressBarStream = require('progressbar-stream');
-var filter_ip = require('../util/config').getKey('local_ip');
 
-if (!process.argv[4]) {
-  console.error(chalk.red("Usage: asn_aggregator.js <rundir> <ASN table> <output file> [filter]"));
+var version = JSON.parse(fs.readFileSync('../package.json')).version;
+var localip = require('../util/config').getKey('local_ip');
+var filter_ip = localip;
+
+if (!process.argv[5]) {
+  console.error(chalk.red("Usage: asn_aggregator.js <rundir> <ASN table> <asn file> <ooni file> [filter]"));
   process.exit(1);
 }
 var rundir = process.argv[2];
 var asnTable = process.argv[3];
 var outFile = process.argv[4];
 var outFD = fs.openSync(outFile, 'ax');
+var ooniFile = process.argv[5];
+var ooniFD = fs.openSync(ooniFile, 'ax');
+var reportid = '';
 
 //If this is an older scan that used cs.washington.edu for probe, allow
 //that IP to be used for blacklist.
@@ -32,9 +39,9 @@ if (fs.existsSync(rundir + '/local.csv.ip')) {
   filter_ip = fs.readFileSync(rundir + '/local.csv.ip').toString().trim();
 }
 
-var blfile = process.argv[5];
+var blfile = process.argv[6];
 
-function parseDomainLine(map, blacklist, into, domains, line) {
+function parseDomainLine(map, blacklist, into, queries, domains, line) {
   var parts = line.toString('ascii').split(','),
     theasn,
     thedomain,
@@ -59,13 +66,22 @@ function parseDomainLine(map, blacklist, into, domains, line) {
       return answer.type === dns.consts.NAME_TO_QTYPE.A;
     });
 
+    queries[thedomain] = queries[thedomain] || [];
     into[thedomain] = into[thedomain] || {};
     into[thedomain][theasn] = into[thedomain][theasn] || {};
     if (answers.length > 0) {
+      var answerIPs = [];
       answers.forEach(function (answer) {
         var ip = answer.address;
         into[thedomain][theasn][ip] = into[thedomain][theasn][ip] || 0;
         into[thedomain][theasn][ip] += 1;
+        answerIPs.push(ip);
+      });
+      queries[thedomain].push({
+        "resolver": [parts[0], 53],
+        "query_type": "A",
+        "query": "[Query('<" + thedomain + ">',1,1)]",
+        "addrs": answerIPs
       });
     } else {
       into[thedomain][theasn].empty = into[thedomain][theasn].empty || 0;
@@ -78,7 +94,9 @@ function parseDomainLine(map, blacklist, into, domains, line) {
 
 // Read one csv file line by line.
 function collapseSingle(map, blacklist, domains, file) {
-  var into = {};
+  var into = {},
+    queries = {},
+    start = fs.statSync(file).atime;
   domains.forEach(function (dom) {
     into[dom] = {
       name: dom,
@@ -89,13 +107,27 @@ function collapseSingle(map, blacklist, domains, file) {
   return Q.Promise(function (resolve, reject) {
     fs.createReadStream(rundir + '/' + file)
       .pipe(es.split())
-      .pipe(es.mapSync(parseDomainLine.bind({}, map, blacklist, into, domains)))
+      .pipe(es.mapSync(parseDomainLine.bind({}, map, blacklist, into, queries, domains)))
       .on('end', resolve)
       .on('error', reject);
   }).then(function () {
     var i;
     for (i = 0; i < domains.length; i += 1) {
       fs.writeSync(outFD, JSON.stringify(into[domains[i]]) + '\n');
+      fs.writeSync(ooniFD, JSON.stringify({
+        "software_name": "satellite",
+        "software_version": version,
+        "probe_asn": "AS73",
+        "probe_cc": "US",
+        "probe_ip": "localip",
+        "record_type": "entry",
+        "report_id": reportid,
+        "start_time": start.valueOf() / 1000,
+        "test_name": "dns",
+        "test_version": "1.0.0",
+        "input": domains[i],
+        "queries": queries[domains[i]]
+      }) + '\n');
       delete into[domains[i]];
     }
     return true;
