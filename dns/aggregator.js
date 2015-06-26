@@ -14,6 +14,7 @@ var es = require('event-stream');
 var chalk = require('chalk');
 var asn = require('../asn_aggregation/asn_lookup');
 var dns = require('native-dns-packet');
+var path = require('path');
 var ProgressBar = require('progress');
 var progressBarStream = require('progressbar-stream');
 
@@ -22,15 +23,18 @@ var localip = require('../util/config').getKey('local_ip');
 var filter_ip = localip;
 
 if (!process.argv[5]) {
-  console.error(chalk.red("Usage: asn_aggregator.js <rundir> <ASN table> <asn file> <ooni file> [filter]"));
+  console.error(chalk.red("Usage: asn_aggregator.js <rundir> <ASN table> <asn file> [filter]"));
   process.exit(1);
 }
 var rundir = process.argv[2];
 var asnTable = process.argv[3];
 var outFile = process.argv[4];
 var outFD = fs.openSync(outFile, 'ax');
-var ooniFile = process.argv[5];
-var ooniFD = fs.openSync(ooniFile, 'ax');
+var ooniFile, ooniFD;
+if (fs.existsSync(outFile.replace(path.basename(outFile), "ooni.header"))) {
+  ooniFile = outFile + '.ooni';
+  ooniFD = fs.openSync(ooniFile, 'ax');
+}
 var reportid = '';
 
 //If this is an older scan that used cs.washington.edu for probe, allow
@@ -39,7 +43,7 @@ if (fs.existsSync(rundir + '/local.csv.ip')) {
   filter_ip = fs.readFileSync(rundir + '/local.csv.ip').toString().trim();
 }
 
-var blfile = process.argv[6];
+var blfile = process.argv[5];
 
 function parseDomainLine(map, blacklist, into, queries, domains, line) {
   var parts = line.toString('ascii').split(','),
@@ -77,7 +81,7 @@ function parseDomainLine(map, blacklist, into, queries, domains, line) {
         into[thedomain][theasn][ip] += 1;
         answerIPs.push(ip);
       });
-      queries[thedomain].push({
+      ooniFile && queries[thedomain].push({
         "resolver": [parts[0], 53],
         "query_type": "A",
         "query": "[Query('<" + thedomain + ">',1,1)]",
@@ -114,7 +118,7 @@ function collapseSingle(map, blacklist, domains, file) {
     var i;
     for (i = 0; i < domains.length; i += 1) {
       fs.writeSync(outFD, JSON.stringify(into[domains[i]]) + '\n');
-      fs.writeSync(ooniFD, JSON.stringify({
+      ooniFile && fs.writeSync(ooniFD, JSON.stringify({
         "software_name": "satellite",
         "software_version": version,
         "probe_asn": "AS73",

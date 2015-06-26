@@ -111,6 +111,17 @@ aggregateRun()
   rm runs/$thisRun/asn.json.*
 }
 
+aggregateRunWithOoni()
+{
+  echo "Aggregating..."
+  plel=$(node util/config.js aggregation_processes)
+  node compat/ooni.js $thisRun runs/$thisRun/ooni.header runs/$thisRun/ooni.footer
+  node util/plelSplit.js $plel runs/$thisRun/zmap runs/$thisRun/asn.json "node ../dns/aggregator.js #1 ../runs/$thisRun/lookup.json #2 ../runs/$thisRun/local.csv"
+  cat runs/$thisRun/asn.json.*[!ooni] >> runs/$thisRun/asn.json
+  cat runs/$thisRun/ooni.header runs/$thisRun/asn.json.*.ooni runs/$thisRun/ooni.footer >> runs/$thisRun/ooni.json
+  rm runs/$thisRun/asn.json.* runs/$thisRun/ooni.header runs/$thisRun/ooni.footer
+}
+
 ##__. Build Similarity Matrices
 buildMatrices()
 {
