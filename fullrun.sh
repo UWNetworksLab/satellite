@@ -98,7 +98,7 @@ makeArchive()
   echo "Archiving..."
   tar -czf runs/$thisRun/zmap.tgz runs/$thisRun/zmap
   sha1sum runs/$thisRun/zmap.tgz | awk '{print $1}' > runs/$thisRun/zmap.tgz.sig
-  node generateStudyMetadata.js
+  node compat/generateStudyMetadata.js
 }
 
 ##11. Aggregate
