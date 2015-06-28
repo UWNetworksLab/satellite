@@ -18,6 +18,7 @@
 var fs = require('fs'),
     stream = require('stream'),
     dns = require('native-dns-packet'),
+    progress = require('progressbar-stream'),
     liner = require('../util/liner').liner,
     ip_utils = require('../util/ip_utils'),
     config = require('../util/config'),
@@ -92,12 +93,15 @@ watcher._transform = function (line, encoding, done) {
   done();
 };
 
-input.pipe(liner).pipe(watcher).pipe(output);
+var total = fs.statSync(process.argv[2]).size || 0;
+input.pipe(progress({total: total})).pipe(liner).pipe(watcher).pipe(output);
 
 output.on('finish', function() {
   printStats();
   if (json) {
-    output.write('"_done":true}');
+    var footfd = fs.openSync(process.argv[3], 'ax'):
+    footfd.end('"_done": true}');
+    fs.closeSYnc(footfd);
   }
   process.exit(0);
 });
