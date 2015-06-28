@@ -26,6 +26,12 @@ var asnTable = process.argv[3];
 var outFile = process.argv[4];
 var outFD = fs.openSync(outFile, 'ax');
 
+//If this is an older scan that used cs.washington.edu for probe, allow
+//that IP to be used for blacklist.
+if (fs.existsSync(rundir + '/local.csv.ip')) {
+  filter_ip = fs.readFileSync(rundir + '/local.csv.ip').toString().trim();
+}
+
 var blfile = process.argv[5];
 
 function parseDomainLine(map, blacklist, into, domains, line) {
@@ -107,7 +113,9 @@ function collapseAll(asm, blacklist) {
   });
 
   console.log(chalk.blue("Starting Aggregation of %d files"), files.length);
-  bar = new ProgressBar(':bar :percent :eta', {total: files.length});
+  bar = new ProgressBar(':bar :percent :eta', {
+    total: files.length
+  });
 
   files.forEach(function (file) {
     var domains = JSON.parse(fs.readFileSync(rundir + '/' + file.replace('.csv', '.json')));

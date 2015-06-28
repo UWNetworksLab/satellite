@@ -7,5 +7,6 @@
   "archive_args": [-i", "id_rsa", "-q", "-b", "-", "washington@scans.io"],
   "local_address": "satellite.cs.washington.edu",
   "local_ip": "128.48.92.104",
-  "shards": 10
+  "shards": 10,
+  "aggregation_processes": 8
 }

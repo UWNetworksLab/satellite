@@ -105,6 +105,9 @@ makeArchive()
 aggregateRun()
 {
   echo "Aggregating..."
+  plel=$(node util/config.js aggregation_processes)
+  node util/plelSplit.js $plel runs/$thisRun/zmap runs/$thisRun/asn.json "node ../dns/aggregator.js #1 ../runs/$thisRun/lookup.json #2 ../runs/$thisRun/local.csv"
+  
   node dns/aggregator.js runs/$thisRun/zmap runs/$thisRun/lookup.json runs/$thisRun/asn.json runs/$thisRun/cs.washington.edu.csv
 }
 
