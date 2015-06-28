@@ -99,9 +99,7 @@ input.pipe(progress({total: total})).pipe(liner).pipe(watcher).pipe(output);
 output.on('finish', function() {
   printStats();
   if (json) {
-    var footfd = fs.openSync(process.argv[3], 'ax'):
-    footfd.end('"_done": true}');
-    fs.closeSYnc(footfd);
+    fs.appendFileSync(process.argv[3], '"_done": true}');
   }
   process.exit(0);
 });
