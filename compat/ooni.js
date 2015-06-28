@@ -9,14 +9,14 @@
 var fs = require('fs');
 var chalk = require('chalk');
 
-var version = JSON.parse(fs.readFileSync('../package.json')).version;
+var version = JSON.parse(fs.readFileSync(__dirname + '/../package.json')).version;
 var localip = require('../util/config').getKey('local_ip');
 
-var ooniHFD = fs.openWriteStream(process.argv[3], "ax");
-var ooniFFD = fs.openWriteStream(process.argv[4], "ax");
+var ooniHFD = fs.createWriteStream(process.argv[3]);
+var ooniFFD = fs.createWriteStream(process.argv[4]);
 var rid = new Date(process.argv[2]).toISOString() + "-satellite";
 
-fs.writeSync(ooniHFD, JSON.stringify({
+ooniHFD.write(new Buffer(JSON.stringify({
   "software_name": "satellite",
   "software_version": version,
   "probe_asn": "AS73",
@@ -27,9 +27,9 @@ fs.writeSync(ooniHFD, JSON.stringify({
   "start_time": new Date(process.argv[2]).valueOf() / 1000,
   "test_name": "dns",
   "test_version": "1.0.0",
-}) + '\n');
+}) + '\n'));
 
-fs.writeSync(ooniHFD, JSON.stringify({
+ooniFFD.write(new Buffer(JSON.stringify({
   "software_name": "satellite",
   "software_version": version,
   "probe_asn": "AS73",
@@ -40,4 +40,7 @@ fs.writeSync(ooniHFD, JSON.stringify({
   "start_time": new Date().valueOf() / 1000,
   "test_name": "dns",
   "test_version": "1.0.0",
-}) + '\n');
+}) + '\n'));
+
+ooniHFD.end();
+ooniFFD.end();
