@@ -65,6 +65,7 @@ getGoodHosts()
 {
   echo "Generating IP list..."
   node dns/filter.js runs/$thisRun/local.csv temp/dns_servers.txt
+  node dns/filter.js runs/$thisRun/local.csv runs/$thisRun/whitelist.json json
 }
 
 ##7. Do it!

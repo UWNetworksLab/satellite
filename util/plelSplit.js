@@ -62,10 +62,12 @@ Q.all(subprocesses).then(function cleanup() {
     var filename = path.basename(files[i]);
     fs.renameSync(indir + '/part_' + (i % degree) + '/' + filename, files[i]);
     // also do corresponding jsons.
-    var json = files[i].replace('.csv', 'json');
+    var json = files[i].replace('.csv', '.json');
     fs.renameSync(indir + '/part_' + (i % degree) + '/' + path.basename(json), json);
   }
   for (i = 0; i < degree; i += 1) {
     fs.rmdirSync(indir + '/part_' + i);
   }
+}).catch(function (e) {
+  console.warn(chalk.red('Error in aggregation:'), e);
 });
