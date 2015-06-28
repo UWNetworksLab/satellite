@@ -9,9 +9,10 @@
  * where:
  *   input.csv is the zmap output file, (csv of servers and base64 responses)
  *   ouput.txt is a return-separated list of ip/32's for use as a whitelist.
+ *   'json' specifies a json object should be output, rather than a zmap (default) output.
  *
  * Example usage:
- * node dns/filter.js runs/04-25-2015/cs.washington.edu.csv temp/hosts.txt
+ * node dns/filter.js runs/04-25-2015/cs.washington.edu.csv temp/hosts.txt [json]
  */
 
 var fs = require('fs'),
@@ -32,6 +33,11 @@ function printStats() {
 
 var input = fs.createReadStream(process.argv[2]);
 var output = fs.createWriteStream(process.argv[3]);
+var json = false;
+if (process.argv[4] && process.argv[4] === 'json') {
+  json = true;
+  output.write("{");
+}
 
 var watcher = new stream.Transform( { objectMode: true } );
 watcher._transform = function (line, encoding, done) {
@@ -77,7 +83,11 @@ watcher._transform = function (line, encoding, done) {
   mask.set(ip_utils.getClassC(info[0])/256);
   dom += 1;
 
-  this.push(info[0] + '/32\n');
+  if (json) {
+    this.push('"' + info[0] + '":true,');
+  } else {
+    this.push(info[0] + '/32\n');
+  }
 
   done();
 };
@@ -86,5 +96,8 @@ input.pipe(liner).pipe(watcher).pipe(output);
 
 output.on('finish', function() {
   printStats();
+  if (json) {
+    output.write('"_done":true}');
+  }
   process.exit(0);
 });

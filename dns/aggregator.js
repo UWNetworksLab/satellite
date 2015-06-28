@@ -132,7 +132,6 @@ function collapseSingle(map, blacklist, domains, file) {
         "input": domains[i],
         "queries": queries[domains[i]]
       }) + '\n');
-      delete into[domains[i]];
     }
     return true;
   });
@@ -186,6 +185,7 @@ function parseBlackList(into, line) {
 function getBlackList() {
   return Q.Promise(function (resolve, reject) {
     if (!blfile) {
+      console.log(chalk.blue("No Server Filter in use."));
       resolve({});
     }
 
