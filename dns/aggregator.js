@@ -18,7 +18,7 @@ var path = require('path');
 var ProgressBar = require('progress');
 var progressBarStream = require('progressbar-stream');
 
-var version = JSON.parse(fs.readFileSync('../package.json')).version;
+var version = JSON.parse(fs.readFileSync(__dirname + '/../package.json')).version;
 var localip = require('../util/config').getKey('local_ip');
 var filter_ip = localip;
 

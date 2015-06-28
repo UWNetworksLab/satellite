@@ -22,16 +22,22 @@ var indir = process.argv[3];
 var outprefix = process.argv[4];
 var cmd = process.argv[5];
 
-var files = glob.sync(indir);
+var files = glob.sync(indir + '/*.csv');
 
 for (var i = 0; i < degree; i += 1) {
-  fs.mkdirSync(indir + '/part_' + i);
+  try {
+    fs.mkdirSync(indir + '/part_' + i);
+  } catch (e) {
+    if (e.code !== 'EEXIST') {
+      throw e;
+    }
+  }
 }
 for (var i = 0; i < files.length; i += 1) {
   var filename = path.basename(files[i]);
   fs.renameSync(files[i], indir + '/part_' + (i % degree) + '/' + filename);
   // also do corresponding jsons.
-  var json = files[i].replace('.csv', 'json');
+  var json = files[i].replace('.csv', '.json');
   fs.renameSync(json, indir + '/part_' + (i % degree) + '/' + path.basename(json));
 }
 
