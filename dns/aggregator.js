@@ -102,7 +102,7 @@ function parseDomainLine(map, blacklist, into, queries, domains, line) {
 function collapseSingle(map, blacklist, domains, file) {
   var into = {},
     queries = {},
-    start = fs.statSync(file).atime;
+    start = fs.statSync(rundir + '/' + file).atime;
   domains.forEach(function (dom) {
     into[dom] = {
       name: dom,
@@ -120,20 +120,22 @@ function collapseSingle(map, blacklist, domains, file) {
     var i;
     for (i = 0; i < domains.length; i += 1) {
       fs.writeSync(outFD, JSON.stringify(into[domains[i]]) + '\n');
-      ooniFile && fs.writeSync(ooniFD, JSON.stringify({
-        "software_name": "satellite",
-        "software_version": version,
-        "probe_asn": "AS73",
-        "probe_cc": "US",
-        "probe_ip": "localip",
-        "record_type": "entry",
-        "report_id": reportid,
-        "start_time": start.valueOf() / 1000,
-        "test_name": "dns",
-        "test_version": "1.0.0",
-        "input": domains[i],
-        "queries": queries[domains[i]]
-      }) + '\n');
+      if(ooniFile) {
+        fs.writeSync(ooniFD, JSON.stringify({
+          "software_name": "satellite",
+          "software_version": version,
+          "probe_asn": "AS73",
+          "probe_cc": "US",
+          "probe_ip": "localip",
+          "record_type": "entry",
+          "report_id": reportid,
+          "start_time": start.valueOf() / 1000,
+          "test_name": "dns",
+          "test_version": "1.0.0",
+          "input": domains[i],
+          "queries": queries[domains[i]]
+        }) + '\n');
+      }
     }
     return true;
   });
