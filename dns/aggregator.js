@@ -22,7 +22,7 @@ var version = JSON.parse(fs.readFileSync(__dirname + '/../package.json')).versio
 var localip = require('../util/config').getKey('local_ip');
 var filter_ip = localip;
 
-if (!process.argv[5]) {
+if (!process.argv[4]) {
   console.error(chalk.red("Usage: asn_aggregator.js <rundir> <ASN table> <asn file> [filter]"));
   process.exit(1);
 }
@@ -51,7 +51,7 @@ function parseDomainLine(map, blacklist, into, queries, domains, line) {
     thedomain,
     record,
     answers;
-  if (parts.length !== 4 || blacklist[parts[0]]) {
+  if (parts.length !== 4 || (blacklist && !blacklist[parts[0]])) {
     return;
   }
   thedomain = domains[parseInt(parts[1], 10)];
@@ -81,12 +81,14 @@ function parseDomainLine(map, blacklist, into, queries, domains, line) {
         into[thedomain][theasn][ip] += 1;
         answerIPs.push(ip);
       });
-      ooniFile && queries[thedomain].push({
-        "resolver": [parts[0], 53],
-        "query_type": "A",
-        "query": "[Query('<" + thedomain + ">',1,1)]",
-        "addrs": answerIPs
-      });
+      if (ooniFile) {
+        queries[thedomain].push({
+          "resolver": [parts[0], 53],
+          "query_type": "A",
+          "query": "[Query('<" + thedomain + ">',1,1)]",
+          "addrs": answerIPs
+        });
+      }
     } else {
       into[thedomain][theasn].empty = into[thedomain][theasn].empty || 0;
       into[thedomain][theasn].empty += 1;
@@ -162,43 +164,17 @@ function collapseAll(asm, blacklist) {
   return base;
 }
 
-function parseBlackList(into, line) {
-  var parts = line.split(','),
-    record;
-  if (parts.length === 3) {
-    try {
-      record = dns.parse(new Buffer(parts[2], 'hex'));
-    } catch (e) {
-      return;
-    }
-    if (record.header.ra === 1 && record.answer.length > 0) {
-      for (var i = 0; i < record.answer.length; i += 1) {
-        if (record.answer[i].address === filter_ip) {
-          return;
-        }
-      }
-      into[parts[0]] = true;
-    }
-  }
-}
-
 function getBlackList() {
   return Q.Promise(function (resolve, reject) {
     if (!blfile) {
       console.log(chalk.blue("No Server Filter in use."));
-      resolve({});
+      resolve(false);
     }
 
-    var into = {},
-      total = fs.statSync(blfile).size;
-
-    console.log(chalk.blue("Generating Server Filter List"));
-    fs.createReadStream(blfile)
-      .pipe(progressBarStream({total: total}))
-      .pipe(es.split())
-      .pipe(es.mapSync(parseBlackList.bind({}, into)))
-      .on('end', resolve.bind({}, into))
-      .on('error', reject);
+    console.log(chalk.blue("Parsing filter..."));
+    var json = JSON.parse(fs.readFileSync(blfile));
+    console.log(chalk.green("Done"));
+    resolve(json);
   });
 }
 
