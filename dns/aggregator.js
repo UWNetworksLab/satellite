@@ -30,6 +30,7 @@ var rundir = process.argv[2];
 var asnTable = process.argv[3];
 var outFile = process.argv[4];
 var outFD = fs.openSync(outFile, 'ax');
+var ooni_line_limit = 10000;
 var ooniFile, ooniFD;
 if (fs.existsSync(outFile.replace(path.basename(outFile), "ooni.header"))) {
   ooniFile = outFile + '.ooni';
@@ -45,7 +46,7 @@ if (fs.existsSync(rundir + '/local.csv.ip')) {
 
 var blfile = process.argv[5];
 
-function parseDomainLine(map, blacklist, into, queries, domains, line) {
+function parseDomainLine(map, blacklist, into, queries, start, domains, line) {
   var parts = line.toString('ascii').split(','),
     theasn,
     thedomain,
@@ -89,6 +90,25 @@ function parseDomainLine(map, blacklist, into, queries, domains, line) {
           "addrs": answerIPs
         });
       }
+      if (queries[thedomain].length > ooni_line_limit) {
+        if (ooniFD) {
+          fs.writeSync(ooniFD, JSON.stringify({
+            "software_name": "satellite",
+            "software_version": version,
+            "probe_asn": "AS73",
+            "probe_cc": "US",
+            "probe_ip": "localip",
+            "record_type": "entry",
+            "report_id": reportid,
+            "start_time": start.valueOf() / 1000,
+            "test_name": "dns",
+            "test_version": "1.0.0",
+            "input": thedomain,
+            "queries": queries[thedomain]
+          }) + '\n');
+        }
+        delete queries[thedomain];
+      }
     } else {
       into[thedomain][theasn].empty = into[thedomain][theasn].empty || 0;
       into[thedomain][theasn].empty += 1;
@@ -113,7 +133,7 @@ function collapseSingle(map, blacklist, domains, file) {
   return Q.Promise(function (resolve, reject) {
     fs.createReadStream(rundir + '/' + file)
       .pipe(es.split())
-      .pipe(es.mapSync(parseDomainLine.bind({}, map, blacklist, into, queries, domains)))
+      .pipe(es.mapSync(parseDomainLine.bind({}, map, blacklist, into, queries, start, domains)))
       .on('end', resolve)
       .on('error', reject);
   }).then(function () {
