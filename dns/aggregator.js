@@ -146,7 +146,7 @@ function collapseSingle(map, blacklist, domains, file) {
           "software_version": version,
           "probe_asn": "AS73",
           "probe_cc": "US",
-          "probe_ip": "localip",
+          "probe_ip": localip,
           "record_type": "entry",
           "report_id": reportid,
           "start_time": start.valueOf() / 1000,

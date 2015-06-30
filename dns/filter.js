@@ -26,6 +26,10 @@ var fs = require('fs'),
 
 
 var hosts = 0, recursive = 0, answer = 0, dom = 0, valid = 0;
+var localip = config.getKey('local_ip');
+if (fs.existsSync(process.argv[2] + '.ip')) {
+  localip = fs.readFileSync(process.argv[2] + '.ip').toString().trim();
+}
 
 function printStats() {
   console.log("total=" + hosts + ", recursive bit=" + recursive + ", with answer field=" + answer +
@@ -70,7 +74,7 @@ watcher._transform = function (line, encoding, done) {
 
   var isvalid = false;
   for (var i = 0; i < record.answer.length; i += 1) {
-    if (record.answer[i].address === config.getKey('local_ip')) {
+    if (record.answer[i].address === localip) {
       isvalid = true;
       valid += 1;
       break;
