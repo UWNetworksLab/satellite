@@ -29,7 +29,7 @@ var template = {
 
 var conn, buffer, cb;
 var sftp = function (cmd, cb) {
-  var creds = require('./util/config').getKey('archive_args');
+  var creds = require('../util/config').getKey('archive_args');
   if (!creds) {
     console.error("Unset archive options. Aborting");
     exit(0);
@@ -55,10 +55,10 @@ var sftp = function (cmd, cb) {
 
 // See if there's a local .tgz for a given date
 var getPathForDate = function (date) {
-  if (fs.existsSync("runs/" + date + "/zmap.tgz")) {
-    return "runs/" + date + "/zmap.tgz";
-  } else if (fs.existsSync("runs/" + date + ".tgz")) {
-    return "runs/" + date + ".tgz";
+  if (fs.existsSync("../runs/" + date + "/zmap.tgz")) {
+    return "../runs/" + date + "/zmap.tgz";
+  } else if (fs.existsSync("../runs/" + date + ".tgz")) {
+    return "../runs/" + date + ".tgz";
   }
 };
 
@@ -110,7 +110,7 @@ var finishMetaData = function (files) {
 
 
 // Get local list.
-var localArchives = glob.sync('runs/{*.tgz,*/*.tgz}');
+var localArchives = glob.sync('../runs/{*.tgz,*/*.tgz}');
 var localDates = localArchives.map(function (file) {
   if (file.indexOf("zmap.tgz") > -1) {
     return file.split("/zmap.tgz")[0].split("/").pop();

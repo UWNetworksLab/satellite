@@ -60,3 +60,11 @@ process:
 * *fullrun.sh* Does a full satellite run!
 * *generateStudyMetadata.js* Creates the .study file needed by scans.io, and uploads files
 * *package.json* Lists node dependencies needed by the code.
+
+
+#### Changelog ####
+
+This attempts to keep track of the evolving Satellite code base, and explain
+major changes as they occur.
+
+* *06/28/2015* Initial aggregation is performed in parallel by multiple cores, reducing time to ~10 hours.

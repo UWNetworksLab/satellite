@@ -65,6 +65,7 @@ getGoodHosts()
 {
   echo "Generating IP list..."
   node dns/filter.js runs/$thisRun/local.csv temp/dns_servers.txt
+  node dns/filter.js runs/$thisRun/local.csv runs/$thisRun/whitelist.json json
 }
 
 ##7. Do it!
@@ -98,7 +99,7 @@ makeArchive()
   echo "Archiving..."
   tar -czf runs/$thisRun/zmap.tgz runs/$thisRun/zmap
   sha1sum runs/$thisRun/zmap.tgz | awk '{print $1}' > runs/$thisRun/zmap.tgz.sig
-  node generateStudyMetadata.js
+  node compat/generateStudyMetadata.js
 }
 
 ##11. Aggregate
@@ -107,8 +108,19 @@ aggregateRun()
   echo "Aggregating..."
   plel=$(node util/config.js aggregation_processes)
   node util/plelSplit.js $plel runs/$thisRun/zmap runs/$thisRun/asn.json "node ../dns/aggregator.js #1 ../runs/$thisRun/lookup.json #2 ../runs/$thisRun/local.csv"
-  
-  node dns/aggregator.js runs/$thisRun/zmap runs/$thisRun/lookup.json runs/$thisRun/asn.json runs/$thisRun/cs.washington.edu.csv
+  cat runs/$thisRun/asn.json.* >> runs/$thisRun/asn.json
+  rm runs/$thisRun/asn.json.*
+}
+
+aggregateRunWithOoni()
+{
+  echo "Aggregating..."
+  plel=$(node util/config.js aggregation_processes)
+  node compat/ooni.js $thisRun runs/$thisRun/ooni.header runs/$thisRun/ooni.footer
+  node util/plelSplit.js $plel runs/$thisRun/zmap runs/$thisRun/asn.json "node ./dns/aggregator.js #1 ./runs/$thisRun/lookup.json #2 ./runs/$thisRun/whitelist.json"
+  cat runs/$thisRun/asn.json.*[!ooni] >> runs/$thisRun/asn.json
+  cat runs/$thisRun/ooni.header runs/$thisRun/asn.json.*.ooni runs/$thisRun/ooni.footer >> runs/$thisRun/ooni.json
+  rm runs/$thisRun/asn.json.* runs/$thisRun/ooni.header runs/$thisRun/ooni.footer
 }
 
 ##__. Build Similarity Matrices

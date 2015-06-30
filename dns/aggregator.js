@@ -5,6 +5,7 @@
  * Aggregate the directory of zmap scans into the .asn.json.
  * The resulting file is a json object on each line, of the format:
  *  domain -> {asn -> {ip -> %}}
+ * Ooni file is a json object on each line in ooni-compatible format.
  */
 
 var Q = require('q');
@@ -13,18 +14,29 @@ var es = require('event-stream');
 var chalk = require('chalk');
 var asn = require('../asn_aggregation/asn_lookup');
 var dns = require('native-dns-packet');
+var path = require('path');
 var ProgressBar = require('progress');
 var progressBarStream = require('progressbar-stream');
-var filter_ip = require('../util/config').getKey('local_ip');
+
+var version = JSON.parse(fs.readFileSync(__dirname + '/../package.json')).version;
+var localip = require('../util/config').getKey('local_ip');
+var filter_ip = localip;
 
 if (!process.argv[4]) {
-  console.error(chalk.red("Usage: asn_aggregator.js <rundir> <ASN table> <output file> [filter]"));
+  console.error(chalk.red("Usage: asn_aggregator.js <rundir> <ASN table> <asn file> [filter]"));
   process.exit(1);
 }
 var rundir = process.argv[2];
 var asnTable = process.argv[3];
 var outFile = process.argv[4];
 var outFD = fs.openSync(outFile, 'ax');
+var ooni_line_limit = 10000;
+var ooniFile, ooniFD;
+if (fs.existsSync(outFile.replace(path.basename(outFile), "ooni.header"))) {
+  ooniFile = outFile + '.ooni';
+  ooniFD = fs.openSync(ooniFile, 'ax');
+}
+var reportid = '';
 
 //If this is an older scan that used cs.washington.edu for probe, allow
 //that IP to be used for blacklist.
@@ -34,13 +46,13 @@ if (fs.existsSync(rundir + '/local.csv.ip')) {
 
 var blfile = process.argv[5];
 
-function parseDomainLine(map, blacklist, into, domains, line) {
+function parseDomainLine(map, blacklist, into, queries, start, domains, line) {
   var parts = line.toString('ascii').split(','),
     theasn,
     thedomain,
     record,
     answers;
-  if (parts.length !== 4 || blacklist[parts[0]]) {
+  if (parts.length !== 4 || (blacklist && !blacklist[parts[0]])) {
     return;
   }
   thedomain = domains[parseInt(parts[1], 10)];
@@ -59,14 +71,44 @@ function parseDomainLine(map, blacklist, into, domains, line) {
       return answer.type === dns.consts.NAME_TO_QTYPE.A;
     });
 
+    queries[thedomain] = queries[thedomain] || [];
     into[thedomain] = into[thedomain] || {};
     into[thedomain][theasn] = into[thedomain][theasn] || {};
     if (answers.length > 0) {
+      var answerIPs = [];
       answers.forEach(function (answer) {
         var ip = answer.address;
         into[thedomain][theasn][ip] = into[thedomain][theasn][ip] || 0;
         into[thedomain][theasn][ip] += 1;
+        answerIPs.push(ip);
       });
+      if (ooniFile) {
+        queries[thedomain].push({
+          "resolver": [parts[0], 53],
+          "query_type": "A",
+          "query": "[Query('<" + thedomain + ">',1,1)]",
+          "addrs": answerIPs
+        });
+      }
+      if (queries[thedomain].length > ooni_line_limit) {
+        if (ooniFD) {
+          fs.writeSync(ooniFD, JSON.stringify({
+            "software_name": "satellite",
+            "software_version": version,
+            "probe_asn": "AS73",
+            "probe_cc": "US",
+            "probe_ip": "localip",
+            "record_type": "entry",
+            "report_id": reportid,
+            "start_time": start.valueOf() / 1000,
+            "test_name": "dns",
+            "test_version": "1.0.0",
+            "input": thedomain,
+            "queries": queries[thedomain]
+          }) + '\n');
+        }
+        delete queries[thedomain];
+      }
     } else {
       into[thedomain][theasn].empty = into[thedomain][theasn].empty || 0;
       into[thedomain][theasn].empty += 1;
@@ -78,7 +120,9 @@ function parseDomainLine(map, blacklist, into, domains, line) {
 
 // Read one csv file line by line.
 function collapseSingle(map, blacklist, domains, file) {
-  var into = {};
+  var into = {},
+    queries = {},
+    start = fs.statSync(rundir + '/' + file).atime;
   domains.forEach(function (dom) {
     into[dom] = {
       name: dom,
@@ -89,14 +133,29 @@ function collapseSingle(map, blacklist, domains, file) {
   return Q.Promise(function (resolve, reject) {
     fs.createReadStream(rundir + '/' + file)
       .pipe(es.split())
-      .pipe(es.mapSync(parseDomainLine.bind({}, map, blacklist, into, domains)))
+      .pipe(es.mapSync(parseDomainLine.bind({}, map, blacklist, into, queries, start, domains)))
       .on('end', resolve)
       .on('error', reject);
   }).then(function () {
     var i;
     for (i = 0; i < domains.length; i += 1) {
       fs.writeSync(outFD, JSON.stringify(into[domains[i]]) + '\n');
-      delete into[domains[i]];
+      if(ooniFile) {
+        fs.writeSync(ooniFD, JSON.stringify({
+          "software_name": "satellite",
+          "software_version": version,
+          "probe_asn": "AS73",
+          "probe_cc": "US",
+          "probe_ip": localip,
+          "record_type": "entry",
+          "report_id": reportid,
+          "start_time": start.valueOf() / 1000,
+          "test_name": "dns",
+          "test_version": "1.0.0",
+          "input": domains[i],
+          "queries": queries[domains[i]]
+        }) + '\n');
+      }
     }
     return true;
   });
@@ -127,42 +186,17 @@ function collapseAll(asm, blacklist) {
   return base;
 }
 
-function parseBlackList(into, line) {
-  var parts = line.split(','),
-    record;
-  if (parts.length === 3) {
-    try {
-      record = dns.parse(new Buffer(parts[2], 'hex'));
-    } catch (e) {
-      return;
-    }
-    if (record.header.ra === 1 && record.answer.length > 0) {
-      for (var i = 0; i < record.answer.length; i += 1) {
-        if (record.answer[i].address === filter_ip) {
-          return;
-        }
-      }
-      into[parts[0]] = true;
-    }
-  }
-}
-
 function getBlackList() {
   return Q.Promise(function (resolve, reject) {
     if (!blfile) {
-      resolve({});
+      console.log(chalk.blue("No Server Filter in use."));
+      resolve(false);
     }
 
-    var into = {},
-      total = fs.statSync(blfile).size;
-
-    console.log(chalk.blue("Generating Server Filter List"));
-    fs.createReadStream(blfile)
-      .pipe(progressBarStream({total: total}))
-      .pipe(es.split())
-      .pipe(es.mapSync(parseBlackList.bind({}, into)))
-      .on('end', resolve.bind({}, into))
-      .on('error', reject);
+    console.log(chalk.blue("Parsing filter..."));
+    var json = JSON.parse(fs.readFileSync(blfile));
+    console.log(chalk.green("Done"));
+    resolve(json);
   });
 }
 
