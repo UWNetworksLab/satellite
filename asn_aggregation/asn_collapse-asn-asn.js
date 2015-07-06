@@ -36,6 +36,8 @@ domainClusters.forEach(function (cluster, idx) {
   });
 });
 
+var rejects = 0;
+
 function doDomain(into, line) {
   var asn_ip,
     domain,
@@ -49,12 +51,9 @@ function doDomain(into, line) {
   }
   domain = asn_ip.name;
   idx = clusterDomains[domain];
-  if (!idx) {
-    console.warn('no cluster for ' + domain);
-  }
   ips = ipClusters['' + idx];
   if (!ips) {
-    console.warn('no good IPs for ' + domain + '. Skipping');
+    rejects += 1;
     return;
   }
   into[domain] = {};
@@ -62,7 +61,7 @@ function doDomain(into, line) {
   Object.keys(asn_ip).filter(function (asn) {
     return typeof asn_ip[asn] === 'object' && asn !== 'unknown';
   }).forEach(function (asn) {
-    var mapped = {}, total = 0, max = [];
+    var mapped = {}, total = 0, max = {};
     Object.keys(asn_ip[asn]).filter(function (ip) {
       total += asn_ip[asn][ip];
       return ip !== 'empty' &&
@@ -74,8 +73,10 @@ function doDomain(into, line) {
       mapped[resolved_asn] = mapped[resolved_asn] || 0;
       mapped[resolved_asn] += asn_ip[asn][ip];
     });
-    max = Object.keys(mapped).filter(function (asn) {
-      return mapped[asn] > (total * 0.1);
+    Object.keys(mapped).filter(function (asn) {
+      return mapped[asn] > (total * 0.01);
+    }).forEach(function (asn) {
+      max[asn] = mapped[asn] / total;
     });
 
     into[domain][asn] = max;
@@ -100,5 +101,6 @@ function doAll() {
 }
 
 doAll().then(function (result) {
+  console.warn('did not know ips for ' + rejects + 'domains');
   fs.writeFileSync(outFile, JSON.stringify(result));
 });
