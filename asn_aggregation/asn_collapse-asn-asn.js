@@ -49,7 +49,14 @@ function doDomain(into, line) {
   }
   domain = asn_ip.name;
   idx = clusterDomains[domain];
-  ips = ipClusters[idx];
+  if (!idx) {
+    console.warn('no cluster for ' + domain);
+  }
+  ips = ipClusters['' + idx];
+  if (!ips) {
+    console.warn('no good IPs for ' + domain + '. Skipping');
+    return;
+  }
   into[domain] = {};
 
   Object.keys(asn_ip).filter(function (asn) {
