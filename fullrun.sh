@@ -123,20 +123,27 @@ aggregateRunWithOoni()
   rm runs/$thisRun/asn.json.* runs/$thisRun/ooni.header runs/$thisRun/ooni.footer
 }
 
-##__. Build Similarity Matrices
+##__. Learn CDN Knowledge
 buildMatrices()
 {
-  echo "Generating Tables..."
+  echo "Aggregating IP-Domain Counts..."
   node asn_aggregation/asn_collapse-classC_domains.js runs/$thisRun/asn.json runs/$thisRun/aggregate
 
   echo "Generating initial Similarity matrix..."
   node cluster_correlation/correlation-matrix.js runs/$thisRun/aggregate.domain-classC.json runs/$thisRun/similarity01
   for i in `seq 1 6`
   do
-    echo "Generating matrix revision $(expr $i + 1)..."
+    echo "Regenerating matrix (iteration $(expr $i) of 6)..."
     node cluster_correlation/reweighting-table.js runs/$thisRun/aggregate.domain-classC.json runs/$thisRun/aggregate.classC-domain.json runs/$thisRun/similarity0$i runs/$thisRun/reweight0$i.json
     node cluster_correlation/correlation-matrix.js runs/$thisRun/aggregate.domain-classC.json runs/$thisRun/reweight0$i.json runs/$thisRun/similarity0$(expr $i + 1)
   done
+
+  echo "Assigning Domains to clusters..."
+  node cluster_correlation/correlation-distr/run-distr.js runs/$thisRun/similarity06  runs/$thisRun/clusters.json
+  echo "Assigning IPs to clusters..."
+  node cluster_correlation/cluster-footprint.js runs/$thisRun/clusters.json runs/$thisRun/aggregate.classC-domain.json runs/$thisRun/similarity06 runs/$thisRun/clusters.ips.json
+
+
 }
 
 #12. Favicons

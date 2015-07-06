@@ -102,14 +102,19 @@ function makeASMap() {
   });
 }
 
+function loadExistingASMap (file) {
+  var map = JSON.parse(fs.readFileSync(file));
+  map.lookup = require('ip2country').lookup.bind({}, map);
+  map.prefix = require('ip2country').prefix;
+  map.classC = ip_utils.getClassC;
+  return map;
+}
+
 function loadASMap(mapFile) {
   var prom = new Q(0);
   if (mapFile && fs.existsSync(mapFile)) {
     prom = prom.then(function() {
-      var map = JSON.parse(fs.readFileSync(mapFile));
-      map.lookup = require('ip2country').lookup.bind({}, map);
-      map.classC = ip_utils.getClassC;
-      return map;
+      return loadExistingASMap(mapFile);
     });
   } else if (!fs.existsSync('asmap.json') ||
       new Date() - fs.statSync('asmap.json').mtime > (1000 * 60 * 60 * 24 * 30)) {
@@ -133,3 +138,4 @@ function loadASMap(mapFile) {
 }
 
 exports.getMap = loadASMap;
+exports.getMapSync = loadExistingASMap;
