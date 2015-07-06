@@ -107,7 +107,7 @@ aggregateRun()
 {
   echo "Aggregating..."
   plel=$(node util/config.js aggregation_processes)
-  node util/plelSplit.js $plel runs/$thisRun/zmap runs/$thisRun/asn.json "node ../dns/aggregator.js #1 ../runs/$thisRun/lookup.json #2 ../runs/$thisRun/local.csv"
+  node util/plelSplit.js $plel runs/$thisRun/zmap runs/$thisRun/asn.json "node ./dns/aggregator.js #1 ./runs/$thisRun/lookup.json #2 ./runs/$thisRun/whitelist.json"
   cat runs/$thisRun/asn.json.* >> runs/$thisRun/asn.json
   rm runs/$thisRun/asn.json.*
 }
@@ -179,5 +179,6 @@ aggregateRun         # replace folder with ASN aggreates.
 favicon              # Favicon scan and compare
 cleanup
 else
+  thisRun=${2}
   ${1}
 fi
