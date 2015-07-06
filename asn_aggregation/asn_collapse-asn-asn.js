@@ -67,7 +67,7 @@ function doDomain(line) {
       return ip !== 'empty' &&
           ip !== 'undefined' &&
           ip.indexOf(':') < 0 &&
-          ips.indexOf('' + lookupTable.prefix(ip, 32)) > -1;
+          ips.indexOf('' + lookupTable.prefix(ip, 24)) > -1;
     }).forEach(function (ip) {
       var resolved_asn = lookupTable.lookup(ip);
       mapped[resolved_asn] = mapped[resolved_asn] || 0;
@@ -78,8 +78,9 @@ function doDomain(line) {
     }).forEach(function (asn) {
       max[asn] = mapped[asn] / total;
     });
-
-    output[asn] = max;
+    if (Object.keys(max).length) {
+      output[asn] = max;
+    }
   });
   return JSON.stringify([domain, output]);
 }
