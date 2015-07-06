@@ -61,7 +61,7 @@ function doDomain(into, line) {
       return ip !== 'empty' &&
           ip !== 'undefined' &&
           ip.indexOf(':') < 0 &&
-          ips.indexOf(lookupTable.prefix(ip, 32)) > -1;
+          ips.indexOf('' + lookupTable.prefix(ip, 32)) > -1;
     }).forEach(function (ip) {
       var resolved_asn = lookupTable.lookup(ip);
       mapped[resolved_asn] = mapped[resolved_asn] || 0;
