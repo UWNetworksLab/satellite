@@ -74,7 +74,7 @@ function doDomain(line) {
       mapped[resolved_asn] += asn_ip[asn][ip];
     });
     Object.keys(mapped).filter(function (asn) {
-      return mapped[asn] > (total * 0.01);
+      return asn !== 'ZZ' && mapped[asn] > (total * 0.01);
     }).forEach(function (asn) {
       max[asn] = mapped[asn] / total;
     });
