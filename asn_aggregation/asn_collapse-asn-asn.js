@@ -38,11 +38,12 @@ domainClusters.forEach(function (cluster, idx) {
 
 var rejects = 0;
 
-function doDomain(into, line) {
+function doDomain(line) {
   var asn_ip,
     domain,
     idx,
-    ips;
+    ips,
+    output = {};
 
   try {
     asn_ip = JSON.parse(line);
@@ -56,7 +57,6 @@ function doDomain(into, line) {
     rejects += 1;
     return;
   }
-  into[domain] = {};
 
   Object.keys(asn_ip).filter(function (asn) {
     return typeof asn_ip[asn] === 'object' && asn !== 'unknown';
@@ -79,28 +79,27 @@ function doDomain(into, line) {
       max[asn] = mapped[asn] / total;
     });
 
-    into[domain][asn] = max;
+    output[asn] = max;
   });
+  return JSON.stringify([domain, output]);
 }
 
 function doAll() {
-  var total = fs.statSync(inFile).size || 0,
-    into = {};
+  var total = fs.statSync(inFile).size || 0;
 
   console.log(chalk.blue('Starting'));
   return Q.Promise(function (resolve, reject) {
     fs.createReadStream(inFile)
       .pipe(progress({total: total}))
       .pipe(es.split())
-      .pipe(es.mapSync(doDomain.bind({}, into)))
-      .on('end', function () {
-        resolve(into);
-      })
+      .pipe(es.mapSync(doDomain))
+      .pipe(es.join('\n'))
+      .pipe(fs.createWriteStream(outFile))
+      .on('end', resolve)
       .on('error', reject);
   });
 }
 
-doAll().then(function (result) {
+doAll().then(function () {
   console.warn('did not know ips for ' + rejects + 'domains');
-  fs.writeFileSync(outFile, JSON.stringify(result));
 });
