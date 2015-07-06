@@ -24,6 +24,9 @@ function getClusterMap(clusters) {
 
   return Q.Promise(function (resolve) {
     clusters.forEach(function (cluster, idx) {
+      if (!cluster) {
+        return;
+      }
       cluster.forEach(function (domain) {
         result[domain] = idx;
       });
