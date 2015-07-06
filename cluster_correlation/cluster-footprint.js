@@ -2,7 +2,8 @@
 
 /**
  * Determines the IPs that are in different clusters.
- * Usage: cluster-footprint.js <clusters.json> <classC-domain.json> <matrix prefix> <output.json>
+ * Usage: cluster-footprint.js <clusters.json> <classC-domain.json> <matrix prefix> <output.json> [strategy]
+ * Output is {clusterIdx -> [ip's in cluster]}
  */
 var fs = require('fs');
 var Q = require('q');
@@ -28,6 +29,7 @@ function getClusterMap(clusters) {
       });
     });
 
+    result._clusters = clusters;
     resolve(result);
   });
 }
@@ -63,6 +65,47 @@ function assignClusters1(clusterMap, ipDomains) {
 
       result[maxID] = result[maxID] || [];
       result[maxID].push(ip);
+
+      if (ipIdx % 100 === 0) {
+        bar.tick();
+      }
+    });
+
+    resolve(result);
+  });
+}
+
+// IPs are considered to be valid for a cluster if
+// 1. they show up in >1/2 of domains in cluster
+// 2. they are resolved by an ASN other than the one they are in
+// 3. they are resolved more than a nominal (~50) amount.
+function assignClusters3(clusterMap, ipDomains) {
+  var result = {};
+
+  return Q.Promise(function (resolve) {
+    var bar;
+
+    console.log(chalk.blue("Assigning Clusters"));
+    bar = new ProgressBar(':bar :percent :eta', Object.keys(ipDomains).length / 100);
+
+    Object.keys(ipDomains).forEach(function (ip, ipIdx) {
+      var clusterCounts = {},
+        domainCounts = ipDomains[ip];
+
+      Object.keys(domainCounts).forEach(function (domain) {
+        var clusterID = clusterMap[domain];
+        clusterCounts[clusterID] = clusterCounts[clusterID] || 0;
+        if (domainCounts[domain] > 50) {
+          clusterCounts[clusterID] += 1;
+        }
+      });
+
+      Object.keys(clusterCounts).forEach(function (clusterID) {
+        if (clusterCounts[clusterID] > clusterMap._clusters[clusterID].length / 2) {
+          result[clusterID] = result[clusterID] || [];
+          result[clusterID].push(ip);
+        }
+      });
 
       if (ipIdx % 100 === 0) {
         bar.tick();
@@ -124,12 +167,17 @@ function assignClusters2(clusterMap, ipDomains, matrix) {
   });
 }
 
+var strategy = assignClusters3;
+if (process.argv[6] && process.argv[6] === 'max') {
+  strategy = assignClusters1;
+}
+
 
 Q.all([
   Q.nfcall(fs.readFile, clusterFile).then(JSON.parse).then(getClusterMap),
   Q.nfcall(fs.readFile, ipDomainFile).then(JSON.parse),
   loadMatrix(matrixFile)
-]).spread(assignClusters1)
+]).spread(strategy)
   .then(function (result) {
     fs.writeFileSync(outFile, JSON.stringify(result));
   })
