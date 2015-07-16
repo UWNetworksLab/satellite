@@ -51,6 +51,7 @@ generateRun()
 ##5. Find active servers
 getActiveResolvers()
 {
+  echo `node util/config.js local_address` > runs/$thisRun/local.csv.ip
   node dns/mkpkt.js temp/query.pkt `node util/config.js local_address`
   echo "Running initial scan..."
   `node util/config.js zmap` -p 53 -o runs/$thisRun/local.csv \
@@ -165,8 +166,8 @@ cleanup()
   echo "Cleaning up..."
   rm temp/dns_servers.txt
   rm -r runs/$thisRun/zmap
-  rm runs/$thisRun/similarity0{1-5}
-  rm runs/$thisRun/reweight0{1-5}
+  rm runs/$thisRun/similarity0[2-6]
+  rm runs/$thisRun/reweight0[1-5]
 }
 
 
