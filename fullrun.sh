@@ -111,8 +111,13 @@ aggregateRun()
   node util/plelSplit.js $plel runs/$thisRun/zmap runs/$thisRun/asn.json "node ./dns/aggregator.js #1 ./runs/$thisRun/lookup.json #2 ./runs/$thisRun/whitelist.json"
   cat runs/$thisRun/asn.json.* >> runs/$thisRun/asn.json
   rm runs/$thisRun/asn.json.*
+
+  echo "Aggregating IP-Domain Counts..."
+  node asn_aggregation/asn_collapse-classC_domains.js runs/$thisRun/asn.json runs/$thisRun/aggregate
+  node asn_aggregation/asn_collapse-ip_domains.js runs/$thisRun/asn.json runs/$thisRun/aggregate.ip-domain.json runs/$thisRun/aggregate.domain-ip.json
 }
 
+##11 (alt). OONI aggregation.
 aggregateRunWithOoni()
 {
   echo "Aggregating..."
@@ -122,14 +127,36 @@ aggregateRunWithOoni()
   cat runs/$thisRun/asn.json.*[!ooni] >> runs/$thisRun/asn.json
   cat runs/$thisRun/ooni.header runs/$thisRun/asn.json.*.ooni runs/$thisRun/ooni.footer >> runs/$thisRun/ooni.json
   rm runs/$thisRun/asn.json.* runs/$thisRun/ooni.header runs/$thisRun/ooni.footer
-}
 
-##__. Learn CDN Knowledge
-buildMatrices()
-{
   echo "Aggregating IP-Domain Counts..."
   node asn_aggregation/asn_collapse-classC_domains.js runs/$thisRun/asn.json runs/$thisRun/aggregate
+  node asn_aggregation/asn_collapse-ip_domains.js runs/$thisRun/asn.json runs/$thisRun/aggregate.domain-ip.json runs/$thisRun/aggregate.ip-domain.json
+}
 
+##12. Get Reverse Lookups of IPs.
+reverseLookup()
+{
+  echo "Looking up PTR Records..."
+  node util/jsonkeystofile.js runs/$thisRun/aggregate.ip-domains.json runs/$thisRun/allIPs.txt
+  node dns/find-ptrs.js runs/$thisRun/allIPs.txt runs/$thisRun/ptrs.json
+}
+
+#13. Favicons
+favicon()
+{
+  # TODO : Randomize domains and parallelize
+  echo "Starting Favicons..."
+  mkdir runs/$thisRun/favicon
+  fp = runs/$thisRun/favicon
+  echo "{}" > $fp/ignorelist.json
+  node favicon/original.js temp/domains.txt $fp/locally-resolved.json
+  node favicon/favicon.js runs/$thisRun/aggregate.ip-domains.json $fp/ignorelist.json $fp/favicons.jsonlines
+  node favicon/compare.js $fp/locally-resolved.json $fp/favicons.jsonlines $fp/validation.jsonlines
+}
+
+##14. Build CDN Mapping
+buildMatrices()
+{
   echo "Generating initial Similarity matrix..."
   node cluster_correlation/correlation-matrix.js runs/$thisRun/aggregate.domain-classC.json runs/$thisRun/similarity01
   for i in `seq 1 6`
@@ -147,27 +174,14 @@ buildMatrices()
 
 }
 
-#12. Favicons
-favicon()
-{
-  # TODO : Randomize domains and parallelize
-  echo "Starting Favicons..."
-  mkdir runs/$thisRun/favicon
-  fp = runs/$thisRun/favicon
-  echo "{}" > $fp/ignorelist.json
-  node favicon/original.js temp/domains.txt $fp/locally-resolved.json
-  node favicon/favicon.js runs/$thisRun/aggregate.ip-domains.json $fp/ignorelist.json $fp/favicons.jsonlines
-  node favicon/compare.js $fp/locally-resolved.json $fp/favicons.jsonlines $fp/validation.jsonlines
-}
-
-##13. Clean up
+##15. Clean up
 cleanup()
 {
   echo "Cleaning up..."
   rm temp/dns_servers.txt
   rm -r runs/$thisRun/zmap
-  rm runs/$thisRun/similarity0[2-6]
-  rm runs/$thisRun/reweight0[1-5]
+  rm runs/$thisRun/similarity0{2,3,4,5,6}
+  rm runs/$thisRun/reweight0{1,2,3,4,5}
 }
 
 
@@ -177,14 +191,16 @@ getTopSites          # downloads alexa.
 addRedirects         # follow redirects and include in top sites.
 getBlacklist         # downloads blacklist.
 generateRun          # creates date-based folder
-getActiveResolvers  # does cs.washington.edu run
-getGoodHosts        # recreates dns_servers.txt from the cs.washington.edu run
+getActiveResolvers   # does cs.washington.edu run
+getGoodHosts         # recreates dns_servers.txt from the cs.washington.edu run
 runTopSites          # runs all top domains against dns_servers.txt
 recordLookupTable    # Build lookup table of current bgp annoncements.
-runHTTPScans         # scan ports 80 & 443
+#runHTTPScans        # scan ports 80 & 443 - not default
 makeArchive          # creates archive.
 aggregateRun         # replace folder with ASN aggreates.
-favicon              # Favicon scan and compare
+reverseLookup        # do PTR lookups
+#favicon             # Favicon scan and compare - not default.
+buildMatrices        # build similarity table
 cleanup
 else
   thisRun=${2}
