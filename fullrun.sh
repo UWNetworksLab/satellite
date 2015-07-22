@@ -52,7 +52,7 @@ generateRun()
 getActiveResolvers()
 {
   echo `node util/config.js local_address` > runs/$thisRun/local.csv.ip
-  node dns/mkpkt.js temp/query.pkt `node util/config.js local_address`
+  node dns/mkpkt.js temp/query.pkt `node util/config.js local_ip`
   echo "Running initial scan..."
   `node util/config.js zmap` -p 53 -o runs/$thisRun/local.csv \
     -b temp/blacklist.conf -c 300 -r `node util/config.js rate` \
