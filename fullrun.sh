@@ -137,7 +137,7 @@ aggregateRunWithOoni()
 reverseLookup()
 {
   echo "Looking up PTR Records..."
-  node util/jsonkeystofile.js runs/$thisRun/aggregate.ip-domains.json runs/$thisRun/allIPs.txt
+  node util/jsonkeystofile.js runs/$thisRun/aggregate.ip-domain.json runs/$thisRun/allIPs.txt
   node dns/find-ptrs.js runs/$thisRun/allIPs.txt runs/$thisRun/ptrs.json
 }
 
