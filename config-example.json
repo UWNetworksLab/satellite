@@ -16,5 +16,5 @@
     "subject": "Internet Scans from Satellite.cs.washington.edu",
     "text": "This is a notification that we will be running an internet-wide scan from satellite on Monday.\n\r\nSource IPs for the probes will be 198.48.92.101-104.\n\r\nScan will begin on Monday and last roughly 24 hours.\r\nMaximum scan rate will be 500k packets/second.\r\nScan will cover the full address space.\r\nI am the emergency contact, you can reach me by email."
   },
-  "notification_delay": 60*60*24,
+  "notification_delay": 86400,
 }
