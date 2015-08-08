@@ -1,5 +1,22 @@
 #!/bin/bash
 
+##0. Notify and wait.
+notify()
+{
+  echo "Sending Notification..."
+  node util/notify.js
+  touch scan_pending.lock
+  sleep `node util/config.js notification_delay`
+  if [ -f scan_pending.lock ];
+  then
+    echo "Beginning."
+    rm scan_pending.lock
+  else
+    echo "Scan Canceled."
+    exit 1
+  fi
+}
+
 ##1. Get The alexa top sites.
 getTopSites()
 {
@@ -187,6 +204,7 @@ cleanup()
 
 if [ $# -eq 0 ]
 then
+notify               # send email, wait 24hr to ensure not canceled.
 getTopSites          # downloads alexa.
 addRedirects         # follow redirects and include in top sites.
 getBlacklist         # downloads blacklist.

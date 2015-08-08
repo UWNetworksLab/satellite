@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "chalk": "^0.5.1",
+    "emailjs": "^0.3.16",
     "event-stream": "^3.1.7",
     "fs-extra": "^0.18.2",
     "ip2country": "^0.2.3",
