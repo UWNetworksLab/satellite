@@ -150,7 +150,7 @@ favicon()
   fp = runs/$thisRun/favicon
   echo "{}" > $fp/ignorelist.json
   node favicon/original.js temp/domains.txt $fp/locally-resolved.json
-  node favicon/favicon.js runs/$thisRun/aggregate.ip-domains.json $fp/ignorelist.json $fp/favicons.jsonlines
+  node favicon/favicon.js runs/$thisRun/aggregate.ip-domain.json $fp/ignorelist.json $fp/favicons.jsonlines
   node favicon/compare.js $fp/locally-resolved.json $fp/favicons.jsonlines $fp/validation.jsonlines
 }
 
@@ -180,8 +180,8 @@ cleanup()
   echo "Cleaning up..."
   rm temp/dns_servers.txt
   rm -r runs/$thisRun/zmap
-  rm runs/$thisRun/similarity0{2,3,4,5,6}
-  rm runs/$thisRun/reweight0{1,2,3,4,5}
+  rm runs/$thisRun/similarity0{2,3,4,5,6}.*
+  rm runs/$thisRun/reweight0{1,2,3,4,5}.json
 }
 
 
