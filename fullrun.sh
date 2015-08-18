@@ -188,7 +188,8 @@ buildMatrices()
   echo "Assigning IPs to clusters..."
   node cluster_correlation/cluster-footprint.js runs/$thisRun/clusters.json runs/$thisRun/aggregate.classC-domain.json runs/$thisRun/similarity06 runs/$thisRun/clusters.ips.json
 
-
+  echo "Building Country-Country Lookup..."
+  node asn_asn-to-country_country.js runs/$thisRun/asn.json runs/$thisRun/country-country.json
 }
 
 ##15. Clean up
