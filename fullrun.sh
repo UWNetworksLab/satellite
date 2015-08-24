@@ -189,7 +189,7 @@ buildMatrices()
   node cluster_correlation/cluster-footprint.js runs/$thisRun/clusters.json runs/$thisRun/aggregate.classC-domain.json runs/$thisRun/similarity06 runs/$thisRun/clusters.ips.json
 
   echo "Building Country-Country Lookup..."
-  node asn_aggregation/asn_asn-to-country_country.js runs/$thisRun/asn.json runs/$thisRun/country-country.json
+  node asn_aggregation/asn_asn-to-country_country.js runs/$thisRun/domains.txt runs/$thisRun/asn.json runs/$thisRun/country-country.json
 }
 
 ##15. Clean up
