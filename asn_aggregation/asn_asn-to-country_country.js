@@ -24,9 +24,9 @@ var domains = process.argv[2];
 var inFile = process.argv[3];
 var outFile = process.argv[4];
 
-function doDomain(into, map, line, domains) {
+function doDomain(into, map, domains, line) {
   var asn_info, domain, countrymap = {};
-  var domain = domains.shift();
+  domain = domains.shift();
   try {
     asn_info = JSON.parse(line);
   } catch (e) {
@@ -38,10 +38,10 @@ function doDomain(into, map, line, domains) {
       return;
     }
     countrymap[cntry] = countrymap[cntry] || {};
-    Object.keys(asn_info[1][asn]).forEach(function (dest) {
+    Object.keys(asn_info[asn]).forEach(function (dest) {
       var destcntry = map[dest];
       countrymap[cntry][destcntry] = countrymap[cntry][destcntry] || 0;
-      countrymap[cntry][destcntry] += asn_info[1][asn][dest];
+      countrymap[cntry][destcntry] += asn_info[asn][dest];
     });
   });
 
@@ -54,7 +54,7 @@ function doAll() {
 
   console.log(chalk.blue('Starting'));
   return countries.then(function(map) {
-    var dlines = fs.readFileSync(domains).split('\n');
+    var dlines = fs.readFileSync(domains).toString().split('\n');
 
     return Q.Promise(function (resolve, reject) {
     fs.createReadStream(inFile)
