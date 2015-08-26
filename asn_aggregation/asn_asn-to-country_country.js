@@ -14,19 +14,19 @@ var chalk = require('chalk');
 var es = require('event-stream');
 var progress = require('progressbar-stream');
 var countries = require('ip2country/src/as2country').createAS2CountryMap();
-var country_lookup = require('ip2country/src/lookup');
+var lookuper = require('ip2country/src/lookup');
 
 if (!process.argv[3]) {
   console.error(chalk.red('Usage: asn_asn-to-country_country.js <lookup.json> <domains.txt> <asn.json> <outfile>'));
   process.exit(1);
 }
 
-var country_lookup_table = JSON.parse(fs.readFileSync(process.argv[2]));
+var asn_lookup = JSON.parse(fs.readFileSync(process.argv[2]));
 var domains = process.argv[3];
 var inFile = process.argv[4];
 var outFile = process.argv[5];
 
-var ip2country = country_lookup.lookup.bind({}, country_lookup_table);
+var ip2asn = lookuper.lookup.bind({}, asn_lookup);
 
 function doDomain(into, map, domains, line) {
   var asn_info, domain, countrymap = {};
@@ -43,7 +43,8 @@ function doDomain(into, map, domains, line) {
     }
     countrymap[cntry] = countrymap[cntry] || {};
     Object.keys(asn_info[asn]).forEach(function (dest) {
-      var destcntry = ip2country(dest);
+      var destasn = ip2asn(dest),
+          destcntry = map[destasn];
       countrymap[cntry][destcntry] = countrymap[cntry][destcntry] || 0;
       countrymap[cntry][destcntry] += asn_info[asn][dest];
     });
