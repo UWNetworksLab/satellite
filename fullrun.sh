@@ -156,6 +156,8 @@ reverseLookup()
   echo "Looking up PTR Records..."
   node util/jsonkeystofile.js runs/$thisRun/aggregate.ip-domain.json runs/$thisRun/allIPs.txt
   node dns/find-ptrs.js runs/$thisRun/allIPs.txt runs/$thisRun/ptrs.json
+  echo "Looking up WHOIS Records..."
+  node dns/find-whois.js runs/$thisRun/allIPs.txt runs/$thisRun/whois.json
 }
 
 #13. Favicons
