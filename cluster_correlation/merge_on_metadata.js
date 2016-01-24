@@ -109,7 +109,7 @@ var clustersToMeta = function (domains, ips, meta) {
 };
 
 Q.all([
-  Q.nfcall(fs.readFile, clusterFile).then(JSON.parse).then(utils.clusterArrayToMap),
+  Q.nfcall(fs.readFile, clusterFile).then(JSON.parse),
   Q.nfcall(fs.readFile, ipFile).then(JSON.parse),
   loadMeta
 ]).spread(clustersToMeta)
