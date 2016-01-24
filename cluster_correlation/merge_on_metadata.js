@@ -45,6 +45,9 @@ var loadMeta = function () {
 
 // cleanup formatting & if it looks like a unique hostname try to get the common domain.
 var cleanup = function(meta) {
+  if (!meta || !meta.length) {
+    return undefined;
+  }
   meta = meta.trim().toLowerCase();
   if (meta.indexOf(" ") < 0) {
     var parts = meta.split(".");
@@ -99,7 +102,7 @@ var clustersToMeta = function (domains, ips, meta) {
         var metas = cluster.map(function (ip) {
           return meta[ip];
         });
-        metas = flatten(metas).map(cleanup);
+        metas = flatten(metas).map(cleanup).filter(function (v) {return v !== undefined;});
         clusterSignals[idx] = utils.getMostFrequentElement(metas);
         clusterSignals[idx][1] /= cluster.length;
       }
