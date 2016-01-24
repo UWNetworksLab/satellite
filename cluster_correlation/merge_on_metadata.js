@@ -7,7 +7,7 @@
  */
 'use strict';
 
-var Q = require('Q');
+var Q = require('q');
 var fs = require('fs');
 var chalk = require('chalk');
 var ProgressBar = require('progress');
