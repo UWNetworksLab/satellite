@@ -117,6 +117,7 @@ Q.all([
   loadMeta
 ]).spread(clustersToMeta)
   .then(function (result) {
+    console.log(chalk.green("Merged to " + result.length + " clusters."));
     fs.writeFileSync(outFile, JSON.stringify(result));
   })
   .then(undefined, console.error);
