@@ -1,5 +1,6 @@
 // Find the median number of distinct answer ASNs for a particular domain globally.
 // Report all ASNs that gave a number larger than this median.
+'use strict';
 
 var fs = require('fs');
 var es = require('event-stream');
@@ -20,7 +21,7 @@ function doDomains(asm) {
     fs.createReadStream(aggregation)
       .pipe(es.split())
       .pipe(es.mapSync(function (line) {
-        var entry, sorted, median, stdev, counts = {},statcounts={}, result = {};
+        var entry, sorted, median, mean, stdev, counts = {},statcounts={}, result = {};
 
         if (line === '' || line === 'undefined') {
           return;

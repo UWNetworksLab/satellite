@@ -10,6 +10,7 @@ var Q = require('q');
 var chalk = require('chalk');
 var ProgressBar = require('progress');
 var loadMatrix = require('./correlation-matrix.js').loadMatrixPromise;
+var utils = require('./cluster_utils');
 
 
 var clusterFile = process.argv[2];
@@ -17,25 +18,6 @@ var ipDomainFile = process.argv[3];
 var matrixFile = process.argv[4];
 var outFile = process.argv[5];
 
-
-// map from domain -> unique cluster id
-function getClusterMap(clusters) {
-  var result = {};
-
-  return Q.Promise(function (resolve) {
-    clusters.forEach(function (cluster, idx) {
-      if (!cluster) {
-        return;
-      }
-      cluster.forEach(function (domain) {
-        result[domain] = idx;
-      });
-    });
-
-    result._clusters = clusters;
-    resolve(result);
-  });
-}
 
 // assign clusters to ips based on cluster with most resolutions
 function assignClusters1(clusterMap, ipDomains) {
@@ -177,7 +159,7 @@ if (process.argv[6] && process.argv[6] === 'max') {
 
 
 Q.all([
-  Q.nfcall(fs.readFile, clusterFile).then(JSON.parse).then(getClusterMap),
+  Q.nfcall(fs.readFile, clusterFile).then(JSON.parse).then(utils.clusterArrayToMap),
   Q.nfcall(fs.readFile, ipDomainFile).then(JSON.parse),
   loadMatrix(matrixFile)
 ]).spread(strategy)

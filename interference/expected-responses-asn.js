@@ -1,4 +1,6 @@
 // calculates the number of domain queries from each ASN
+'use strict';
+
 var fs = require('fs');
 var Q = require('q');
 var asn = require('../asn_aggregation/asn_lookup');
