@@ -189,8 +189,8 @@ buildMatrices()
   node cluster_correlation/correlation-distr/run-distr.js runs/$thisRun/similarity06  runs/$thisRun/clusters.json
   echo "Assigning IPs to clusters..."
   node cluster_correlation/cluster-footprint.js runs/$thisRun/clusters.json runs/$thisRun/aggregate.classC-domain.json runs/$thisRun/similarity06 runs/$thisRun/clusters.ips.json
-  echo "Secondary Signal Aggregation"
-  node cluster_correlation/merge_on_metadata.js runs/$thisRun/clusters.json runs/$thisRun/clusters.ips.json runs/$thisRun/ptrs.json runs/$thisRuns/clusters.merged
+  echo "Secondary Signal Aggregation [ptrs]"
+  node cluster_correlation/merge_on_metadata.js runs/$thisRun/clusters.json runs/$thisRun/clusters.ips.json runs/$thisRun/ptrs.json 0.8 runs/$thisRuns/clusters.merged.json
 
   echo "Building Country-Country Lookup..."
   node asn_aggregation/asn_asn-to-country_country.js runs/$thisRun/lookup.json runs/$thisRun/domains.txt runs/$thisRun/asn.json runs/$thisRun/country-country.json
