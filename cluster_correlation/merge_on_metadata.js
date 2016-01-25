@@ -81,7 +81,7 @@ var mergeClusters = function (domains, clusters) {
     var combined = [];
     tomerge[key].forEach(function (idx) {
       combined = combined.concat(domains[idx]);
-      delete idxs[idxs.indexOf(idx)];
+      idxs.splice(idxs.indexOf(idx), 1);
     });
     reclustered.push(combined);
   });
