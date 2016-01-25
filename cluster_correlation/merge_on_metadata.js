@@ -38,7 +38,7 @@ var loadMeta = function () {
       var ipstring = ip_utils.getClassC(line[0]);
       map[ipstring] = line[1];
     };
-    fs.createReadStream(metaFile).pipe(es.split()).pipe(fillMap).on('end', function () {
+    fs.createReadStream(metaFile).pipe(es.split()).pipe(es.mapSync(fillMap)).on('end', function () {
       resolve(map);
     });
   });
