@@ -15,6 +15,7 @@ var utils = require('./cluster_utils');
 var es = require('event-stream');
 var flatten = require('flatten');
 var ip_utils = require('../util/ip_utils');
+var llquantize = require('llquantize');
 
 if (process.argv.length < 7) {
   console.log(chalk.red("Usage:"), "merge_on_metadata.js <clusters.json> <clusters.ip.json> <ptrs.json | whois.json> 0.9 clusters.out.json");
@@ -91,6 +92,15 @@ var mergeClusters = function (domains, clusters) {
   return reclustered;
 };
 
+var printStats = function (signals) {
+  var llq = llquantize();
+  Object.keys(signals).forEach(function (key) {
+    llq(signals[key][1]);
+  });
+  console.log("Metadata confidences");
+  console.log(llq());
+};
+
 // turn each cluster into a dominant meta-data tag, if there is one.
 var clustersToMeta = function (domains, ips, meta) {
   console.log(chalk.blue("Data Loaded. Linking Metadata."));
@@ -107,6 +117,7 @@ var clustersToMeta = function (domains, ips, meta) {
         clusterSignals[idx][1] /= cluster.length;
       }
     });
+    printStats(clusterSignals);
     resolve(mergeClusters(domains, clusterSignals));
   });
 };

@@ -9,6 +9,7 @@
     "flatten": "^1.0.1",
     "glob": "^5.0.10",
     "googleapis": "^1.0.6",
+    "llquantize": "0.0.6",
     "map-stream-concurrent": "0.0.1",
     "mkdirp": "^0.5.0",
     "native-dns": "git://github.com/sidberg/node-dns.git",
