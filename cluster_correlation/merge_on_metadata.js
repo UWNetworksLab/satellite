@@ -65,7 +65,7 @@ var mergeClusters = function (domains, clusters) {
   var tomerge = {};
   var idxs = [];
   var reclustered = [];
-  for (var i = 0; i <domains.length; i += 1) {
+  for (var i = 0; i < domains.length; i += 1) {
     idxs.push(i);
   }
   Object.keys(clusters).forEach (function (idx) {
@@ -79,7 +79,7 @@ var mergeClusters = function (domains, clusters) {
   });
   Object.keys(tomerge).forEach(function (key) {
     var combined = [];
-    key.forEach(function (idx) {
+    tomerge[key].forEach(function (idx) {
       combined = combined.concat(domains[idx]);
       delete idxs[idxs.indexOf(idx)];
     });
@@ -106,11 +106,14 @@ var clustersToMeta = function (domains, ips, meta) {
   console.log(chalk.blue("Data Loaded. Linking Metadata."));
   var clusterSignals = {};
   return Q.Promise(function (resolve) {
-    domains.forEach(function (domains, idx) {
+    Object.keys(ips).forEach(function (idx) {
       var cluster = ips[idx];
       if (cluster && cluster.length) {
-        var metas = cluster.map(function (ip) {
-          return meta[ip];
+        var metas = [];
+        cluster.forEach(function (ip) {
+          if (meta[ip]) {
+            metas.push(meta[ip])
+          }
         });
         metas = flatten(metas).map(cleanup).filter(function (v) {return v !== undefined;});
         clusterSignals[idx] = utils.getMostFrequentElement(metas);
@@ -125,7 +128,7 @@ var clustersToMeta = function (domains, ips, meta) {
 Q.all([
   Q.nfcall(fs.readFile, clusterFile).then(JSON.parse),
   Q.nfcall(fs.readFile, ipFile).then(JSON.parse),
-  loadMeta
+  loadMeta()
 ]).spread(clustersToMeta)
   .then(function (result) {
     console.log(chalk.green("Merged to " + result.length + " clusters."));
