@@ -10,6 +10,8 @@ var chalk = require('chalk');
 var dns = require('dns');
 var es = require('event-stream');
 var mapConcurrent = require('map-stream-concurrent');
+var progress = require('progressbar-stream');
+
 
 if (!process.argv[2]) {
   console.error(chalk.red("Usage: find-ptrs.js <ips> <output.json>"));
@@ -29,9 +31,10 @@ function dnsWorker(ip, done) {
   });
 }
 
+var length = fs.statSync(inFile).size;
 fs.createReadStream(inFile)
+    .pipe(progress({total: length}))
     .pipe(es.split())
     .pipe(mapConcurrent(CONCURRENT_DNS_REQUESTS, dnsWorker))
     .pipe(es.join('\n'))
     .pipe(fs.createWriteStream(outFile));
-
