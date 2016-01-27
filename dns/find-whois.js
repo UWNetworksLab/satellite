@@ -28,6 +28,8 @@ function whoisWorker(ip, done) {
       val.split('\n').forEach(function (l) {
         if (l.indexOf('OrgNOCName') === 0) {
           org = l.split(':')[1].trim();
+        } else if(l.indexOf('netname') === 0) {
+          org = l.split(':')[1].trim();
         }
       });
     }
