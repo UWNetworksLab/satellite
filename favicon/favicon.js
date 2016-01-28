@@ -29,6 +29,7 @@ var Q = require('q');
 var es = require('event-stream');
 var mapConcurrent = require('map-stream-concurrent');
 var requester = require('./requester.js');
+var progress = require('progressbar-stream');
 
 var CONCURRENT_IPS = 200;
 
@@ -64,7 +65,7 @@ function shuffle(array) {
 
 var ips = Object.keys(infile);
 ips = shuffle(ips);
-es.from(ips).pipe(mapConcurrent(CONCURRENT_IPS, processIP)).pipe(es.join('\n')).pipe(outFile);
+es.from(ips).pipe(progress({total: 15 * ips.length})).pipe(mapConcurrent(CONCURRENT_IPS, processIP)).pipe(es.join('\n')).pipe(outFile);
 
 function processIP(ip, callback) {
   var hosts = Object.keys(infile[ip]);
@@ -79,7 +80,7 @@ function processIP(ip, callback) {
   }
 
   var state = {
-    ip: ip,
+    ip: ip.toString(),
     hosts: hosts,
     good: true,
     lastresult: null,
