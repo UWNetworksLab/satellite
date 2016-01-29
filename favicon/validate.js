@@ -6,7 +6,7 @@
  * to known successful and failed attempts at favicon resolution.
  *
  * Usage
- *  node validate.js <validation.jsonlines> <scores> <output>
+ *  node validate.js <validation.jsonlines> <scores> sandline <output>
  *  Where:
  *   validation comes from favicon/compare.js
  *   domainToIp / iptodomain comes from asn_collapse-classC_domain or ip_domain
@@ -21,6 +21,7 @@ var iu = require('../util/ip_utils');
 
 console.log(chalk.blue('Reading Input.'));
 var scores = JSON.parse(fs.readFileSync(process.argv[3]));
+var sandline = Number(process.argv[4]);
 console.log(chalk.green('Done!'));
 
 var domains = {};
@@ -46,16 +47,17 @@ var ipDomainValidation = function (ip) {
         var score = scores[domain][cc];
         if (score && ip[1][domain]) {
           t_tt += 1;
-          if (score > 0.5) {
+          if (score > sandline) {
             t_c += 1;
           }
-          cdomains[domain].push(score > 0.5 ? 1 : 0);
+          cdomains[domain].push(score > sandline ? 1 : 0);
           domains[domain].push(score);
         } else if (score) {
           t_tf += 1;
-          if (score < 0.5) {
+          if (score < sandline) {
             t_f += 1;
           }
+          cdomains[domain].push(score < sandline ? 1 : 0);
           domains[domain].push(1 - score);
         }
       }
@@ -68,21 +70,22 @@ var ipDomainValidation = function (ip) {
 
 var reduceDomains = function () {
   console.log('reducing.');
-  var dscores = [];
+  //var dscores = [];
   var fracs = [];
   Object.keys(domains).forEach(function (d) {
     if (!domains[d].length) { return; }
-    var score = domains[d].reduce(function (a,b) {return a + b;}, 0) / domains[d].length;
-    dscores.push(score);
+    //var score = domains[d].reduce(function (a,b) {return a + b;}, 0) / domains[d].length;
+    //dscores.push(score);
 
-    var frac = cdomains[d].reduce(function (a,b) {return a + b;}, 0) / domains[d].length;
+    var frac = cdomains[d].reduce(function (a,b) {return a + b;}, 0) / cdomains[d].length;
     fracs.push(frac);
   });
-  fs.writeFileSync(process.argv[4], JSON.stringify(dscores));
-  fs.writeFileSync(process.argv[4]+'.frac', JSON.stringify(fracs));
+  //fs.writeFileSync(process.argv[5], JSON.stringify(dscores));
+  fs.writeFileSync(process.argv[5], JSON.stringify(fracs));
   console.log('done.');
   console.log('Gave score of true to', t_c, ' of ', t_tt);
   console.log('Gave score of false to', t_f, ' of ', t_tf);
+  console.log('Under curve is ', (t_c + tf) / (t_tt + t_tf));
   process.exit(0);
 };
 

@@ -46,7 +46,7 @@ function mapToBoolean(data) {
   Object.keys(hosts).forEach(function (host) {
     if (expected[host]) {
       // Check that it gives back a 200 and check hash
-      results[host] = hosts[host][0] === 200 && hosts[host][2] === expected[host];
+      results[host] = hosts[host][2] === expected[host];
     }
   });
   if (Object.keys(results).length > 0) {
@@ -62,4 +62,3 @@ actual
   .pipe(es.stringify())
   .pipe(es.join('\n'))
   .pipe(outFile);
-
