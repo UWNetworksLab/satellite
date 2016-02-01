@@ -227,7 +227,7 @@ buildMatrices        # build similarity table
 cleanup
 if [ -f postrun.sh ]
   then
-    bash postrun.sh
+    source postrun.sh
 fi
 else
   thisRun=${2}
