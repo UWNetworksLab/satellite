@@ -40,7 +40,7 @@ var ipDomainValidation = function (ip) {
     if (ip.length < 2) { return; }
 
     var doms = Object.keys(ip[1]);
-    var cc = iu.getClassC(ip[0]);
+    var cc = ip[0];
     for (var i = 0; i < doms.length; i += 1) {
       var domain = doms[i];
       if (scores[domain] && scores[domain][cc] !== undefined) {
@@ -85,7 +85,7 @@ var reduceDomains = function () {
   console.log('done.');
   console.log('Gave score of true to', t_c, ' of ', t_tt);
   console.log('Gave score of false to', t_f, ' of ', t_tf);
-  console.log('Under curve is ', (t_c + tf) / (t_tt + t_tf));
+  console.log('Under curve is ', (t_c + t_f) / (t_tt + t_tf));
   process.exit(0);
 };
 

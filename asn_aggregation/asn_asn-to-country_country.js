@@ -28,14 +28,18 @@ var outFile = process.argv[5];
 
 var ip2asn = lookuper.lookup.bind({}, asn_lookup);
 
-function doDomain(into, map, domains, line) {
+function doDomain(into, map, line) {
   var asn_info, domain, countrymap = {};
-  domain = domains.shift();
   try {
     asn_info = JSON.parse(line);
   } catch (e) {
     return;
   }
+  domain = asn_info.name;
+  if (!domain) {
+    return;
+  }
+
   Object.keys(asn_info).forEach(function(asn) {
     var cntry = map[asn];
     if (!cntry) {
@@ -59,13 +63,11 @@ function doAll() {
 
   console.log(chalk.blue('Starting'));
   return countries.then(function(map) {
-    var dlines = fs.readFileSync(domains).toString().split('\n');
-
     return Q.Promise(function (resolve, reject) {
     fs.createReadStream(inFile)
       .pipe(progress({total: total}))
       .pipe(es.split())
-      .pipe(es.mapSync(doDomain.bind({}, into, map, dlines)))
+      .pipe(es.mapSync(doDomain.bind({}, into, map)))
       .pipe(es.join('\n'))
       .on('end', function () {
         resolve(into);
