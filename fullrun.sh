@@ -1,5 +1,21 @@
 #!/bin/bash
 
+##-1. Sanity Check Environment.
+sanityCheck()
+{
+  zmapPath=`node util/config.js zmap`
+  zmapModules=$($zmapPath --list-probe-modules | grep udp_multi)
+  if [ -z "$zmapModules" ]; then
+    echo "Your zmap doesn't have the udp_multi probe module built.";
+    exit 1
+  fi
+  if [ ! -f cluster_correlation/correlation-distr/bin64/chainedSolvers ]; then
+    echo "You haven't compiled the clustering dependency."
+    echo "Run cluster_correlation/correlation-distr/build-distr.sh"
+    exit 1
+  fi
+}
+
 ##0. Notify and wait.
 notify()
 {
@@ -215,6 +231,7 @@ cleanup()
 
 if [ $# -eq 0 ]
 then
+sanityCheck          # Checks to make sure environment is sane.
 notify               # send email, wait 24hr to ensure not canceled.
 getTopSites          # downloads alexa.
 addRedirects         # follow redirects and include in top sites.
