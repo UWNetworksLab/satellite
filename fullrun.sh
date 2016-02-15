@@ -55,6 +55,12 @@ echo "Getting Blacklist..."
     echo "in order to use ours."
     exit 1
   fi
+  if [ -s temp/blacklist.conf ]; then
+    echo "blacklist set"
+  else
+    echo "blacklist is empty. that's bad."
+    exit 1
+  fi
 }
 
 ##4. Create output for run.
