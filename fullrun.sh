@@ -96,7 +96,7 @@ getActiveResolvers()
   `node util/config.js zmap` -p 53 -o runs/$thisRun/local.csv \
     -b temp/blacklist.conf -c 300 -r `node util/config.js rate` \
     --output-module=csv -f saddr,timestamp-str,data \
-    --output-filter="success = 1 && repeat = 0" -M udp \
+    --output-filter="success = 1" -M udp \
     --probe-args=file:temp/query.pkt
 }
 
