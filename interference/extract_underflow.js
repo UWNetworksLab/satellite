@@ -6,7 +6,7 @@ var iputils = require('../util/ip_utils');
 
 // Tells you which sites have too few resolutions across the different ASNs in a given country.
 //
-// usage: node extract_underflow.js <runs/date/asn.js> <blockedomains.json> <CountryCode>
+// usage: node extract_underflow.js <runs/date/asn.js> <output.json> <CountryCode>
 var country = process.argv[4];
 
 var doDomain = function (asns, list, domLine) {
@@ -50,7 +50,7 @@ countries.then (function (cmap) {
     .pipe(es.mapSync(doDomain.bind({}, irASNs, list)))
     .on('end', function () {
       //console.log(list);
-      var sum = 0;    
+      var sum = 0;
       list.forEach(function(d) {
         sum += d[1] + d[2];
       });

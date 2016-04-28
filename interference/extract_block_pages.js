@@ -4,13 +4,12 @@ var countries = require('ip2country/src/as2country').createAS2CountryMap();
 var progress = require('progressbar-stream');
 var iputils = require('../util/ip_utils');
 
-// Tells you which sites have a significant resolution to non-public prefixes
-// within a given country.
+// Tells you which IPs are used for block pages in a country.
 //
-// usage: node extract_local_resolutions.js <runs/date/asn.js> <output.json> <CountryCode>
-var country = process.argv[4];
+// usage: node extract_block_pages.js <runs/date/asn.js> <runs/date/reweight.json> <output.json> <CountryCode>
+var country = process.argv[5];
 
-var doDomain = function (asns, list, domLine) {
+var doDomain = function (asns, scores, list, domLine) {
   if (!domLine.length) {
     return;
   }
@@ -20,41 +19,53 @@ var doDomain = function (asns, list, domLine) {
   } catch (e) {
     return;
   }
-  var good = 0, bad = 0;
+  var domainScores = scores[dom.name];
+  var worst, worstn = 0, good = 0, bad = 0;
   asns.forEach (function (asn) {
     if (!dom[asn]) {
       return;
     }
     Object.keys(dom[asn]).forEach(function (ip) {
-      if (iputils.isReserved(ip)) {
+      var score = domainScores[iputils.getClassC(ip)];
+      if (score < 0) {
         bad += dom[asn][ip];
+        if (dom[asn][ip] > worstn) {
+          worst = ip;
+          worstn = dom[asn][ip];
+        }
       } else {
         good += dom[asn][ip];
       }
     });
   });
   if (bad * 4 > good) {
-    //console.log(dom.name);
-    list.push([dom.name, good, bad]);
+    if (!list[worst]) {
+      list[worst] = 0;
+    }
+    list[worst] += 1;
   }
 }
 
 countries.then (function (cmap) {
-  var irASNs = [];
+  var theseASNs = [];
   Object.keys(cmap).forEach(function (asn) {
     if (cmap[asn] === country) {
-      irASNs.push(asn);
+      theseASNs.push(asn);
     }
   });
+  console.log('Loading IP scores...');
+  var scores = JSON.parse(fs.readFileSync(process.argv[3]));
+  console.log('IP scores loaded.');
+
   var asnFile = process.argv[2];
-  var list = [];
+  var list = {};
   fs.createReadStream(asnFile)
     .pipe(progress({total: fs.statSync(asnFile).size}))
     .pipe(es.split())
-    .pipe(es.mapSync(doDomain.bind({}, irASNs, list)))
+    .pipe(es.mapSync(doDomain.bind({}, theseASNs, scores, list)))
     .on('end', function () {
       //console.log(list);
-      fs.writeFileSync(process.argv[3], JSON.stringify(list));
+      fs.writeFileSync(process.argv[4], JSON.stringify(list));
       process.exit(0);
     });
 });
