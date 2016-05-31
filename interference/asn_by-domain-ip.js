@@ -1,4 +1,6 @@
 // node ./asn_by-domain-ips.js asn-domain-ip.json scores.json output.json [threshold]
+// usage:
+// node interference/asn_by-domain-ip.js runs/$n/aggregate.domain-ip.json runs/$n/reweight06.json runs/$n/anomalies.json
 //
 // output {asn: asn,
 //         domain -> {ips: {ip: [count, score]},
@@ -19,6 +21,7 @@ var threshold = process.argv[5] || 1;
 var outFD = fs.openSync(outFile, 'ax');
 
 function doAsn(scores, line) {
+  'use strict';
   var result,
     table;
 
@@ -60,6 +63,7 @@ function doAsn(scores, line) {
 }
 
 function doAll(scores) {
+  'use strict';
   console.log(chalk.blue('Scoring Countries'));
   return Q.Promise(function (resolve, reject) {
     fs.createReadStream(inFile)
@@ -68,7 +72,7 @@ function doAll(scores) {
       .on('end', resolve)
       .on('error', reject);
   }).then(function () {
-    return chalk.green('Done.')
+    return chalk.green('Done.');
   });
 }
 
