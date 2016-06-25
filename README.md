@@ -67,4 +67,8 @@ process:
 This attempts to keep track of the evolving Satellite code base, and explain
 major changes as they occur.
 
+* *03/31/2015* Extraction of NXdomain failures
+* *02/15/2015* Better handling of failures to retrieve current blacklist
+* *09/13/2015* Collection of WHOIS ownership records
+* *08/03/2015* Collection of reverse PTR records
 * *06/28/2015* Initial aggregation is performed in parallel by multiple cores, reducing time to ~10 hours.
