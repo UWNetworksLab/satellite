@@ -31,9 +31,14 @@ process:
 
 ### Installation ###
 
-* Install [zmap](https://zmap.io/), and [node/npm](https://nodejs.org/)
-* git clone
-* npm install
+* Install [node/npm](https://nodejs.org/)
+* Install [zmap](https://zmap.io/) with the [multi-udp](https://github.com/willscott/zmap) feature-branch.
+* make sure it's runnable by the zmap user.
+* ```git clone https://github.com/uwnetworkslab/satellite```
+* ```cd satelite```
+* ```npm install```
+* Run ```cluster_correlation/correlation-distr/build-distr.sh``` (which needs build utils)
+* Set up the config.json with appropriate values
 
 ### Contribution guidelines ###
 
