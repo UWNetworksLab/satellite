@@ -1,6 +1,6 @@
 var fs = require('fs');
 var es = require('event-stream');
-var countries = require('ip2country/src/as2country').createAS2CountryMap();
+var asmap = require('asbycountry');
 var progress = require('progressbar-stream');
 var iputils = require('../util/ip_utils');
 
@@ -46,26 +46,19 @@ var doDomain = function (asns, scores, list, domLine) {
   }
 }
 
-countries.then (function (cmap) {
-  var theseASNs = [];
-  Object.keys(cmap).forEach(function (asn) {
-    if (cmap[asn] === country) {
-      theseASNs.push(asn);
-    }
-  });
-  console.log('Loading IP scores...');
-  var scores = JSON.parse(fs.readFileSync(process.argv[3]));
-  console.log('IP scores loaded.');
+var ASList = Array.from(new Set(asmap[country]));
+console.log('Loading IP scores...');
+var scores = JSON.parse(fs.readFileSync(process.argv[3]));
+console.log('IP scores loaded.');
 
-  var asnFile = process.argv[2];
-  var list = {};
-  fs.createReadStream(asnFile)
-    .pipe(progress({total: fs.statSync(asnFile).size}))
-    .pipe(es.split())
-    .pipe(es.mapSync(doDomain.bind({}, theseASNs, scores, list)))
-    .on('end', function () {
-      //console.log(list);
-      fs.writeFileSync(process.argv[4], JSON.stringify(list));
-      process.exit(0);
-    });
-});
+var asnFile = process.argv[2];
+var list = {};
+fs.createReadStream(asnFile)
+  .pipe(progress({total: fs.statSync(asnFile).size}))
+  .pipe(es.split())
+  .pipe(es.mapSync(doDomain.bind({}, ASList, scores, list)))
+  .on('end', function () {
+    //console.log(list);
+    fs.writeFileSync(process.argv[4], JSON.stringify(list));
+    process.exit(0);
+  });

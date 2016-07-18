@@ -1,6 +1,6 @@
 var fs = require('fs');
 var es = require('event-stream');
-var countries = require('ip2country/src/as2country').createAS2CountryMap();
+var asmap = require('asbycountry');
 var progress = require('progressbar-stream');
 var iputils = require('../util/ip_utils');
 
@@ -39,22 +39,15 @@ var doDomain = function (asns, list, domLine) {
   }
 }
 
-countries.then (function (cmap) {
-  var irASNs = [];
-  Object.keys(cmap).forEach(function (asn) {
-    if (cmap[asn] === country) {
-      irASNs.push(asn);
-    }
+var ASList = Array.from(new Set(asmap[country]));
+var asnFile = process.argv[2];
+var list = [];
+fs.createReadStream(asnFile)
+  .pipe(progress({total: fs.statSync(asnFile).size}))
+  .pipe(es.split())
+  .pipe(es.mapSync(doDomain.bind({}, ASList, list)))
+  .on('end', function () {
+    //console.log(list);
+    fs.writeFileSync(process.argv[3], JSON.stringify(list));
+    process.exit(0);
   });
-  var asnFile = process.argv[2];
-  var list = [];
-  fs.createReadStream(asnFile)
-    .pipe(progress({total: fs.statSync(asnFile).size}))
-    .pipe(es.split())
-    .pipe(es.mapSync(doDomain.bind({}, irASNs, list)))
-    .on('end', function () {
-      //console.log(list);
-      fs.writeFileSync(process.argv[3], JSON.stringify(list));
-      process.exit(0);
-    });
-});
