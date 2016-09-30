@@ -43,7 +43,11 @@ getTopSites()
   rm top-1m.csv.zip
   cut -d "," -f 2 top-1m.csv | head -10000 > domains.txt
   if [[ -n $(node ../util/config.js domainlist) ]]; then
-    curl -s `node ../util/config.js domainlist` >> domains.txt
+    if [[ $(node ../util/config.js domainlist) == /* ]]; then
+      cat `node ../util/config.js domainlist` >> domains.txt
+    else
+      curl -s `node ../util/config.js domainlist` >> domains.txt
+    fi
   fi
   rm top-1m.csv
   cd ..
@@ -63,7 +67,11 @@ getBlacklist()
 {
 echo "Getting Blacklist..."
   if [[ -n $(node util/config.js blacklist) ]]; then
-    curl -s `node util/config.js blacklist` > temp/blacklist.conf
+    if [[ $(node util/config.js blacklist) == /* ]]; then
+      cp `node util/config.js blacklist` temp/blacklist.conf
+    else
+      curl -s `node util/config.js blacklist` > temp/blacklist.conf
+    fi
   else
     echo "No blacklist set for satellite."
     echo "Configure this setting in the config.json file."
