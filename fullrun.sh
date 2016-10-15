@@ -130,7 +130,7 @@ runTopSites()
 recordLookupTable()
 {
   echo "Building ASN tables..."
-  node asn_aggregation/makemap.js $thisRun runs/$thisRun/lookup.json
+  node --max-old-space-size=8192 asn_aggregation/makemap.js $thisRun runs/$thisRun/lookup.json
 }
 
 ##9. Run HTTP Scans.
@@ -160,8 +160,8 @@ aggregateRun()
   rm runs/$thisRun/asn.json.*
 
   echo "Aggregating IP-Domain Counts..."
-  node asn_aggregation/asn_collapse-classC_domains.js runs/$thisRun/asn.json runs/$thisRun/aggregate
-  node asn_aggregation/asn_collapse-ip_domains.js runs/$thisRun/asn.json runs/$thisRun/aggregate.ip-domain.json runs/$thisRun/aggregate.domain-ip.json
+  node --max-old-space-size=8192 asn_aggregation/asn_collapse-classC_domains.js runs/$thisRun/asn.json runs/$thisRun/aggregate
+  node --max-old-space-size=8192 asn_aggregation/asn_collapse-ip_domains.js runs/$thisRun/asn.json runs/$thisRun/aggregate.ip-domain.json runs/$thisRun/aggregate.domain-ip.json
 }
 
 ##11 (alt). OONI aggregation.
@@ -169,25 +169,25 @@ aggregateRunWithOoni()
 {
   echo "Aggregating..."
   plel=$(node util/config.js aggregation_processes)
-  node compat/ooni.js $thisRun runs/$thisRun/ooni.header runs/$thisRun/ooni.footer
+  node --max-old-space-size=8192 compat/ooni.js $thisRun runs/$thisRun/ooni.header runs/$thisRun/ooni.footer
   node util/plelSplit.js $plel runs/$thisRun/zmap runs/$thisRun/asn.json "node ./dns/aggregator.js #1 ./runs/$thisRun/lookup.json #2 ./runs/$thisRun/whitelist.json"
   cat runs/$thisRun/asn.json.*[!ooni] >> runs/$thisRun/asn.json
   cat runs/$thisRun/ooni.header runs/$thisRun/asn.json.*.ooni runs/$thisRun/ooni.footer >> runs/$thisRun/ooni.json
   rm runs/$thisRun/asn.json.* runs/$thisRun/ooni.header runs/$thisRun/ooni.footer
 
   echo "Aggregating IP-Domain Counts..."
-  node asn_aggregation/asn_collapse-classC_domains.js runs/$thisRun/asn.json runs/$thisRun/aggregate
-  node asn_aggregation/asn_collapse-ip_domains.js runs/$thisRun/asn.json runs/$thisRun/aggregate.domain-ip.json runs/$thisRun/aggregate.ip-domain.json
+  node --max-old-space-size=8192 asn_aggregation/asn_collapse-classC_domains.js runs/$thisRun/asn.json runs/$thisRun/aggregate
+  node --max-old-space-size=8192 asn_aggregation/asn_collapse-ip_domains.js runs/$thisRun/asn.json runs/$thisRun/aggregate.domain-ip.json runs/$thisRun/aggregate.ip-domain.json
 }
 
 ##12. Get Reverse Lookups of IPs.
 reverseLookup()
 {
   echo "Looking up PTR Records..."
-  node util/jsonkeystofile.js runs/$thisRun/aggregate.ip-domain.json runs/$thisRun/allIPs.txt
+  node --max-old-space-size=8192 util/jsonkeystofile.js runs/$thisRun/aggregate.ip-domain.json runs/$thisRun/allIPs.txt
   node dns/find-ptrs.js runs/$thisRun/allIPs.txt runs/$thisRun/ptrs.json
-  echo "Looking up WHOIS Records..."
-  node dns/find-whois.js runs/$thisRun/allIPs.txt runs/$thisRun/whois.json
+  #echo "Looking up WHOIS Records..."
+  #node dns/find-whois.js runs/$thisRun/allIPs.txt runs/$thisRun/whois.json
 }
 
 #13. Favicons
@@ -207,23 +207,23 @@ favicon()
 buildMatrices()
 {
   echo "Generating initial Similarity matrix..."
-  node cluster_correlation/correlation-matrix.js runs/$thisRun/aggregate.domain-classC.json runs/$thisRun/similarity01
+  node --max-old-space-size=8192 cluster_correlation/correlation-matrix.js runs/$thisRun/aggregate.domain-classC.json runs/$thisRun/similarity01
   for i in `seq 1 6`
   do
     echo "Regenerating matrix (iteration $(expr $i) of 6)..."
-    node cluster_correlation/reweighting-table.js runs/$thisRun/aggregate.domain-classC.json runs/$thisRun/aggregate.classC-domain.json runs/$thisRun/similarity0$i runs/$thisRun/reweight0$i.json
-    node cluster_correlation/correlation-matrix.js runs/$thisRun/aggregate.domain-classC.json runs/$thisRun/reweight0$i.json runs/$thisRun/similarity0$(expr $i + 1)
+    node --max-old-space-size=8192 cluster_correlation/reweighting-table.js runs/$thisRun/aggregate.domain-classC.json runs/$thisRun/aggregate.classC-domain.json runs/$thisRun/similarity0$i runs/$thisRun/reweight0$i.json
+    node --max-old-space-size=8192 cluster_correlation/correlation-matrix.js runs/$thisRun/aggregate.domain-classC.json runs/$thisRun/reweight0$i.json runs/$thisRun/similarity0$(expr $i + 1)
   done
 
   echo "Assigning Domains to clusters..."
-  node cluster_correlation/correlation-distr/run-distr.js runs/$thisRun/similarity06  runs/$thisRun/clusters.json
+  node --max-old-space-size=8192 cluster_correlation/correlation-distr/run-distr.js runs/$thisRun/similarity06  runs/$thisRun/clusters.json
   echo "Assigning IPs to clusters..."
-  node cluster_correlation/cluster-footprint.js runs/$thisRun/clusters.json runs/$thisRun/aggregate.classC-domain.json runs/$thisRun/similarity07 runs/$thisRun/clusters.ips.json
+  node --max-old-space-size=8192 cluster_correlation/cluster-footprint.js runs/$thisRun/clusters.json runs/$thisRun/aggregate.classC-domain.json runs/$thisRun/similarity07 runs/$thisRun/clusters.ips.json
   echo "Secondary Signal Aggregation [ptrs]"
-  node cluster_correlation/merge_on_metadata.js runs/$thisRun/clusters.json runs/$thisRun/clusters.ips.json runs/$thisRun/ptrs.json 0.8 runs/$thisRuns/clusters.merged.json
+  node --max-old-space-size=8192 cluster_correlation/merge_on_metadata.js runs/$thisRun/clusters.json runs/$thisRun/clusters.ips.json runs/$thisRun/ptrs.json 0.8 runs/$thisRuns/clusters.merged.json
 
   echo "Building Country-Country Lookup..."
-  node asn_aggregation/asn_asn-to-country_country.js runs/$thisRun/lookup.json runs/$thisRun/domains.txt runs/$thisRun/asn.json runs/$thisRun/country-country.json
+  node --max-old-space-size=8192 asn_aggregation/asn_asn-to-country_country.js runs/$thisRun/lookup.json runs/$thisRun/domains.txt runs/$thisRun/asn.json runs/$thisRun/country-country.json
 }
 
 ##15. Clean up

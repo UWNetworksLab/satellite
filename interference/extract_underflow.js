@@ -18,7 +18,7 @@ var doDomain = function (asns, list, domLine) {
   } catch (e) {
     return;
   }
-  asns.forEach (function (country) {
+  Object.keys(asns).forEach (function (country) {
     var n = 0; var m = 0;
     asns[country].forEach(function (asn) {
       if (!dom[asn]) {
@@ -43,7 +43,7 @@ Object.keys(asmap).forEach(function(country) {
 });
 
 fs.createReadStream(asnFile)
-  .pipe(progress({total: fs.statSync(asnFile).size}))
+//  .pipe(progress({total: fs.statSync(asnFile).size}))
   .pipe(es.split())
   .pipe(es.mapSync(doDomain.bind({}, asmap, list)))
   .on('end', function () {

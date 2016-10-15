@@ -40,6 +40,9 @@ var doDomain = function (asns, list, domLine) {
 }
 
 var ASList = Array.from(new Set(asmap[country]));
+if (ASList.length == 0) {
+  console.warn("No ASNs being used for filter!");
+}
 var asnFile = process.argv[2];
 var list = [];
 fs.createReadStream(asnFile)
