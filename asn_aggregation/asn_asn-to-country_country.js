@@ -13,16 +13,15 @@ var Q = require('q');
 var chalk = require('chalk');
 var es = require('event-stream');
 var progress = require('progressbar-stream');
-var countries = require('ip2country/src/as2country').createAS2CountryMap();
+var countries = require('asbycountry');
 var lookuper = require('ip2country/src/lookup');
 
 if (!process.argv[3]) {
-  console.error(chalk.red('Usage: asn_asn-to-country_country.js <lookup.json> <domains.txt> <asn.json> <outfile>'));
+  console.error(chalk.red('Usage: asn_asn-to-country_country.js <lookup.json> <asn.json> <outfile>'));
   process.exit(1);
 }
 
 var asn_lookup = JSON.parse(fs.readFileSync(process.argv[2]));
-var domains = process.argv[3];
 var inFile = process.argv[4];
 var outFile = process.argv[5];
 
@@ -62,19 +61,23 @@ function doAll() {
     into = {};
 
   console.log(chalk.blue('Starting'));
-  return countries.then(function(map) {
-    return Q.Promise(function (resolve, reject) {
+  var invmap = {};
+  Object.keys(countries).forEach(function (country) {
+    countries[country].forEach(function (asn) {
+      invmap[asn] = country;
+    });
+  });
+  return Q.Promise(function (resolve, reject) {
     fs.createReadStream(inFile)
       .pipe(progress({total: total}))
       .pipe(es.split())
-      .pipe(es.mapSync(doDomain.bind({}, into, map)))
+      .pipe(es.mapSync(doDomain.bind({}, into, invmap)))
       .pipe(es.join('\n'))
       .on('end', function () {
         resolve(into);
       })
       .on('error', reject);
   });
-});
 }
 
 doAll().then(function (data) {
