@@ -22,8 +22,8 @@ if (!process.argv[3]) {
 }
 
 var asn_lookup = JSON.parse(fs.readFileSync(process.argv[2]));
-var inFile = process.argv[4];
-var outFile = process.argv[5];
+var inFile = process.argv[3];
+var outFile = process.argv[4];
 
 var ip2asn = lookuper.lookup.bind({}, asn_lookup);
 
