@@ -1,8 +1,6 @@
 var fs = require('fs');
 var es = require('event-stream');
 var asmap = require('asbycountry');
-var progress = require('progressbar-stream');
-var iputils = require('../util/ip_utils');
 
 // Tells you which sites have too few resolutions across the different ASNs
 //

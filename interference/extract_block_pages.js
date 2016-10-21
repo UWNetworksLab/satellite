@@ -4,10 +4,10 @@ var asmap = require('asbycountry');
 var progress = require('progressbar-stream');
 var iputils = require('../util/ip_utils');
 
-// Tells you which IPs are used for block pages in a country.
+// Tells you which IPs are used for block pages.
 //
-// usage: node extract_block_pages.js <runs/date/asn.js> <runs/date/reweight.json> <output.json> <CountryCode>
-var country = process.argv[5];
+// usage: node extract_block_pages.js <runs/date/asn.js> <runs/date/reweight.json> <output.json> <cutoff>
+var cutoff = process.argv[5] * 1.0;
 
 var doDomain = function (asns, scores, list, domLine) {
   if (!domLine.length) {
@@ -20,43 +20,47 @@ var doDomain = function (asns, scores, list, domLine) {
     return;
   }
   var domainScores = scores[dom.name];
-  var worst, worstn = 0, good = 0, bad = 0;
-  asns.forEach (function (asn) {
-    if (!dom[asn]) {
-      return;
-    }
-    Object.keys(dom[asn]).forEach(function (ip) {
-      var score = domainScores[iputils.getClassC(ip)];
-      if (score < 0) {
-        bad += dom[asn][ip];
-        if (dom[asn][ip] > worstn) {
-          worst = ip;
-          worstn = dom[asn][ip];
-        }
-      } else {
-        good += dom[asn][ip];
+  Object.keys(asns).forEach (function(country) {
+    var worst, worstn = 0, good = 0, bad = 0;
+    asns[country].forEach (function (asn) {
+      if (!dom[asn]) {
+        return;
       }
+      Object.keys(dom[asn]).forEach(function (ip) {
+        var score = domainScores[iputils.getClassC(ip)];
+        if (score < cutoff) {
+          bad += dom[asn][ip];
+          if (dom[asn][ip] > worstn) {
+            worst = ip;
+            worstn = dom[asn][ip];
+          }
+        } else {
+          good += dom[asn][ip];
+        }
+      });
     });
-  });
-  if (bad * 4 > good) {
-    if (!list[worst]) {
-      list[worst] = 0;
+    if (bad > good) {
+      if (!list[country][worst]) {
+        list[country][worst] = [];
+      }
+      list[country][worst].push(dom.name);
     }
-    list[worst] += 1;
-  }
+  });
 }
 
-var ASList = Array.from(new Set(asmap[country]));
 console.log('Loading IP scores...');
 var scores = JSON.parse(fs.readFileSync(process.argv[3]));
 console.log('IP scores loaded.');
 
 var asnFile = process.argv[2];
 var list = {};
+Object.keys(asmap).forEach(function(country) {
+  list[country] = {};
+});
 fs.createReadStream(asnFile)
   .pipe(progress({total: fs.statSync(asnFile).size}))
   .pipe(es.split())
-  .pipe(es.mapSync(doDomain.bind({}, ASList, scores, list)))
+  .pipe(es.mapSync(doDomain.bind({}, asmap, scores, list)))
   .on('end', function () {
     //console.log(list);
     fs.writeFileSync(process.argv[4], JSON.stringify(list));
