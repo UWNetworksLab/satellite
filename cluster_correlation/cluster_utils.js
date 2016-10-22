@@ -3,7 +3,7 @@
  */
 'use strict';
 
-var Q = require('q');
+var Q = require('Q');
 
 // map from domain -> unique cluster id
 exports.clusterArrayToMap = function (clusters) {

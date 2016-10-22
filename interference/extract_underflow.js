@@ -32,7 +32,7 @@ var doDomain = function (asns, list, domLine) {
     });
     list[country].push([dom.name, n, m]);
   });
-}
+};
 
 var asnFile = process.argv[2];
 var list = {};
@@ -57,7 +57,7 @@ fs.createReadStream(asnFile)
       list[country].forEach(function(d) {
         // < 50% success
         if (d[1] < avg && d[2] > d[1]) {
-          low.push([d[0], d[1], d[2]])
+          low.push([d[0], d[1], d[2]]);
         }
       });
       downs[country] = low;

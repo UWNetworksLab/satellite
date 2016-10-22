@@ -260,6 +260,7 @@ if [ -f postrun.sh ]
   then
     source postrun.sh
 fi
+node util/notify.js finished
 else
   thisRun=${2}
   ${1}

@@ -3,6 +3,7 @@
 /**
  * Locally query WHOIS records for discovered IP addresses for use in subsequent
  * clustering.
+ * Note: due to rate limiting, this is not enabled by default.
  */
 
 var fs = require('fs');

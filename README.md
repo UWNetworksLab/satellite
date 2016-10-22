@@ -42,8 +42,8 @@ process:
 
 ### Contribution guidelines ###
 
-* Attempt to pass jslint as specified by the [brackets](https://brackets.io) editor.
-* Comments should go in a branch or fork and then be pull requested for review.
+* Attempt to pass eslint rules.
+* Comment to a branch or fork and open a pull request for review.
 
 ### Contact ###
 
@@ -57,10 +57,10 @@ process:
 * *dns* Contains scripts around dns specific packet generation & processing
 * *favicon* Contains scripts for fetching favicon information to test if an IP serves a domain.
 * *http* Contains scripts for testing whether IPs have servers on ports 443 and 80.
-* *interference* Contains scripts for detecting anomalies in ASN level behavior.
+* *interference* Contains scripts for detecting anomalies in responses.
 * *util* Contains general-purpose utility scripts for working with zmap.
 * *runs* Contains raw data
-* *temp* Contains downloaded files used during scanning.
+* *temp* Contains downloaded files used during an active run.
 
 * *fullrun.sh* Does a full satellite run!
 * *generateStudyMetadata.js* Creates the .study file needed by scans.io, and uploads files
@@ -72,8 +72,10 @@ process:
 This attempts to keep track of the evolving Satellite code base, and explain
 major changes as they occur.
 
-* *03/31/2015* Extraction of NXdomain failures
-* *02/15/2015* Better handling of failures to retrieve current blacklist
+* *10/20/2016* Improved interference analysis
+* *07/13/2016* Better geolocation
+* *03/31/2016* Extraction of NXdomain failures
+* *02/15/2016* Better handling of failures to retrieve current blacklist
 * *09/13/2015* Collection of WHOIS ownership records
 * *08/03/2015* Collection of reverse PTR records
 * *06/28/2015* Initial aggregation is performed in parallel by multiple cores, reducing time to ~10 hours.
