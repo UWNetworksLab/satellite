@@ -4,12 +4,11 @@ var asmap = require('asbycountry');
 var chalk = require('chalk');
 var progress = require('progressbar-stream');
 var iputils = require('../util/ip_utils');
+var ip2country = require('ip2country');
 
 // Tells you which IPs are used for block pages.
 //
-// usage: node extract_block_pages.js <runs/date/asn.js> <output.json>
-var cutoff = process.argv[5] * 1.0;
-
+// usage: node extract_block_pages.js <runs/date/asn.js> <runs/date/lookup.json> <output.json>
 var doDomain = function (asns, scores, list, maxglobals, domLine) {
   if (!domLine.length) {
     return;
@@ -73,6 +72,10 @@ var doDomain = function (asns, scores, list, maxglobals, domLine) {
       }
 
       if (cntryipcnts[ip] / ipcnts[ip] > leeway * cntrytotalcnt / totalcnt) {
+        if (!iputils.isReserved(ip) && ipasMap.lookup(ip) != "ZZ" && ipasMap.lookup(ip) != country) {
+          return;
+        }
+
         if (!list[country][ip]) {
           list[country][ip] = [];
         }
@@ -88,6 +91,10 @@ var maxglobals = {};
 Object.keys(asmap).forEach(function(country) {
   list[country] = {};
 });
+
+var ipasMap = JSON.parse(fs.readFileSync(process.argv[3]));
+ipasMap.lookup = ip2country.lookup.bind({}, ipasMap);
+
 console.log(chalk.blue("Calculating country-specific IPs per domain."));
 fs.createReadStream(asnFile)
   .pipe(progress({total: fs.statSync(asnFile).size}))
@@ -96,7 +103,7 @@ fs.createReadStream(asnFile)
   .on('end', function () {
     // 3. find IPs with low ratio across domains.
     console.log(chalk.blue("Correlating IPs across domains."));
-    var outputs = {};
+    var output = {};
     Object.keys(list).forEach(function (country) {
       output[country] = [];
       Object.keys(list[country]).forEach(function (ip) {
@@ -104,7 +111,7 @@ fs.createReadStream(asnFile)
           var correlated = 0;
           for (var i = 0; i < list[country][ip].length; i++) {
             for (var j = i + 1; j < list[country][ip].length; j++) {
-                if (maxglobals[list[country[ip][i]]] == maxglobals[list[country][ip][j]]) {
+                if (maxglobals[list[country][ip][i]] == maxglobals[list[country][ip][j]]) {
                   correlated += 1;
                 }
             }
@@ -116,6 +123,6 @@ fs.createReadStream(asnFile)
       });
     });
     console.log(chalk.green("Writing Output."));
-    fs.writeFileSync(process.argv[4], JSON.stringify(list));
+    fs.writeFileSync(process.argv[4], JSON.stringify(output));
     process.exit(0);
   });
