@@ -9,7 +9,7 @@ var ip2country = require('ip2country');
 // Tells you which IPs are used for block pages.
 //
 // usage: node extract_block_pages.js <runs/date/asn.js> <runs/date/lookup.json> <output.json>
-var doDomain = function (asns, scores, list, maxglobals, domLine) {
+var doDomain = function (asns, list, maxglobals, domLine) {
   if (!domLine.length) {
     return;
   }
@@ -27,6 +27,9 @@ var doDomain = function (asns, scores, list, maxglobals, domLine) {
       return;
     }
     Object.keys(dom[asn]).forEach(function(ip) {
+      if (ip == "empty") {
+        return;
+      }
       if (!ipcnts[ip]) {
         ipcnts[ip] = 0;
       }
@@ -56,6 +59,9 @@ var doDomain = function (asns, scores, list, maxglobals, domLine) {
         return;
       }
       Object.keys(dom[asn]).forEach(function (ip) {
+        if (ip == "empty") {
+          return;
+        }
         if (!cntryipcnts[ip]) {
           cntryipcnts[ip] = 0;
         }
@@ -117,7 +123,7 @@ fs.createReadStream(asnFile)
             }
           }
           if (correlated < list[country][ip].length) {
-            output[country].push([ip, doms]);
+            output[country].push([ip, country, list[country][ip]]);
           }
         }
       });
