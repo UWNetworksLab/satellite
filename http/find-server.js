@@ -11,6 +11,7 @@ var chalk = require('chalk');
 var es = require('event-stream');
 var mapConcurrent = require('map-stream-concurrent');
 var progress = require('progressbar-stream');
+var config = require('../util/config');
 
 
 if (!process.argv[2]) {
@@ -26,7 +27,8 @@ function httpWorker(ip, done) {
   http.get({
     hostname: ip,
     agent: false,
-    timeout: 1000
+    timeout: 1000,
+    localAddress: config.getKey('local_ip')
   }, function (resp) {
     var server ="";
     if (resp.headers && resp.headers.server) {
