@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Locally query server headers of discovered IP addresses for use in subsequent
  * clustering.
@@ -24,12 +22,14 @@ var outFile = process.argv[3];
 var CONCURRENT_REQUESTS = 10;
 
 function httpWorker(ip, done) {
-  http.get({
+  var req = http.request({
+    method: 'GET',
     hostname: ip,
     agent: false,
     timeout: 1000,
     localAddress: config.getKey('local_ip')
-  }, function (resp) {
+  });
+  req.on('response', function (resp) {
     var server ="";
     if (resp.headers && resp.headers.server) {
       server = resp.headers.server;
@@ -37,7 +37,14 @@ function httpWorker(ip, done) {
     done(JSON.stringify([ip, resp.statusCode, server]));
   }).on('error',function(e) {
     done(JSON.stringify([ip, 504, ""]));
+  }).on('socket', function (socket) {
+    socket.setTimeout(20000);
+    socket.on('timeout', function () {
+      req.abort();
+      done(JSON.stringify([ip, 504, ""]));
+    });
   });
+  req.end();
 }
 
 var length = fs.statSync(inFile).size;

@@ -13,6 +13,7 @@ var http = require('http');
 var chalk = require('chalk');
 var dns = require('dns');
 var getClassC = require('../util/ip_utils.js').getClassC;
+var config = require('../util/config');
 
 if (!process.argv[2]) {
   console.error(chalk.red("Usage: find-redirects.js <rundir> <domains> <outputPrefix>"));
@@ -31,6 +32,7 @@ function doHTTP(domain, method) {
       host: domain,
       method: method,
       agent: false,
+      localAddress: config.getKey('local_ip'),
       headers: {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36'}
     });
 
