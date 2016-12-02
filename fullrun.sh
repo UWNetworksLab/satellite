@@ -186,6 +186,8 @@ reverseLookup()
   echo "Looking up PTR Records..."
   node --max-old-space-size=8192 util/jsonkeystofile.js runs/$thisRun/aggregate.ip-domain.json runs/$thisRun/allIPs.txt
   node dns/find-ptrs.js runs/$thisRun/allIPs.txt runs/$thisRun/ptrs.json
+  echo "Looking up Server headers..."
+  node --max-old-space-size=8192 http/find-server.js runs/$thisRun/allIPs.txt runs/$thisRun/serverheaders.json
   #echo "Looking up WHOIS Records..."
   #node dns/find-whois.js runs/$thisRun/allIPs.txt runs/$thisRun/whois.json
 }
