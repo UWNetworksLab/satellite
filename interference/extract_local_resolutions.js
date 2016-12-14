@@ -6,6 +6,8 @@ var iputils = require('../util/ip_utils');
 
 // Tells you which sites have a significant resolution to non-public prefixes
 // within a given country.
+// This works for countries using an internal (e.g 10.x.x.x) block page, most
+// notably, Iran.
 //
 // usage: node extract_local_resolutions.js <runs/date/asn.js> <output.json> <CountryCode>
 var country = process.argv[4];
