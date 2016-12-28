@@ -73,7 +73,12 @@ var getSignature = function(output, domLine) {
       var ptr = ptrs[ip];
       if (ptr && ptr[1].length && ptr[1][0].indexOf(".")) {
         ptr = ptr[1][0].split(".");
-        ptr = ptr[ptr.length - 2];
+        // Account for '.co.uk' type things.
+        if (ptr.length > 3 && ptr[ptr.length - 2].length < 3) {
+          ptr = ptr[ptr.length - 3];
+        } else {
+          ptr = ptr[ptr.length - 2];
+        }
         if (!r_ptrs[ptr]) {
           r_ptrs[ptr] = 0;
         }
@@ -91,6 +96,7 @@ var getSignature = function(output, domLine) {
   })
 
   totalResolutions *= 0.75;
+  var signatures = [];
 
   // 1. Check if domain is single homed.
   var ip_keys = Object.keys(r_ips).sort(function(a, b) {
@@ -104,8 +110,8 @@ var getSignature = function(output, domLine) {
       if (ip_keys.length > i + 1 && r_ips[ip_keys[i]] < r_ips[ip_keys[i + 1]] * 1.5) {
         break;
       }
-      output[dom.name] = ["IP", ip_keys.slice(0, i + 1)];
-      return;
+      signatures.push(["IP", ip_keys.slice(0, i + 1)]);
+      break;
     }
   }
   ip_keys = [];
@@ -114,9 +120,8 @@ var getSignature = function(output, domLine) {
   var as_keys = Object.keys(r_asns).sort(function(a, b) {
     return r_asns[b] - r_asns[a];
   });
-  if (r_asns[as_keys[0]] > totalResolutions) {
-    output[dom.name] = ["ASN", as_keys[0]];
-    return;
+  if (r_asns[as_keys[0]] > totalResolutions && as_keys[0] != "ZZ") {
+    signatures.push(["ASN", as_keys[0]]);
   }
   as_keys = [];
 
@@ -125,8 +130,7 @@ var getSignature = function(output, domLine) {
     return r_ptrs[b] - r_ptrs[a];
   });
   if (r_ptrs[ptr_keys[0]] > totalResolutions) {
-    output[dom.name] = ["PTR", ptr_keys[0]];
-    return;
+    signatures.push(["PTR", ptr_keys[0]]);
   }
 
   // 4. Check if domain uses a single dominant server header.
@@ -134,11 +138,10 @@ var getSignature = function(output, domLine) {
     return r_servers[b] - r_servers[a];
   });
   if (r_servers[server_keys[0]] > totalResolutions) {
-    output[dom.name] = ["SERVER", server_keys[0]];
-    return;
+    signatures.push(["SERVER", server_keys[0]]);
   }
 
-  output[dom.name] = ["UNKNOWN"];
+  output[dom.name] = signatures;
 };
 
 var printStats = function(domains) {
@@ -152,6 +155,9 @@ var printStats = function(domains) {
   Object.keys(domains).forEach(function(dom) {
     types[domains[dom][0]] += 1;
   });
+  if (domains[dom].length == 0) {
+    types["UNKNOWN"] += 1;
+  }
   Object.keys(types).forEach(function(cat) {
     console.log(cat +":\t" + types[cat]);
   });
