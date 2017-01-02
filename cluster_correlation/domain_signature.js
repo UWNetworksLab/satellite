@@ -30,7 +30,10 @@ var a_output = process.argv[6];
 var ip2asn = JSON.parse(fs.readFileSync(a_lookup));
 ip2asn.lookup = ip2country.lookup.bind({}, ip2asn);
 var ptrs = jsonlinesloader.load(a_ptrs);
-var servers = jsonlinesloader.load(a_servers);
+var servers = {};
+if (fs.existsSync(a_servers)) {
+  servers = jsonlinesloader.load(a_servers);
+}
 
 var getSignature = function(output, domLine) {
   if (!domLine.length) {
@@ -156,7 +159,9 @@ var printStats = function(domains) {
     if (domains[dom].length == 0) {
       types.UNKNOWN += 1;
     } else {
-      types[domains[dom][0]] += 1;
+      domains[dom].forEach(function(el) {
+        types[el[0]] += 1;
+      });
     }
   });
 
