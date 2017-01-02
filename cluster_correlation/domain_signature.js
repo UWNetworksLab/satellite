@@ -153,11 +153,13 @@ var printStats = function(domains) {
     "UNKNOWN": 0
   };
   Object.keys(domains).forEach(function(dom) {
-    types[domains[dom][0]] += 1;
+    if (domains[dom].length == 0) {
+      types.UNKNOWN += 1;
+    } else {
+      types[domains[dom][0]] += 1;
+    }
   });
-  if (domains[dom].length == 0) {
-    types["UNKNOWN"] += 1;
-  }
+
   Object.keys(types).forEach(function(cat) {
     console.log(cat +":\t" + types[cat]);
   });
