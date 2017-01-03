@@ -228,6 +228,15 @@ buildMatrices()
   node --max-old-space-size=8192 asn_aggregation/asn_asn-to-country_country.js runs/$thisRun/lookup.json runs/$thisRun/asn.json runs/$thisRun/country-country.json
 }
 
+##15. Signatures / Anomalies
+makeSignatures()
+{
+  echo "Calculating signatures..."
+  node --max-old-space=8192 cluster_correlation/domain_signature.js runs/$thisRun/asn.json runs/$thisRun/lookup.json runs/$thisRun/ptrs.json runs/$thisRun/serverheaders.json runs/$thisRun/domainsigs.json
+  echo "Calculating Outliers..."
+  node --max-old-space=8192 interference/extract_anomalies.js runs/$thisRun/asn.json runs/$thisRun/domainsigs.json runs/$thisRun/lookup.json runs/$thisRun/ptrs.json runs/$thisRun/serverheaders.json runs/$thisRun/anomalies.json
+}
+
 ##15. Clean up
 cleanup()
 {
@@ -257,6 +266,7 @@ aggregateRun         # replace folder with ASN aggreates.
 reverseLookup        # do PTR lookups
 #favicon             # Favicon scan and compare - not default.
 buildMatrices        # build similarity table
+makeSignatures       # calculate anomalies
 cleanup
 if [ -f postrun.sh ]
   then
