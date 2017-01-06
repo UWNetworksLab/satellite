@@ -26,7 +26,10 @@ var ip2asn = JSON.parse(fs.readFileSync(a_lookup));
 var sigs = JSON.parse(fs.readFileSync(a_sigs));
 ip2asn.lookup = ip2country.lookup.bind({}, ip2asn);
 var ptrs = jsonlinesloader.load(a_ptrs);
-var servers = jsonlinesloader.load(a_servers);
+var servers = {};
+if (fs.existsSync(a_servers)) {
+  servers = jsonlinesloader.load(a_servers);
+}
 
 var checkSignature = function(output, domLine) {
   if (!domLine.length) {
