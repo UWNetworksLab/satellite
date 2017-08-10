@@ -31,6 +31,7 @@ if (fs.existsSync(a_servers)) {
   servers = jsonlinesloader.load(a_servers);
 }
 
+// process all results for a single domain.
 var checkSignature = function(output, domLine) {
   if (!domLine.length) {
     return;
@@ -50,6 +51,7 @@ var checkSignature = function(output, domLine) {
   Object.keys(asmap).forEach(function(country) {
     var countryTotal = 0;
     var countryGood = [];
+    var asStats = {};
     var countryStats = {
       "IP": {},
       "ASN": {},
@@ -61,30 +63,49 @@ var checkSignature = function(output, domLine) {
     }
     asmap[country].forEach(function (asn) {
       if (!dom[asn]) {return;}
+      asStats[asn] = {
+        "IP": {},
+        "ASN": {},
+        "PTR": {},
+        "SERVER": {}
+      };
+      var asTotal = 0;
+      var asGood = [];
       Object.keys(dom[asn]).forEach(function (ip) {
         if (ip == "empty") {
           return;
         }
+        asTotal += dom[asn][ip];
         countryTotal += dom[asn][ip];
         for (var i = 0; i < methods.length; i++) {
           var method = methods[i];
           if (method[0] == "IP") {
             if (method[1].indexOf(ip) > -1) {
               countryGood[i] += dom[asn][ip];
+              asGood[i] += dom[asn][ip];
             }
             if (!countryStats.IP[ip]) {
               countryStats.IP[ip] = 0;
             }
             countryStats.IP[ip] += dom[asn][ip];
+            if (!asStats[asn].IP[ip]) {
+              asStats[asn].IP[ip] = 0
+            }
+            asStats[asn].IP[ip] += dom[asn][ip];
           } else if (method[0] == "ASN") {
             var c_asn = ip2asn.lookup(ip);
             if (method[1] == c_asn) {
               countryGood[i] += dom[asn][ip];
+              asGood[i] += dom[asn][ip];
             }
             if (!countryStats.ASN[c_asn]) {
               countryStats.ASN[c_asn] = 0;
             }
             countryStats.ASN[c_asn] += dom[asn][ip];
+            if (!asStats[asn].ASN[c_asn]) {
+              asStats[asn].ASN[c_asn] = 0
+            }
+            asStats[asn].ASN[c_asn] += dom[asn][ip];
           } else if (method[0] == "PTR") {
             var ptr = ptrs[ip];
             if (ptr && ptr[1].length && ptr[1][0].indexOf(".")) {
@@ -99,8 +120,13 @@ var checkSignature = function(output, domLine) {
                 countryStats.PTR[ptr] = 0;
               }
               countryStats.PTR[ptr] += dom[asn][ip];
+              if (!asStats[asn].PTR[ptr]) {
+                asStats[asn].PTR[ptr] =0
+              }
+              asStats[asn].PTR[ptr] += dom[asn][ip];
               if (ptr == method[1]) {
                 countryGood[i] += dom[asn][ip];
+                asGood[i] += dom[asn][ip];
               }
             }
           } else if (method[0] == "SERVER") {
@@ -110,8 +136,13 @@ var checkSignature = function(output, domLine) {
                 countryStats.SERVER[server[2]] = 0;
               }
               countryStats.SERVER[server[2]] += dom[asn][ip];
+              if (!asStats[asn].SERVER[server[2]]) {
+                asStats[asn].SERVER[server[2]] = 0
+              }
+              asStats[asn].SERVER[server[2]] += dom[asn][ip];
               if (method[1] == server[2]) {
                 countryGood[i] += dom[asn][ip];
+                asGood[i] += dom[asn][ip];
               }
             }
           }
@@ -126,7 +157,7 @@ var checkSignature = function(output, domLine) {
         }
       }
       // failed.
-      var out = [dom.name, countryTotal];
+      var out = [dom.name, countryTotal, asStats];
       for (j = 0; j < methods.length; j++) {
         if (methods[j][0] == "IP" && methods[j][1][0] == "empty") {
           return;
