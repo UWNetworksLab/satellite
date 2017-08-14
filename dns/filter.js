@@ -12,7 +12,7 @@
  *   'json' specifies a json object should be output, rather than a zmap (default) output.
  *
  * Example usage:
- * node dns/filter.js runs/04-25-2015/cs.washington.edu.csv temp/hosts.txt [json]
+ * node dns/filter.js runs/04-25-2015/cs.washington.edu.csv temp/hosts.txt [json|permissive]
  */
 
 var fs = require('fs'),
@@ -42,6 +42,10 @@ var json = false;
 if (process.argv[4] && process.argv[4] === 'json') {
   json = true;
   output.write("{");
+}
+var permissive = false;
+if (process.argv[4] && process.argv[4] === 'permissive') {
+  permissive = true;
 }
 
 var watcher = new stream.Transform( { objectMode: true } );
@@ -81,7 +85,7 @@ watcher._transform = function (line, encoding, done) {
     }
   }
 
-  if (!isvalid || mask.get(ip_utils.getClassC(info[0])/256)) {
+  if (!isvalid || (!permissive && mask.get(ip_utils.getClassC(info[0])/256))) {
     done();
     return;
   }

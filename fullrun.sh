@@ -112,7 +112,10 @@ getActiveResolvers()
 getGoodHosts()
 {
   echo "Generating IP list..."
-  node dns/filter.js runs/$thisRun/local.csv temp/dns_servers.txt
+  oldRun=$(date -v-28d +"%m-%d-%Y")
+  node dns/filter.js runs/$oldRun/local.csv temp/old_servers.txt permissive
+  node dns/filter.js runs/$thisRun/local.csv temp/dns_candidates.txt
+  node dns/historicfilter.js temp/dns_candidates.txt temp/old_servers.txt temp/dns_servers.txt
   node dns/filter.js runs/$thisRun/local.csv runs/$thisRun/whitelist.json json
 }
 
@@ -242,6 +245,8 @@ cleanup()
 {
   echo "Cleaning up..."
   rm temp/dns_servers.txt
+  rm temp/dns_candidates.txt
+  rm temp/old_servers.txt
   rm -r runs/$thisRun/zmap
   rm runs/$thisRun/similarity0{2,3,4,5,6}.*
   rm runs/$thisRun/reweight0{1,2,3,4,5}.json
