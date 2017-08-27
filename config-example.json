@@ -1,5 +1,9 @@
 {
   "zmap": "zmap -i eth0",
+  "_zmap_remote": "The following are used when zmap above is set to 'remotezmap.sh'",
+  "zmap_remote_host": "scanhost",
+  "zmap_remote_dir": "/mnt/storage",
+  "zmap_remote_bin": "zmap -i eth0",
   "rate": 500000,
   "recvrate": 50000,
   "blacklist_example": "http://seahawk.cs.washington.edu:8080/blacklist.conf",

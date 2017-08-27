@@ -5,8 +5,8 @@
 set -e
 
 ARGS=$@
-ZMAP_HOST=""
-REMOTE_PATH=""
-ZMAP_PATH=""
+ZMAP_HOST=`node util/config.js zmap_remote_host`
+REMOTE_PATH=`node util/config.js zmap_remote_dir`
+ZMAP_PATH=`node util/config.js zmap_remote_bin`
 
 ssh $ZMAP_HOST "cd $REMOTE_PATH && $ZMAP_PATH $ARGS"
